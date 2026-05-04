@@ -117,7 +117,7 @@ app.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[LOGIN ERROR]', err.message);
+    console.error('[LOGIN ERROR]', err.message, err.stack);
     res.status(500).json({ error: 'Server error — check your DATABASE_URL in .env' });
   }
 });
