@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RTMS — Camera View | © SEUSHI, ANWAR 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#020408;--bg2:#060d14;--bg3:#0a1520;
+  --green:#00ff88;--green2:#00cc6a;--green-dim:rgba(0,255,136,.1);
+  --red:#ff2244;--red-dim:rgba(255,34,68,.1);
+  --amber:#ffb800;--amber-dim:rgba(255,184,0,.1);
+  --cyan:#00d4ff;--cyan-dim:rgba(0,212,255,.08);
+  --blue:#0066ff;
+  --text:#c9d1d9;--text2:#6e7f8d;--text3:#2d3f50;
+  --mono:'JetBrains Mono',monospace;
+  --head:'Barlow Condensed',sans-serif;
+  --border:rgba(0,212,255,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden}
+
+/* scanlines */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:999}
+
+/* watermark */
+.wm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
+.wm-text{font-family:var(--head);font-size:80px;font-weight:900;color:rgba(0,212,255,.018);text-transform:uppercase;letter-spacing:.2em;white-space:nowrap;transform:rotate(-20deg)}
+
+/* layout */
+.shell{display:grid;grid-template-rows:48px 1fr 32px;height:100vh}
+
+/* topbar */
+.topbar{display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(6,13,20,.95);border-bottom:1px solid var(--border);position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4}
+.logo{font-family:var(--head);font-size:16px;font-weight:900;color:var(--cyan);letter-spacing:.1em}
+.cam-selector{display:flex;gap:4px;margin-left:12px}
+.cam-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.05em}
+.cam-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cam-btn.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);letter-spacing:.08em}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.clock{font-size:11px;color:var(--text2)}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;text-decoration:none;transition:all .15s}
+.back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* main grid */
+.main{display:grid;grid-template-columns:1fr 320px;overflow:hidden}
+
+/* camera feed */
+.feed-wrap{position:relative;background:var(--bg2);overflow:hidden}
+.cam-canvas{width:100%;height:100%;display:block}
+.cam-overlay{position:absolute;inset:0;pointer-events:none}
+
+/* HUD elements */
+.hud-corner{position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;opacity:.6}
+.hud-tl{top:12px;left:12px;border-width:2px 0 0 2px}
+.hud-tr{top:12px;right:12px;border-width:2px 2px 0 0}
+.hud-bl{bottom:12px;left:12px;border-width:0 0 2px 2px}
+.hud-br{bottom:12px;right:12px;border-width:0 2px 2px 0}
+.hud-info{position:absolute;top:16px;left:36px;font-size:10px;color:var(--cyan);opacity:.7;line-height:1.8}
+.hud-time{position:absolute;top:16px;right:36px;font-size:11px;color:var(--cyan);opacity:.7;text-align:right;line-height:1.8}
+.hud-cam-id{position:absolute;bottom:16px;left:36px;font-size:11px;color:var(--green);opacity:.8}
+.hud-status{position:absolute;bottom:16px;right:36px;font-size:10px;color:var(--amber);opacity:.8}
+
+/* detection box */
+.detection-box{position:absolute;border:2px solid var(--green);box-shadow:0 0 12px rgba(0,255,136,.5);display:none;transition:all .1s}
+.detection-box.show{display:block}
+.detection-box::before{content:'PLATE DETECTED';position:absolute;top:-18px;left:0;font-size:9px;color:var(--green);background:rgba(0,255,136,.15);padding:1px 6px;border-radius:2px;white-space:nowrap}
+.plate-label{position:absolute;bottom:-22px;left:0;font-size:11px;font-weight:700;color:var(--green);background:rgba(0,0,0,.8);padding:2px 8px;border-radius:2px;letter-spacing:.1em;white-space:nowrap}
+.conf-label{position:absolute;bottom:-38px;left:0;font-size:9px;color:var(--amber);white-space:nowrap}
+
+/* scan line animation */
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3;animation:scanMove 3s linear infinite}
+@keyframes scanMove{0%{top:0}100%{top:100%}}
+
+/* right panel */
+.right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:10px}
+
+/* stats */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.stat-box{background:var(--bg3);border-radius:6px;padding:8px 10px;border:1px solid var(--border)}
+.stat-num{font-size:20px;font-weight:700;margin-bottom:1px}
+.stat-lbl{font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.n-green{color:var(--green)}.n-amber{color:var(--amber)}.n-red{color:var(--red)}.n-cyan{color:var(--cyan)}
+
+/* evidence viewer */
+.evidence-list{flex:1;overflow-y:auto;padding:10px}
+.evidence-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;cursor:pointer;transition:all .15s}
+.evidence-card:hover{border-color:var(--cyan)}
+.evidence-card.alert{border-color:var(--red)}
+.evidence-img{width:100%;height:100px;object-fit:cover;display:block;background:var(--bg2);position:relative}
+.evidence-img-placeholder{width:100%;height:100px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text2)}
+.evidence-info{padding:8px 10px}
+.evidence-plate{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:3px}
+.evidence-meta{display:flex;justify-content:space-between;align-items:center}
+.evidence-type{font-size:9px;color:var(--text2)}
+.evidence-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
+.eb-fine{background:var(--green-dim);color:var(--green)}
+.eb-review{background:var(--amber-dim);color:var(--amber)}
+.eb-alert{background:var(--red-dim);color:var(--red)}
+.evidence-time{font-size:9px;color:var(--text2);margin-top:3px}
+
+/* copyright bar */
+.copyright-bar{background:rgba(2,4,8,.98);border-top:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-size:9px;color:var(--text2);letter-spacing:.04em}
+.cp-name{color:var(--cyan)}
+
+/* evidence modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;padding:20px}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;overflow:hidden;transform:scale(.95);transition:transform .25s}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:13px;font-weight:700;color:var(--cyan)}
+.modal-close{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-img-wrap{position:relative;background:var(--bg);height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.modal-evidence-img{width:100%;height:100%;object-fit:cover}
+.modal-plate-overlay{position:absolute;border:3px solid var(--green);box-shadow:0 0 20px rgba(0,255,136,.6)}
+.modal-details{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-detail{background:var(--bg3);border-radius:6px;padding:8px 12px}
+.modal-detail-label{font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.modal-detail-value{font-size:12px;color:var(--text);font-weight:500}
+.modal-detail-value.green{color:var(--green)}.modal-detail-value.amber{color:var(--amber)}.modal-detail-value.red{color:var(--red)}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+</style>
+</head>
+<body>
+
+<div class="wm"><div class="wm-text">SEUSHI ANWAR · RTMS</div></div>
+
+<div class="shell">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo">RTMS://CAM-VIEW</div>
+    <div class="cam-selector" id="cam-selector"></div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div>RECORDING</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <a href="camera-monitor.html" class="back-btn">← Monitor</a>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Camera Feed -->
+    <div class="feed-wrap">
+      <canvas class="cam-canvas" id="cam-canvas"></canvas>
+
+      <!-- HUD overlay -->
+      <div class="cam-overlay">
+        <div class="hud-corner hud-tl"></div>
+        <div class="hud-corner hud-tr"></div>
+        <div class="hud-corner hud-bl"></div>
+        <div class="hud-corner hud-br"></div>
+        <div class="hud-info" id="hud-info"></div>
+        <div class="hud-time" id="hud-time"></div>
+        <div class="hud-cam-id" id="hud-cam-id"></div>
+        <div class="hud-status" id="hud-status">● MONITORING</div>
+        <div class="scan-line"></div>
+        <!-- Detection box -->
+        <div class="detection-box" id="detection-box">
+          <div class="plate-label" id="plate-label"></div>
+          <div class="conf-label" id="conf-label"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="panel-section">
+        <div class="panel-title">Live Stats</div>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-num n-green" id="s-detections">0</div><div class="stat-lbl">Detections</div></div>
+          <div class="stat-box"><div class="stat-num n-cyan" id="s-fines">0</div><div class="stat-lbl">Fines</div></div>
+          <div class="stat-box"><div class="stat-num n-amber" id="s-review">0</div><div class="stat-lbl">Review</div></div>
+          <div class="stat-box"><div class="stat-num n-red" id="s-alerts">0</div><div class="stat-lbl">Alerts</div></div>
+        </div>
+      </div>
+      <div class="panel-section" style="flex-shrink:0">
+        <div class="panel-title">Evidence Feed</div>
+      </div>
+      <div class="evidence-list" id="evidence-list">
+        <div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Copyright bar -->
+  <div class="copyright-bar">
+    <div>&copy; <span class="cp-name">SEUSHI, ANWAR</span> &nbsp;|&nbsp; 2025 &nbsp;|&nbsp; Dar es Salaam, Tanzania &nbsp;|&nbsp; RTMS &mdash; Camera View</div>
+    <div style="opacity:.5">All rights reserved.</div>
+  </div>
+
+</div>
+
+<!-- Evidence Modal -->
+<div class="modal-overlay" id="evidence-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modal-title">Evidence Photo</span>
+      <div class="modal-close" onclick="closeModal()">&#x2715;</div>
+    </div>
+    <div class="modal-img-wrap" id="modal-img-wrap"></div>
+    <div class="modal-details" id="modal-details"></div>
+  </div>
+</div>
+
+<script>
+// ── Camera definitions ────────────────────────────────────────
+const CAMERAS = [
+  { id:'CAM-DSM-001', name:'Uhuru Street Junction',     type:'INTERSECTION', lat:-6.8161, lng:39.2894 },
+  { id:'CAM-DSM-002', name:'Morogoro Road Speed Point', type:'SPEED',        lat:-6.7924, lng:39.2083 },
+  { id:'CAM-DSM-003', name:'Kariakoo Pedestrian Zone',  type:'PEDESTRIAN',   lat:-6.8219, lng:39.2741 },
+  { id:'CAM-DSM-004', name:'Bagamoyo Road Junction',    type:'INTERSECTION', lat:-6.7689, lng:39.2456 },
+  { id:'CAM-DSM-005', name:'Nelson Mandela Expressway', type:'SPEED',        lat:-6.8034, lng:39.2612 },
+];
+
+const VIOLATIONS = {
+  INTERSECTION: ['RED_LIGHT','PHONE_USE','NO_SEATBELT','WRONG_WAY'],
+  SPEED:        ['SPEEDING','PHONE_USE'],
+  PEDESTRIAN:   ['PEDESTRIAN_ZONE','ILLEGAL_PARKING'],
+};
+
+const PLATE_COLORS = ['#FFFFFF','#FFFF00','#FF4444'];
+const CAR_COLORS   = ['#1a3a5c','#2d5a27','#4a1a1a','#1a1a4a','#3a2a1a','#1a3a3a','#2a2a2a','#4a3a1a','#1a4a2a','#3a1a3a'];
+const AMOUNTS      = { RED_LIGHT:150000, SPEEDING:200000, ILLEGAL_PARKING:50000, WRONG_WAY:300000, NO_SEATBELT:30000, PHONE_USE:50000, PEDESTRIAN_ZONE:100000 };
+
+let currentCam = 0;
+let cars = [];
+let frameCount = 0;
+let stats = { detections:0, fines:0, review:0, alerts:0 };
+let evidenceItems = [];
+let animFrame;
+
+const canvas  = document.getElementById('cam-canvas');
+const ctx     = canvas.getContext('2d');
+
+// ── Canvas resize ─────────────────────────────────────────────
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ── Build camera selector ─────────────────────────────────────
+function buildSelector() {
+  const sel = document.getElementById('cam-selector');
+  sel.innerHTML = CAMERAS.map((c,i) =>
+    `<button class="cam-btn ${i===0?'active':''}" onclick="switchCam(${i})">${c.id}</button>`
+  ).join('');
+}
+buildSelector();
+
+function switchCam(i) {
+  currentCam = i;
+  cars = [];
+  document.querySelectorAll('.cam-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+  updateHUD();
+}
+
+// ── HUD ───────────────────────────────────────────────────────
+function updateHUD() {
+  const cam = CAMERAS[currentCam];
+  document.getElementById('hud-info').innerHTML =
+    `${cam.id}<br>${cam.type}<br>GPS: ${cam.lat}, ${cam.lng}`;
+  document.getElementById('hud-cam-id').textContent = cam.name;
+}
+updateHUD();
+
+// ── Clock ─────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const ts  = now.toLocaleTimeString('en-GB');
+  document.getElementById('clock').textContent     = ts;
+  document.getElementById('hud-time').innerHTML    =
+    `${now.toLocaleDateString('en-GB')}<br>${ts}<br>REC ●`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Road drawing ─────────────────────────────────────────────
+function drawRoad() {
+  const W = canvas.width, H = canvas.height;
+
+  // Sky gradient
+  const sky = ctx.createLinearGradient(0,0,0,H*0.45);
+  sky.addColorStop(0,'#0a0e14');
+  sky.addColorStop(1,'#0d1520');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,W,H*0.45);
+
+  // Ground
+  const gnd = ctx.createLinearGradient(0,H*0.45,0,H);
+  gnd.addColorStop(0,'#0c1218');
+  gnd.addColorStop(1,'#080c10');
+  ctx.fillStyle = gnd;
+  ctx.fillRect(0,H*0.45,W,H*0.55);
+
+  // Road surface
+  const roadY = H*0.42;
+  const road = ctx.createLinearGradient(0,roadY,0,H);
+  road.addColorStop(0,'#1a1e22');
+  road.addColorStop(1,'#0e1216');
+  ctx.fillStyle = road;
+  ctx.beginPath();
+  ctx.moveTo(W*0.1,roadY);
+  ctx.lineTo(W*0.9,roadY);
+  ctx.lineTo(W,H);
+  ctx.lineTo(0,H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Road markings - center line
+  ctx.strokeStyle = '#ffb800';
+  ctx.lineWidth   = 2;
+  ctx.setLineDash([30,20]);
+  ctx.beginPath();
+  ctx.moveTo(W*0.5,roadY+20);
+  ctx.lineTo(W*0.5,H);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Lane lines
+  ctx.strokeStyle = 'rgba(255,255,255,.3)';
+  ctx.lineWidth   = 1.5;
+  ctx.setLineDash([20,25]);
+  [0.33, 0.66].forEach(x => {
+    ctx.beginPath();
+    ctx.moveTo(W*x, roadY+10);
+    ctx.lineTo(W*x, H);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Buildings silhouette
+  drawBuildings(W, roadY);
+
+  // Streetlights
+  drawStreetlights(W, roadY);
+
+  // Camera frame effect — vignette
+  const vig = ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.8);
+  vig.addColorStop(0,'transparent');
+  vig.addColorStop(1,'rgba(0,0,0,.5)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0,0,W,H);
+
+  // Green tint overlay (night vision effect)
+  ctx.fillStyle = 'rgba(0,255,136,.012)';
+  ctx.fillRect(0,0,W,H);
+}
+
+function drawBuildings(W, horizonY) {
+  ctx.fillStyle = '#060a0e';
+  const buildings = [
+    {x:0.02,w:0.08,h:0.25},{x:0.12,w:0.06,h:0.18},{x:0.19,w:0.09,h:0.3},
+    {x:0.65,w:0.07,h:0.22},{x:0.73,w:0.05,h:0.15},{x:0.79,w:0.1,h:0.28},
+    {x:0.90,w:0.08,h:0.2},
+  ];
+  buildings.forEach(b => {
+    const bx = W*b.x, by = horizonY - canvas.height*b.h;
+    const bw = W*b.w, bh = canvas.height*b.h;
+    ctx.fillRect(bx, by, bw, bh);
+    // Windows
+    ctx.fillStyle = 'rgba(255,220,100,.15)';
+    for(let r=0;r<Math.floor(bh/12);r++) {
+      for(let c=0;c<Math.floor(bw/10);c++) {
+        if(Math.random()>0.4) ctx.fillRect(bx+c*10+2, by+r*12+3, 5, 6);
+      }
+    }
+    ctx.fillStyle = '#060a0e';
+  });
+}
+
+function drawStreetlights(W, horizonY) {
+  [[0.15,horizonY+5],[0.45,horizonY+5],[0.85,horizonY+5]].forEach(([x,y]) => {
+    ctx.strokeStyle = '#2a3a4a';
+    ctx.lineWidth   = 3;
+    ctx.beginPath();
+    ctx.moveTo(W*x, y);
+    ctx.lineTo(W*x, y-80);
+    ctx.lineTo(W*x+30, y-80);
+    ctx.stroke();
+    // Light glow
+    const glow = ctx.createRadialGradient(W*x+30,y-80,0,W*x+30,y-80,40);
+    glow.addColorStop(0,'rgba(255,220,100,.3)');
+    glow.addColorStop(1,'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(W*x+30,y-80,40,0,Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// ── Car simulation ────────────────────────────────────────────
+class Car {
+  constructor(W, H, horizonY) {
+    this.lane    = Math.floor(Math.random()*3); // 0,1,2
+    this.progress= 0; // 0=far, 1=close
+    this.speed   = 0.002 + Math.random()*0.003;
+    this.color   = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
+    this.plate   = this.randomPlate();
+    this.detected= false;
+    this.W = W; this.H = H; this.horizonY = horizonY;
+  }
+
+  randomPlate() {
+    const prefixes = ['T','SU'];
+    const p = prefixes[Math.floor(Math.random()*prefixes.length)];
+    const n = String(Math.floor(Math.random()*900)+100);
+    const l = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+    const s = l[Math.floor(Math.random()*l.length)] +
+              l[Math.floor(Math.random()*l.length)] +
+              l[Math.floor(Math.random()*l.length)];
+    return `${p}${n}${s}`;
+  }
+
+  get pos() {
+    const W = this.W, H = this.H, hy = this.horizonY;
+    const laneOffsets = [-0.18, 0, 0.18];
+    const t  = this.progress;
+    const x  = W/2 + (W * laneOffsets[this.lane]) * t;
+    const y  = hy + (H - hy) * t;
+    const sc = 0.1 + t * 0.9;
+    return { x, y, scale: sc };
+  }
+
+  draw(ctx) {
+    const {x, y, scale} = this.pos;
+    const W = 80 * scale, H = 40 * scale;
+
+    // Car body
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.beginPath();
+    ctx.ellipse(0, H*0.3, W*0.45, H*0.15, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Body
+    const bodyGrad = ctx.createLinearGradient(0,-H/2,0,H/2);
+    bodyGrad.addColorStop(0, lighten(this.color, 30));
+    bodyGrad.addColorStop(0.5, this.color);
+    bodyGrad.addColorStop(1, darken(this.color, 40));
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.roundRect(-W/2, -H/2, W, H, H*0.15);
+    ctx.fill();
+
+    // Windshield
+    ctx.fillStyle = 'rgba(100,200,255,.25)';
+    ctx.beginPath();
+    ctx.roundRect(-W*0.25, -H*0.45, W*0.5, H*0.35, 4*scale);
+    ctx.fill();
+
+    // Headlights
+    if(this.progress > 0.5) {
+      const glow = ctx.createRadialGradient(-W*0.45, -H*0.1, 0, -W*0.45, -H*0.1, W*0.3);
+      glow.addColorStop(0,'rgba(255,240,200,.8)');
+      glow.addColorStop(1,'transparent');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(-W*0.45,-H*0.1,W*0.3,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    // Plate
+    const pw = W*0.4, ph = H*0.18;
+    ctx.fillStyle = PLATE_COLORS[0];
+    ctx.fillRect(-pw/2, H*0.2, pw, ph);
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${7*scale}px JetBrains Mono`;
+    ctx.textAlign = 'center';
+    ctx.fillText(this.plate, 0, H*0.2+ph*0.75);
+
+    ctx.restore();
+  }
+
+  update() {
+    this.progress += this.speed;
+    return this.progress < 1.2;
+  }
+}
+
+function lighten(hex, amt) {
+  const n = parseInt(hex.slice(1),16);
+  const r = Math.min(255,((n>>16)&0xff)+amt);
+  const g = Math.min(255,((n>>8)&0xff)+amt);
+  const b = Math.min(255,(n&0xff)+amt);
+  return `rgb(${r},${g},${b})`;
+}
+function darken(hex, amt) { return lighten(hex,-amt); }
+
+// ── Detection logic ───────────────────────────────────────────
+let detectionCooldown = 0;
+
+function tryDetect() {
+  if (detectionCooldown > 0) { detectionCooldown--; return; }
+  const visible = cars.filter(c => c.progress > 0.4 && c.progress < 0.8 && !c.detected);
+  if (!visible.length || Math.random() > 0.015) return;
+
+  const car  = visible[Math.floor(Math.random()*visible.length)];
+  car.detected = true;
+  detectionCooldown = 120;
+
+  const cam      = CAMERAS[currentCam];
+  const vTypes   = VIOLATIONS[cam.type] || VIOLATIONS.INTERSECTION;
+  const vType    = vTypes[Math.floor(Math.random()*vTypes.length)];
+  const conf     = 0.88 + Math.random()*0.11;
+  const isReview = conf < 0.92;
+  const isAlert  = Math.random() < 0.03;
+
+  stats.detections++;
+  if (isAlert)       stats.alerts++;
+  else if (isReview) stats.review++;
+  else               stats.fines++;
+
+  updateStats();
+
+  // Show detection box
+  showDetectionBox(car, conf, isAlert);
+
+  // Add evidence card
+  addEvidenceCard(car, vType, conf, isReview, isAlert);
+}
+
+function showDetectionBox(car, conf, isAlert) {
+  const box   = document.getElementById('detection-box');
+  const label = document.getElementById('plate-label');
+  const clbl  = document.getElementById('conf-label');
+  const {x,y,scale} = car.pos;
+  const W = canvas.width, H = canvas.height;
+  const cw = 80*scale, ch = 40*scale;
+
+  box.style.left   = `${x-cw/2}px`;
+  box.style.top    = `${y-ch/2}px`;
+  box.style.width  = `${cw}px`;
+  box.style.height = `${ch}px`;
+  box.style.borderColor = isAlert ? 'var(--red)' : 'var(--green)';
+  box.style.boxShadow   = isAlert ? '0 0 12px rgba(255,34,68,.6)' : '0 0 12px rgba(0,255,136,.5)';
+  label.textContent = car.plate;
+  clbl.textContent  = `CONF: ${(conf*100).toFixed(1)}%`;
+  box.classList.add('show');
+
+  setTimeout(() => box.classList.remove('show'), 2000);
+}
+
+function addEvidenceCard(car, vType, conf, isReview, isAlert) {
+  const now  = new Date();
+  const item = {
+    plate:    car.plate,
+    vType,
+    conf,
+    isReview,
+    isAlert,
+    time:     now.toLocaleTimeString('en-GB'),
+    cam:      CAMERAS[currentCam].id,
+    amount:   AMOUNTS[vType] || 50000,
+  };
+  evidenceItems.unshift(item);
+  if (evidenceItems.length > 20) evidenceItems.pop();
+  renderEvidenceList();
+}
+
+function renderEvidenceList() {
+  const list = document.getElementById('evidence-list');
+  if (!evidenceItems.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>';
+    return;
+  }
+  list.innerHTML = evidenceItems.map((item,i) => {
+    const badgeCls = item.isAlert ? 'eb-alert' : item.isReview ? 'eb-review' : 'eb-fine';
+    const badgeTxt = item.isAlert ? 'ALERT' : item.isReview ? 'REVIEW' : 'FINE';
+    return `
+    <div class="evidence-card ${item.isAlert?'alert':''}" onclick="openEvidence(${i})">
+      <div class="evidence-img-placeholder">
+        ${renderMiniCar(item)}
+      </div>
+      <div class="evidence-info">
+        <div class="evidence-plate">${item.plate}</div>
+        <div class="evidence-meta">
+          <span class="evidence-type">${item.vType.replace(/_/g,' ')}</span>
+          <span class="evidence-badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        <div class="evidence-time">${item.time} &bull; ${item.cam} &bull; TZS ${item.amount.toLocaleString()}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMiniCar(item) {
+  // SVG mini car evidence frame
+  const color = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
+  return `<svg width="100%" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="100" fill="#0a1218"/>
+    <!-- Road -->
+    <rect x="0" y="65" width="300" height="35" fill="#141820"/>
+    <line x1="150" y1="65" x2="150" y2="100" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="8,6"/>
+    <!-- Car body -->
+    <rect x="90" y="38" width="120" height="38" rx="6" fill="${color}"/>
+    <!-- Windshield -->
+    <rect x="118" y="40" width="64" height="22" rx="3" fill="rgba(100,200,255,0.3)"/>
+    <!-- Wheels -->
+    <circle cx="110" cy="76" r="10" fill="#0a0a0a"/><circle cx="110" cy="76" r="5" fill="#222"/>
+    <circle cx="190" cy="76" r="10" fill="#0a0a0a"/><circle cx="190" cy="76" r="5" fill="#222"/>
+    <!-- Plate -->
+    <rect x="126" y="66" width="48" height="14" fill="white" rx="2"/>
+    <text x="150" y="76.5" fill="#000" font-size="8" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
+    <!-- Detection box -->
+    <rect x="118" y="58" width="64" height="18" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="2"/>
+    <!-- Scanlines -->
+    <rect x="0" y="0" width="300" height="100" fill="url(#scan)" opacity="0.1"/>
+    <!-- Timestamp -->
+    <text x="8" y="14" fill="#00d4ff" font-size="7" font-family="JetBrains Mono" opacity="0.8">${item.time}</text>
+    <text x="8" y="24" fill="#00ff88" font-size="7" font-family="JetBrains Mono" opacity="0.8">${item.cam}</text>
+    <text x="292" y="14" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="7" font-family="JetBrains Mono" text-anchor="end" opacity="0.8">CONF ${(item.conf*100).toFixed(0)}%</text>
+  </svg>`;
+}
+
+function updateStats() {
+  document.getElementById('s-detections').textContent = stats.detections;
+  document.getElementById('s-fines').textContent      = stats.fines;
+  document.getElementById('s-review').textContent     = stats.review;
+  document.getElementById('s-alerts').textContent     = stats.alerts;
+}
+
+// ── Evidence modal ────────────────────────────────────────────
+function openEvidence(i) {
+  const item = evidenceItems[i];
+  if (!item) return;
+
+  document.getElementById('modal-title').textContent = `Evidence — ${item.plate}`;
+
+  const imgWrap = document.getElementById('modal-img-wrap');
+  imgWrap.innerHTML = `
+    <svg width="100%" height="280" viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="280" fill="#080c10"/>
+      <!-- Sky -->
+      <rect width="600" height="140" fill="#0a0e14"/>
+      <!-- Road -->
+      <rect x="0" y="140" width="600" height="140" fill="#111620"/>
+      <rect x="50" y="140" width="500" height="140" fill="#141820"/>
+      <!-- Road lines -->
+      <line x1="300" y1="140" x2="300" y2="280" stroke="#ffb800" stroke-width="2" stroke-dasharray="20,15"/>
+      <line x1="180" y1="140" x2="180" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="12,18"/>
+      <line x1="420" y1="140" x2="420" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="12,18"/>
+      <!-- Buildings -->
+      <rect x="10" y="80" width="60" height="60" fill="#060a0e"/>
+      <rect x="80" y="95" width="50" height="45" fill="#060a0e"/>
+      <rect x="460" y="75" width="70" height="65" fill="#060a0e"/>
+      <rect x="540" y="90" width="55" height="50" fill="#060a0e"/>
+      <!-- Car -->
+      <rect x="220" y="155" width="160" height="70" rx="8" fill="${CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)]}"/>
+      <rect x="252" y="158" width="96" height="38" rx="4" fill="rgba(100,200,255,0.25)"/>
+      <circle cx="245" cy="225" r="16" fill="#0a0a0a"/><circle cx="245" cy="225" r="8" fill="#1a1a1a"/>
+      <circle cx="355" cy="225" r="16" fill="#0a0a0a"/><circle cx="355" cy="225" r="8" fill="#1a1a1a"/>
+      <!-- Plate -->
+      <rect x="260" y="206" width="80" height="22" fill="white" rx="3"/>
+      <text x="300" y="221" fill="#000" font-size="12" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
+      <!-- Detection boxes -->
+      <rect x="252" y="196" width="96" height="36" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="3" opacity="0.9"/>
+      <rect x="256" y="200" width="88" height="28" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="1" opacity="0.4"/>
+      <!-- Label -->
+      <rect x="252" y="178" width="96" height="16" fill="${item.isAlert?'rgba(255,34,68,0.8)':'rgba(0,255,136,0.8)'}"/>
+      <text x="300" y="189" fill="#000" font-size="9" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">PLATE DETECTED</text>
+      <!-- HUD -->
+      <text x="10" y="20" fill="#00d4ff" font-size="9" font-family="JetBrains Mono">${item.cam} | ${CAMERAS[currentCam].name}</text>
+      <text x="10" y="32" fill="#00ff88" font-size="9" font-family="JetBrains Mono">${item.time} | ${new Date().toLocaleDateString('en-GB')}</text>
+      <text x="590" y="20" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="9" font-family="JetBrains Mono" text-anchor="end">CONF: ${(item.conf*100).toFixed(1)}%</text>
+      <text x="590" y="32" fill="#ffb800" font-size="9" font-family="JetBrains Mono" text-anchor="end">${item.vType.replace(/_/g,' ')}</text>
+      <!-- Corner brackets -->
+      <path d="M2,2 L2,20 M2,2 L20,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M598,2 L598,20 M598,2 L580,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M2,278 L2,260 M2,278 L20,278" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+      <path d="M598,278 L598,260 M598,278 L580,278" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+      <!-- Scanlines -->
+      <rect width="600" height="280" fill="rgba(0,20,10,0.08)" style="background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px)"/>
+    </svg>`;
+
+  document.getElementById('modal-details').innerHTML = `
+    <div class="modal-detail"><div class="modal-detail-label">Plate Number</div><div class="modal-detail-value">${item.plate}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Violation</div><div class="modal-detail-value amber">${item.vType.replace(/_/g,' ')}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Camera</div><div class="modal-detail-value">${item.cam}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Confidence</div><div class="modal-detail-value ${item.conf>=0.92?'green':'amber'}">${(item.conf*100).toFixed(1)}%</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Time</div><div class="modal-detail-value">${item.time}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Fine Amount</div><div class="modal-detail-value green">TZS ${item.amount.toLocaleString()}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Status</div><div class="modal-detail-value ${item.isAlert?'red':item.isReview?'amber':'green'}">${item.isAlert?'POLICE ALERT':item.isReview?'NEEDS REVIEW':'FINE ISSUED'}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Location</div><div class="modal-detail-value">${CAMERAS[currentCam].name}</div></div>`;
+
+  document.getElementById('evidence-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('evidence-modal').classList.remove('open');
+}
+
+document.getElementById('evidence-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('evidence-modal')) closeModal();
+});
+
+// ── Main render loop ──────────────────────────────────────────
+function spawnCar() {
+  if (cars.length < 6 && Math.random() < 0.02) {
+    cars.push(new Car(canvas.width, canvas.height, canvas.height * 0.42));
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawRoad();
+
+  // Sort cars by progress (far to near)
+  cars.sort((a,b) => a.progress - b.progress);
+
+  cars.forEach(c => c.draw(ctx));
+  cars = cars.filter(c => c.update());
+
+  spawnCar();
+  tryDetect();
+  frameCount++;
+  animFrame = requestAnimationFrame(render);
+}
+
+render();
+</script>
+</body>
+</html>
