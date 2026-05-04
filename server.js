@@ -20,13 +20,12 @@ const jwt       = require('jsonwebtoken');
 const app        = express();
 
 // ─── DATABASE CONNECTION ──────────────────────────────────────
-// SSL is required for Render PostgreSQL
-// ssl: false for local, ssl: { rejectUnauthorized: false } for Render
-const isProduction = process.env.NODE_ENV === 'production';
-
+// SSL required for Render PostgreSQL — auto-detected from URL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('render.com')
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 const JWT_SECRET = process.env.JWT_SECRET;
