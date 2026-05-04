@@ -13,14 +13,23 @@ const cors      = require('cors');
 const { Pool }  = require('pg');
 const cron      = require('node-cron');
 const processor = require('./processor');
-const payment = require('./payment');
+const payment   = require('./payment');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 
 const app        = express();
-const pool       = new Pool({ connectionString: process.env.DATABASE_URL });
-const JWT_SECRET = process.env.JWT_SECRET;
 
+// ─── DATABASE CONNECTION ──────────────────────────────────────
+// SSL is required for Render PostgreSQL
+// ssl: false for local, ssl: { rejectUnauthorized: false } for Render
+const isProduction = process.env.NODE_ENV === 'production';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isProduction ? { rejectUnauthorized: false } : false,
+});
+
+const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error('JWT_SECRET is not defined in .env file');
 
 app.use(cors());
@@ -77,7 +86,7 @@ async function sendNotification(fineId, channel, recipient, message) {
 app.get('/health', (_, res) => res.json({ status: 'ok', time: new Date() }));
 
 // ══════════════════════════════════════════════════════════════
-// AUTH — LOGIN  (all roles)
+// AUTH — LOGIN
 // ══════════════════════════════════════════════════════════════
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -123,7 +132,7 @@ app.post('/login', async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
-// AUTH — REGISTER  (public self-signup — creates USER role only)
+// AUTH — REGISTER
 // ══════════════════════════════════════════════════════════════
 app.post('/register', async (req, res) => {
   const { username, password, full_name, email, phone, national_id } = req.body;
@@ -185,7 +194,7 @@ app.post('/register', async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
-// USERS  (ADMIN only)
+// USERS
 // ══════════════════════════════════════════════════════════════
 app.get('/users', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   try {
@@ -316,55 +325,48 @@ app.get('/vehicles/:plate', authenticateToken, requireRole('ADMIN','OFFICER','CA
 });
 
 // ══════════════════════════════════════════════════════════════
-// VIOLATIONS — Layer 3 processor integrated
+// VIOLATIONS
 // ══════════════════════════════════════════════════════════════
-
-// POST /violations — camera or officer submits a detection
-// Layer 3 engines handle: confidence check, duplicate check,
-// plate lookup, flag checking, case creation, notifications
 app.post('/violations', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   try {
     const result = await processor.processDetection(req.body);
 
     if (!result.success) {
-      // REJECTED: low confidence, duplicate, or unregistered plate
       const httpStatus = result.stage === 'ERROR' ? 500 : 202;
       return res.status(httpStatus).json(result);
     }
 
-    // POLICE ALERT: stolen vehicle detected
     if (result.status === 'POLICE_ALERT_TRIGGERED') {
       return res.status(200).json(result);
     }
 
-    // SUCCESS: case created, fine issued (or queued for review)
-   // ── Send real SMS to vehicle owner after fine is issued ──
-if (result.fine && !result.needsReview) {
-  const { rows: vRows } = await db(
-    `SELECT vh.owner_name, vh.owner_phone, vh.owner_email,
-            v.violation_type, v.occurred_at
-     FROM fines f
-     JOIN violations v  ON v.id  = f.violation_id
-     JOIN vehicles   vh ON vh.id = v.vehicle_id
-     WHERE f.id = $1`,
-    [result.fine.id]
-  );
-  if (vRows.length) {
-    const vh = vRows[0];
-    await payment.notifyFineIssued({
-      fineId:        result.fine.id,
-      fineNumber:    result.fine.fine_number,
-      amountTzs:     result.fine.amount_tzs,
-      ownerName:     vh.owner_name,
-      ownerPhone:    vh.owner_phone,
-      ownerEmail:    vh.owner_email,
-      violationType: vh.violation_type,
-      occurredAt:    vh.occurred_at,
-    }).catch(err => console.error('[SMS] Fine notification failed:', err.message));
-  }
-}
+    // Send SMS to vehicle owner after fine is issued
+    if (result.fine && !result.needsReview) {
+      const { rows: vRows } = await db(
+        `SELECT vh.owner_name, vh.owner_phone, vh.owner_email,
+                v.violation_type, v.occurred_at
+         FROM fines f
+         JOIN violations v  ON v.id  = f.violation_id
+         JOIN vehicles   vh ON vh.id = v.vehicle_id
+         WHERE f.id = $1`,
+        [result.fine.id]
+      );
+      if (vRows.length) {
+        const vh = vRows[0];
+        await payment.notifyFineIssued({
+          fineId:        result.fine.id,
+          fineNumber:    result.fine.fine_number,
+          amountTzs:     result.fine.amount_tzs,
+          ownerName:     vh.owner_name,
+          ownerPhone:    vh.owner_phone,
+          ownerEmail:    vh.owner_email,
+          violationType: vh.violation_type,
+          occurredAt:    vh.occurred_at,
+        }).catch(err => console.error('[SMS] Fine notification failed:', err.message));
+      }
+    }
 
-res.status(201).json(result);
+    res.status(201).json(result);
 
   } catch (err) {
     console.error('[VIOLATIONS ERROR]', err.message);
@@ -372,7 +374,6 @@ res.status(201).json(result);
   }
 });
 
-// GET /violations/pending — list detections waiting for officer review
 app.get('/violations/pending', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   try {
     const { rows } = await db(
@@ -392,12 +393,10 @@ app.get('/violations/pending', authenticateToken, requireRole('ADMIN','OFFICER')
   }
 });
 
-// PATCH /violations/:id/review — officer approves or rejects a queued detection
 app.patch('/violations/:id/review', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   const { decision, officer_id } = req.body;
   if (!decision)
     return res.status(400).json({ error: 'decision is required (APPROVE or REJECT)' });
-
   try {
     const officerId = officer_id || req.user.id;
     const result = await processor.reviewDetection(
@@ -526,7 +525,7 @@ app.post('/fines/:id/cancel', authenticateToken, requireRole('ADMIN'), async (re
   }
 });
 
-app.post('/fines/:id/appeal', authenticateToken, async (req, res) => {
+app.post('/fines/:id/appeal', async (req, res) => {
   const { reason, supporting_docs } = req.body;
   if (!reason) return res.status(400).json({ error: 'Reason is required' });
   try {
@@ -574,27 +573,28 @@ app.patch('/appeals/:id/decide', authenticateToken, requireRole('ADMIN'), async 
         [appeal.fine_id]
       );
     }
-    // ── Notify owner of appeal decision via SMS ──
-const { rows: fRows } = await db(
-  `SELECT f.fine_number, vh.owner_phone, vh.owner_name
-   FROM fines f
-   JOIN violations v  ON v.id  = f.violation_id
-   JOIN vehicles   vh ON vh.id = v.vehicle_id
-   WHERE f.id = $1`,
-  [appeal.fine_id]
-);
-if (fRows.length) {
-  const f = fRows[0];
-  await payment.notifyAppealDecision({
-    fineId:     appeal.fine_id,
-    fineNumber: f.fine_number,
-    decision,
-    ownerPhone: f.owner_phone,
-    ownerName:  f.owner_name,
-  }).catch(err => console.error('[SMS] Appeal notification failed:', err.message));
-}
 
-res.json({ appeal });
+    // Notify owner of appeal decision via SMS
+    const { rows: fRows } = await db(
+      `SELECT f.fine_number, vh.owner_phone, vh.owner_name
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE f.id = $1`,
+      [appeal.fine_id]
+    );
+    if (fRows.length) {
+      const f = fRows[0];
+      await payment.notifyAppealDecision({
+        fineId:     appeal.fine_id,
+        fineNumber: f.fine_number,
+        decision,
+        ownerPhone: f.owner_phone,
+        ownerName:  f.owner_name,
+      }).catch(err => console.error('[SMS] Appeal notification failed:', err.message));
+    }
+
+    res.json({ appeal });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -626,10 +626,8 @@ app.get('/dashboard/stats', authenticateToken, requireRole('ADMIN','OFFICER','CA
 });
 
 // ══════════════════════════════════════════════════════════════
-// USER PORTAL — car owner self-service (no auth for /fines lookup)
+// CITIZEN PORTAL
 // ══════════════════════════════════════════════════════════════
-
-// Public plate lookup — used by citizen portal
 app.get('/portal/fines', async (req, res) => {
   const { plate } = req.query;
   if (!plate) return res.status(400).json({ error: 'plate query parameter is required' });
@@ -653,7 +651,6 @@ app.get('/portal/fines', async (req, res) => {
   }
 });
 
-// Authenticated user — view own fines
 app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) => {
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
@@ -676,7 +673,6 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
   }
 });
 
-// Authenticated user — view own vehicles
 app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res) => {
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
@@ -719,13 +715,18 @@ cron.schedule('0 0 * * *', async () => {
        WHERE status='OVERDUE' AND overdue_at < NOW() - INTERVAL '60 days'`
     );
     console.log(`[CRON] Court-referred ${c} fines`);
-    await payment.sendOverdueReminders().catch(err => console.error('[CRON SMS]', err.message));
+
+    await payment.sendOverdueReminders()
+      .catch(err => console.error('[CRON SMS]', err.message));
+
   } catch (err) {
     console.error('[CRON ERROR]', err.message);
   }
 });
 
-// ── POST /fines/:id/pay/mobile ────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// MOBILE MONEY & PAYMENT ROUTES
+// ══════════════════════════════════════════════════════════════
 app.post('/fines/:id/pay/mobile', async (req, res) => {
   const { phone, provider, amount_tzs } = req.body;
   if (!phone || !provider)
@@ -745,12 +746,12 @@ app.post('/fines/:id/pay/mobile', async (req, res) => {
     if (fine.status === 'CANCELLED') return res.status(400).json({ error: 'Fine has been cancelled' });
     const totalDue = Number(fine.amount_tzs) + Number(fine.penalty_amount || 0);
     const result = await payment.initiateMobilePayment({
-      fineId:    fine.id,
-      fineNumber:fine.fine_number,
-      amountTzs: amount_tzs || totalDue,
+      fineId:     fine.id,
+      fineNumber: fine.fine_number,
+      amountTzs:  amount_tzs || totalDue,
       phone,
       provider,
-      ownerName: fine.owner_name,
+      ownerName:  fine.owner_name,
     });
     res.json(result);
   } catch (err) {
@@ -759,7 +760,6 @@ app.post('/fines/:id/pay/mobile', async (req, res) => {
   }
 });
 
-// ── POST /payments/callback ───────────────────────────────────
 app.post('/payments/callback', async (req, res) => {
   console.log('[CALLBACK] Azampay callback received:', JSON.stringify(req.body));
   try {
@@ -771,7 +771,6 @@ app.post('/payments/callback', async (req, res) => {
   }
 });
 
-// ── GET /payments/status/:txnRef ──────────────────────────────
 app.get('/payments/status/:txnRef', async (req, res) => {
   try {
     const result = await payment.checkPaymentStatus(req.params.txnRef);
@@ -781,7 +780,6 @@ app.get('/payments/status/:txnRef', async (req, res) => {
   }
 });
 
-// ── POST /sms/send ────────────────────────────────────────────
 app.post('/sms/send', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   const { phone, message, fine_id } = req.body;
   if (!phone || !message) return res.status(400).json({ error: 'phone and message required' });
@@ -793,7 +791,6 @@ app.post('/sms/send', authenticateToken, requireRole('ADMIN'), async (req, res) 
   }
 });
 
-// ── GET /notifications ────────────────────────────────────────
 app.get('/notifications', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   const { status, channel, page = 1, limit = 20 } = req.query;
   const conditions = [];
@@ -801,7 +798,7 @@ app.get('/notifications', authenticateToken, requireRole('ADMIN','OFFICER'), asy
   if (status)  { params.push(status.toUpperCase());  conditions.push(`n.status=$${params.length}`); }
   if (channel) { params.push(channel.toUpperCase()); conditions.push(`n.channel=$${params.length}`); }
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  params.push(Number(limit), (Number(page)-1)*Number(limit));
+  params.push(Number(limit), (Number(page) - 1) * Number(limit));
   try {
     const { rows } = await db(
       `SELECT n.*, f.fine_number
@@ -809,7 +806,7 @@ app.get('/notifications', authenticateToken, requireRole('ADMIN','OFFICER'), asy
        JOIN fines f ON f.id = n.fine_id
        ${where}
        ORDER BY n.created_at DESC
-       LIMIT $${params.length-1} OFFSET $${params.length}`,
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
     res.json({ data: rows, page: Number(page) });
