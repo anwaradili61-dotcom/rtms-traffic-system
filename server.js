@@ -56,7 +56,14 @@ function dueDate(days = 30) {
 }
 
 // ── HEALTH ───────────────────────────────────────────────────
-app.get('/health', (_, res) => res.json({ status: 'ok', time: new Date() }));
+app.get('/health', async (_, res) => {
+  try {
+    await db('SELECT 1');
+    res.json({ status: 'ok', db: 'connected', time: new Date() });
+  } catch (err) {
+    res.json({ status: 'ok', db: 'FAILED', error: err.message, url: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET' });
+  }
+});
 
 // ── LOGIN ────────────────────────────────────────────────────
 app.post('/login', async (req, res) => {
