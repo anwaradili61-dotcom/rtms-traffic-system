@@ -15,8 +15,6 @@ const jwt       = require('jsonwebtoken');
 
 const app = express();
 
-// ─── DATABASE CONNECTION ──────────────────────────────────────
-// SSL always ON — works for both local and Render
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
@@ -49,19 +47,13 @@ function requireRole(...roles) {
   };
 }
 
-function dueDate(days = 30) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
 // ── HEALTH ───────────────────────────────────────────────────
 app.get('/health', async (_, res) => {
   try {
     await db('SELECT 1');
     res.json({ status: 'ok', db: 'connected', time: new Date() });
   } catch (err) {
-    res.json({ status: 'ok', db: 'FAILED', error: err.message, url: process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET' });
+    res.json({ status: 'ok', db: 'FAILED', error: err.message });
   }
 });
 
@@ -142,7 +134,8 @@ app.post('/users', authenticateToken, requireRole('ADMIN'), async (req, res) => 
   try {
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await db(
-      `INSERT INTO users (username, password_hash, full_name, email, phone, role, badge_number) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, username, full_name, email, role, badge_number`,
+      `INSERT INTO users (username, password_hash, full_name, email, phone, role, badge_number)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, username, full_name, email, role, badge_number`,
       [username.trim().toLowerCase(), hash, full_name, email, phone, role, badge_number]
     );
     res.status(201).json(rows[0]);
@@ -162,12 +155,37 @@ app.patch('/users/:id/toggle', authenticateToken, requireRole('ADMIN'), async (r
 
 // ── VEHICLES ─────────────────────────────────────────────────
 app.post('/vehicles', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
-  const { plate_number, owner_name, owner_phone, owner_email, owner_national_id, owner_address, make, model, color, year, chassis_number, engine_number, registration_expiry } = req.body;
-  if (!plate_number || !owner_name) return res.status(400).json({ error: 'plate_number and owner_name are required' });
+  const {
+    plate_number, owner_name, owner_phone, owner_email,
+    owner_national_id, owner_address,
+    make, model, color, year,
+    chassis_number, engine_number, registration_expiry
+  } = req.body;
+  if (!plate_number || !owner_name)
+    return res.status(400).json({ error: 'plate_number and owner_name are required' });
   try {
     const { rows } = await db(
-      `INSERT INTO vehicles (plate_number, owner_name, owner_phone, owner_email, owner_national_id, owner_address, make, model, color, year, chassis_number, engine_number, registration_expiry) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-      [plate_number.trim().toUpperCase(), owner_name, owner_phone, owner_email, owner_national_id, owner_address, make, model, color, year, chassis_number, engine_number, registration_expiry]
+      `INSERT INTO vehicles
+         (plate_number, owner_name, owner_phone, owner_email,
+          owner_national_id, owner_address,
+          make, model, color, year,
+          chassis_number, engine_number, registration_expiry)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      [
+        plate_number.trim().toUpperCase(),
+        owner_name,
+        owner_phone || null,
+        owner_email || null,
+        owner_national_id || null,
+        owner_address || null,
+        make || null,
+        model || null,
+        color || null,
+        year || null,
+        chassis_number || null,
+        engine_number || null,
+        registration_expiry
+      ]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -183,7 +201,10 @@ app.get('/vehicles', authenticateToken, requireRole('ADMIN','OFFICER'), async (r
   if (plate) { params.push('%' + plate.toUpperCase() + '%'); where = 'WHERE plate_number ILIKE $1'; }
   params.push(Number(limit), (Number(page) - 1) * Number(limit));
   try {
-    const { rows } = await db(`SELECT * FROM vehicles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
+    const { rows } = await db(
+      `SELECT * FROM vehicles ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
     res.json({ data: rows, page: Number(page) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -191,7 +212,17 @@ app.get('/vehicles', authenticateToken, requireRole('ADMIN','OFFICER'), async (r
 app.get('/vehicles/:plate', authenticateToken, requireRole('ADMIN','OFFICER','CASHIER'), async (req, res) => {
   try {
     const { rows } = await db(
-      `SELECT v.*, COUNT(f.id) AS total_fines, COUNT(f.id) FILTER (WHERE f.status='PAID') AS paid_fines, COUNT(f.id) FILTER (WHERE f.status='OVERDUE') AS overdue_fines, COUNT(f.id) FILTER (WHERE f.status='ISSUED') AS issued_fines, COALESCE(SUM(f.amount_tzs + f.penalty_amount) FILTER (WHERE f.status NOT IN ('PAID','CANCELLED')), 0) AS total_outstanding FROM vehicles v LEFT JOIN violations vi ON vi.vehicle_id = v.id LEFT JOIN fines f ON f.violation_id = vi.id WHERE v.plate_number = $1 GROUP BY v.id`,
+      `SELECT v.*,
+              COUNT(f.id) AS total_fines,
+              COUNT(f.id) FILTER (WHERE f.status='PAID') AS paid_fines,
+              COUNT(f.id) FILTER (WHERE f.status='OVERDUE') AS overdue_fines,
+              COUNT(f.id) FILTER (WHERE f.status='ISSUED') AS issued_fines,
+              COALESCE(SUM(f.amount_tzs + f.penalty_amount) FILTER (WHERE f.status NOT IN ('PAID','CANCELLED')), 0) AS total_outstanding
+       FROM vehicles v
+       LEFT JOIN violations vi ON vi.vehicle_id = v.id
+       LEFT JOIN fines f ON f.violation_id = vi.id
+       WHERE v.plate_number = $1
+       GROUP BY v.id`,
       [req.params.plate.toUpperCase()]
     );
     if (!rows.length) return res.status(404).json({ error: 'Vehicle not found' });
@@ -207,12 +238,21 @@ app.post('/violations', authenticateToken, requireRole('ADMIN','OFFICER'), async
     if (result.status === 'POLICE_ALERT_TRIGGERED') return res.status(200).json(result);
     if (result.fine && !result.needsReview) {
       const { rows: vRows } = await db(
-        `SELECT vh.owner_name, vh.owner_phone, vh.owner_email, v.violation_type, v.occurred_at FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE f.id = $1`,
+        `SELECT vh.owner_name, vh.owner_phone, vh.owner_email, v.violation_type, v.occurred_at
+         FROM fines f
+         JOIN violations v  ON v.id  = f.violation_id
+         JOIN vehicles   vh ON vh.id = v.vehicle_id
+         WHERE f.id = $1`,
         [result.fine.id]
       );
       if (vRows.length) {
         const vh = vRows[0];
-        await payment.notifyFineIssued({ fineId: result.fine.id, fineNumber: result.fine.fine_number, amountTzs: result.fine.amount_tzs, ownerName: vh.owner_name, ownerPhone: vh.owner_phone, ownerEmail: vh.owner_email, violationType: vh.violation_type, occurredAt: vh.occurred_at }).catch(err => console.error('[SMS]', err.message));
+        await payment.notifyFineIssued({
+          fineId: result.fine.id, fineNumber: result.fine.fine_number,
+          amountTzs: result.fine.amount_tzs, ownerName: vh.owner_name,
+          ownerPhone: vh.owner_phone, ownerEmail: vh.owner_email,
+          violationType: vh.violation_type, occurredAt: vh.occurred_at
+        }).catch(err => console.error('[SMS]', err.message));
       }
     }
     res.status(201).json(result);
@@ -221,7 +261,17 @@ app.post('/violations', authenticateToken, requireRole('ADMIN','OFFICER'), async
 
 app.get('/violations/pending', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   try {
-    const { rows } = await db(`SELECT v.id, v.camera_id, v.violation_type, v.confidence_score, v.evidence_image_url, v.occurred_at, v.gps_lat, v.gps_lng, vh.plate_number, vh.owner_name, f.id AS fine_id, f.fine_number, f.amount_tzs FROM violations v JOIN vehicles vh ON vh.id = v.vehicle_id JOIN fines f ON f.violation_id = v.id WHERE f.status = 'PENDING' AND v.reviewed_by IS NULL ORDER BY v.occurred_at DESC`);
+    const { rows } = await db(
+      `SELECT v.id, v.camera_id, v.violation_type, v.confidence_score,
+              v.evidence_image_url, v.occurred_at, v.gps_lat, v.gps_lng,
+              vh.plate_number, vh.owner_name,
+              f.id AS fine_id, f.fine_number, f.amount_tzs
+       FROM violations v
+       JOIN vehicles vh ON vh.id = v.vehicle_id
+       JOIN fines    f  ON f.violation_id = v.id
+       WHERE f.status = 'PENDING' AND v.reviewed_by IS NULL
+       ORDER BY v.occurred_at DESC`
+    );
     res.json({ data: rows, count: rows.length });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -239,7 +289,14 @@ app.patch('/violations/:id/review', authenticateToken, requireRole('ADMIN','OFFI
 app.get('/fines/:id', authenticateToken, requireRole('ADMIN','OFFICER','CASHIER'), async (req, res) => {
   try {
     const { rows } = await db(
-      `SELECT f.*, v.violation_type, v.occurred_at, v.evidence_image_url, v.camera_id, v.gps_lat, v.gps_lng, v.confidence_score, vh.plate_number, vh.owner_name, vh.owner_phone, vh.owner_email, vh.make AS vehicle_make, vh.model AS vehicle_model, vh.color AS vehicle_color FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE f.id::text = $1 OR f.fine_number = $1`,
+      `SELECT f.*, v.violation_type, v.occurred_at, v.evidence_image_url, v.camera_id,
+              v.gps_lat, v.gps_lng, v.confidence_score,
+              vh.plate_number, vh.owner_name, vh.owner_phone, vh.owner_email,
+              vh.make AS vehicle_make, vh.model AS vehicle_model, vh.color AS vehicle_color
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE f.id::text = $1 OR f.fine_number = $1`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'Fine not found' });
@@ -256,7 +313,16 @@ app.get('/fines', async (req, res) => {
   params.push(Number(limit), (Number(page) - 1) * Number(limit));
   try {
     const { rows } = await db(
-      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status, f.due_date, f.issued_at, v.violation_type, v.occurred_at, v.camera_id, v.evidence_image_url, vh.plate_number, vh.owner_name, vh.owner_phone, vh.make AS vehicle_make, vh.model AS vehicle_model, vh.color AS vehicle_color FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id ${where} ORDER BY f.issued_at DESC NULLS LAST LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status, f.due_date, f.issued_at,
+              v.violation_type, v.occurred_at, v.camera_id, v.evidence_image_url,
+              vh.plate_number, vh.owner_name, vh.owner_phone,
+              vh.make AS vehicle_make, vh.model AS vehicle_model, vh.color AS vehicle_color
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       ${where}
+       ORDER BY f.issued_at DESC NULLS LAST
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
     res.json({ data: rows, page: Number(page), limit: Number(limit) });
@@ -274,7 +340,8 @@ app.post('/fines/:id/pay', authenticateToken, requireRole('ADMIN','CASHIER'), as
     const totalDue = Number(fine.amount_tzs) + Number(fine.penalty_amount);
     if (Number(amount_tzs) < totalDue) return res.status(400).json({ error: 'Insufficient payment', amount_due: totalDue });
     const { rows: payRows } = await db(
-      `INSERT INTO payments (fine_id, amount_tzs, payment_method, provider, transaction_ref, received_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      `INSERT INTO payments (fine_id, amount_tzs, payment_method, provider, transaction_ref, received_by)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
       [fine.id, amount_tzs, payment_method, provider, transaction_ref || ('TXN-' + Date.now()), req.user.id]
     );
     await db(`UPDATE fines SET status='PAID', paid_at=NOW() WHERE id=$1`, [fine.id]);
@@ -302,8 +369,12 @@ app.post('/fines/:id/appeal', async (req, res) => {
     const { rows: fineRows } = await db(`SELECT * FROM fines WHERE id::text = $1 OR fine_number = $1`, [req.params.id]);
     if (!fineRows.length) return res.status(404).json({ error: 'Fine not found' });
     const fine = fineRows[0];
-    if (!['ISSUED','PENDING','OVERDUE'].includes(fine.status)) return res.status(400).json({ error: `Cannot appeal a ${fine.status} fine` });
-    const { rows: appealRows } = await db(`INSERT INTO appeals (fine_id, reason, supporting_docs) VALUES ($1,$2,$3) RETURNING *`, [fine.id, reason, supporting_docs || []]);
+    if (!['ISSUED','PENDING','OVERDUE'].includes(fine.status))
+      return res.status(400).json({ error: `Cannot appeal a ${fine.status} fine` });
+    const { rows: appealRows } = await db(
+      `INSERT INTO appeals (fine_id, reason, supporting_docs) VALUES ($1,$2,$3) RETURNING *`,
+      [fine.id, reason, supporting_docs || []]
+    );
     await db(`UPDATE fines SET status='APPEALED' WHERE id=$1`, [fine.id]);
     res.status(201).json({ appeal: appealRows[0] });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -311,9 +382,13 @@ app.post('/fines/:id/appeal', async (req, res) => {
 
 app.patch('/appeals/:id/decide', authenticateToken, requireRole('ADMIN'), async (req, res) => {
   const { decision, decision_notes } = req.body;
-  if (!['UPHELD','DISMISSED'].includes(decision)) return res.status(400).json({ error: 'Decision must be UPHELD or DISMISSED' });
+  if (!['UPHELD','DISMISSED'].includes(decision))
+    return res.status(400).json({ error: 'Decision must be UPHELD or DISMISSED' });
   try {
-    const { rows: appealRows } = await db(`UPDATE appeals SET status=$1, decision_notes=$2, reviewed_by=$3, decided_at=NOW() WHERE id=$4 RETURNING *`, [decision, decision_notes, req.user.id, req.params.id]);
+    const { rows: appealRows } = await db(
+      `UPDATE appeals SET status=$1, decision_notes=$2, reviewed_by=$3, decided_at=NOW() WHERE id=$4 RETURNING *`,
+      [decision, decision_notes, req.user.id, req.params.id]
+    );
     if (!appealRows.length) return res.status(404).json({ error: 'Appeal not found' });
     const appeal = appealRows[0];
     if (decision === 'UPHELD') {
@@ -321,9 +396,19 @@ app.patch('/appeals/:id/decide', authenticateToken, requireRole('ADMIN'), async 
     } else {
       await db(`UPDATE fines SET status='ISSUED', penalty_amount=penalty_amount+10000 WHERE id=$1`, [appeal.fine_id]);
     }
-    const { rows: fRows } = await db(`SELECT f.fine_number, vh.owner_phone, vh.owner_name FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE f.id = $1`, [appeal.fine_id]);
+    const { rows: fRows } = await db(
+      `SELECT f.fine_number, vh.owner_phone, vh.owner_name
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE f.id = $1`,
+      [appeal.fine_id]
+    );
     if (fRows.length) {
-      await payment.notifyAppealDecision({ fineId: appeal.fine_id, fineNumber: fRows[0].fine_number, decision, ownerPhone: fRows[0].owner_phone, ownerName: fRows[0].owner_name }).catch(err => console.error('[SMS]', err.message));
+      await payment.notifyAppealDecision({
+        fineId: appeal.fine_id, fineNumber: fRows[0].fine_number,
+        decision, ownerPhone: fRows[0].owner_phone, ownerName: fRows[0].owner_name
+      }).catch(err => console.error('[SMS]', err.message));
     }
     res.json({ appeal });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -332,7 +417,17 @@ app.patch('/appeals/:id/decide', authenticateToken, requireRole('ADMIN'), async 
 // ── DASHBOARD STATS ──────────────────────────────────────────
 app.get('/dashboard/stats', authenticateToken, requireRole('ADMIN','OFFICER','CASHIER'), async (_, res) => {
   try {
-    const { rows } = await db(`SELECT COUNT(*) AS total_fines, COUNT(*) FILTER (WHERE status='PAID') AS paid, COUNT(*) FILTER (WHERE status='OVERDUE') AS overdue, COUNT(*) FILTER (WHERE status='APPEALED') AS appealed, COUNT(*) FILTER (WHERE status='ISSUED') AS pending_payment, COUNT(*) FILTER (WHERE status='COURT_REFERRED') AS court_referred, COALESCE(SUM(amount_tzs + penalty_amount) FILTER (WHERE status='PAID'), 0) AS total_collected_tzs, COALESCE(SUM(amount_tzs + penalty_amount) FILTER (WHERE status IN ('ISSUED','OVERDUE')), 0) AS total_outstanding_tzs FROM fines`);
+    const { rows } = await db(
+      `SELECT COUNT(*) AS total_fines,
+              COUNT(*) FILTER (WHERE status='PAID') AS paid,
+              COUNT(*) FILTER (WHERE status='OVERDUE') AS overdue,
+              COUNT(*) FILTER (WHERE status='APPEALED') AS appealed,
+              COUNT(*) FILTER (WHERE status='ISSUED') AS pending_payment,
+              COUNT(*) FILTER (WHERE status='COURT_REFERRED') AS court_referred,
+              COALESCE(SUM(amount_tzs + penalty_amount) FILTER (WHERE status='PAID'), 0) AS total_collected_tzs,
+              COALESCE(SUM(amount_tzs + penalty_amount) FILTER (WHERE status IN ('ISSUED','OVERDUE')), 0) AS total_outstanding_tzs
+       FROM fines`
+    );
     res.json(rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -343,7 +438,16 @@ app.get('/portal/fines', async (req, res) => {
   if (!plate) return res.status(400).json({ error: 'plate query parameter is required' });
   try {
     const { rows } = await db(
-      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status, f.due_date, f.issued_at, f.paid_at, v.violation_type, v.occurred_at, v.evidence_image_url, v.camera_id, vh.plate_number, vh.owner_name, vh.owner_phone, vh.make, vh.model, vh.color FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE vh.plate_number = $1 ORDER BY f.issued_at DESC NULLS LAST`,
+      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status,
+              f.due_date, f.issued_at, f.paid_at,
+              v.violation_type, v.occurred_at, v.evidence_image_url, v.camera_id,
+              vh.plate_number, vh.owner_name, vh.owner_phone,
+              vh.make, vh.model, vh.color
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE vh.plate_number = $1
+       ORDER BY f.issued_at DESC NULLS LAST`,
       [plate.toUpperCase()]
     );
     res.json({ data: rows, count: rows.length });
@@ -355,7 +459,15 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
     const { rows } = await db(
-      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status, f.due_date, f.issued_at, f.paid_at, v.violation_type, v.occurred_at, v.evidence_image_url, vh.plate_number, vh.owner_name, vh.make, vh.model, vh.color FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE vh.owner_email = $1 OR vh.owner_phone = $2 ORDER BY f.issued_at DESC NULLS LAST`,
+      `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status,
+              f.due_date, f.issued_at, f.paid_at,
+              v.violation_type, v.occurred_at, v.evidence_image_url,
+              vh.plate_number, vh.owner_name, vh.make, vh.model, vh.color
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE vh.owner_email = $1 OR vh.owner_phone = $2
+       ORDER BY f.issued_at DESC NULLS LAST`,
       [u.email || '', u.phone || '']
     );
     res.json({ data: rows, user: { full_name: u.full_name, email: u.email, phone: u.phone } });
@@ -367,7 +479,17 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
     const { rows } = await db(
-      `SELECT v.*, COUNT(f.id) AS total_fines, COUNT(f.id) FILTER (WHERE f.status='PAID') AS paid_fines, COUNT(f.id) FILTER (WHERE f.status IN ('ISSUED','OVERDUE')) AS unpaid_fines, COALESCE(SUM(f.amount_tzs + f.penalty_amount) FILTER (WHERE f.status IN ('ISSUED','OVERDUE')), 0) AS total_outstanding FROM vehicles v LEFT JOIN violations vi ON vi.vehicle_id = v.id LEFT JOIN fines f ON f.violation_id = vi.id WHERE v.owner_email = $1 OR v.owner_phone = $2 GROUP BY v.id ORDER BY v.created_at DESC`,
+      `SELECT v.*,
+              COUNT(f.id) AS total_fines,
+              COUNT(f.id) FILTER (WHERE f.status='PAID') AS paid_fines,
+              COUNT(f.id) FILTER (WHERE f.status IN ('ISSUED','OVERDUE')) AS unpaid_fines,
+              COALESCE(SUM(f.amount_tzs + f.penalty_amount) FILTER (WHERE f.status IN ('ISSUED','OVERDUE')), 0) AS total_outstanding
+       FROM vehicles v
+       LEFT JOIN violations vi ON vi.vehicle_id = v.id
+       LEFT JOIN fines      f  ON f.violation_id = vi.id
+       WHERE v.owner_email = $1 OR v.owner_phone = $2
+       GROUP BY v.id
+       ORDER BY v.created_at DESC`,
       [u.email || '', u.phone || '']
     );
     res.json({ data: rows });
@@ -377,9 +499,15 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
 // ── CRON ─────────────────────────────────────────────────────
 cron.schedule('0 0 * * *', async () => {
   try {
-    const { rowCount } = await db(`UPDATE fines SET status='OVERDUE', penalty_amount=amount_tzs*0.5, overdue_at=NOW() WHERE status='ISSUED' AND due_date < CURRENT_DATE`);
+    const { rowCount } = await db(
+      `UPDATE fines SET status='OVERDUE', penalty_amount=amount_tzs*0.5, overdue_at=NOW()
+       WHERE status='ISSUED' AND due_date < CURRENT_DATE`
+    );
     console.log(`[CRON] Marked ${rowCount} fines as OVERDUE`);
-    const { rowCount: c } = await db(`UPDATE fines SET status='COURT_REFERRED' WHERE status='OVERDUE' AND overdue_at < NOW() - INTERVAL '60 days'`);
+    const { rowCount: c } = await db(
+      `UPDATE fines SET status='COURT_REFERRED'
+       WHERE status='OVERDUE' AND overdue_at < NOW() - INTERVAL '60 days'`
+    );
     console.log(`[CRON] Court-referred ${c} fines`);
     await payment.sendOverdueReminders().catch(err => console.error('[CRON SMS]', err.message));
   } catch (err) { console.error('[CRON ERROR]', err.message); }
@@ -390,13 +518,23 @@ app.post('/fines/:id/pay/mobile', async (req, res) => {
   const { phone, provider, amount_tzs } = req.body;
   if (!phone || !provider) return res.status(400).json({ error: 'phone and provider are required' });
   try {
-    const { rows } = await db(`SELECT f.*, vh.owner_name, vh.owner_phone FROM fines f JOIN violations v ON v.id = f.violation_id JOIN vehicles vh ON vh.id = v.vehicle_id WHERE f.id::text = $1 OR f.fine_number = $1`, [req.params.id]);
+    const { rows } = await db(
+      `SELECT f.*, vh.owner_name, vh.owner_phone
+       FROM fines f
+       JOIN violations v  ON v.id  = f.violation_id
+       JOIN vehicles   vh ON vh.id = v.vehicle_id
+       WHERE f.id::text = $1 OR f.fine_number = $1`,
+      [req.params.id]
+    );
     if (!rows.length) return res.status(404).json({ error: 'Fine not found' });
     const fine = rows[0];
     if (fine.status === 'PAID') return res.status(400).json({ error: 'Fine already paid' });
     if (fine.status === 'CANCELLED') return res.status(400).json({ error: 'Fine has been cancelled' });
     const totalDue = Number(fine.amount_tzs) + Number(fine.penalty_amount || 0);
-    const result = await payment.initiateMobilePayment({ fineId: fine.id, fineNumber: fine.fine_number, amountTzs: amount_tzs || totalDue, phone, provider, ownerName: fine.owner_name });
+    const result = await payment.initiateMobilePayment({
+      fineId: fine.id, fineNumber: fine.fine_number,
+      amountTzs: amount_tzs || totalDue, phone, provider, ownerName: fine.owner_name
+    });
     res.json(result);
   } catch (err) { console.error('[MOBILE PAY ERROR]', err.message); res.status(500).json({ error: err.message }); }
 });
@@ -433,7 +571,14 @@ app.get('/notifications', authenticateToken, requireRole('ADMIN','OFFICER'), asy
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   params.push(Number(limit), (Number(page) - 1) * Number(limit));
   try {
-    const { rows } = await db(`SELECT n.*, f.fine_number FROM notifications n JOIN fines f ON f.id = n.fine_id ${where} ORDER BY n.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
+    const { rows } = await db(
+      `SELECT n.*, f.fine_number FROM notifications n
+       JOIN fines f ON f.id = n.fine_id
+       ${where}
+       ORDER BY n.created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
     res.json({ data: rows, page: Number(page) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
