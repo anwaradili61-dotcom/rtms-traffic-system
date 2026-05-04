@@ -180,6 +180,12 @@ async function initiateMobilePayment({
       [txnRef]
     );
     const errMsg = err.response?.data?.message || err.response?.data || err.message;
+log('MOBILE_PAYMENT', 'ERROR', 'Azampay full error', { 
+  status: err.response?.status,
+  data: JSON.stringify(err.response?.data),
+  url: `${AZAMPAY.BASE_URL}/azampay/mno/checkout`,
+  headers: err.response?.headers
+});
     log('MOBILE_PAYMENT', 'ERROR', 'Azampay request failed', { error: errMsg, txnRef });
     throw new Error(`Payment initiation failed: ${errMsg}`);
   }
