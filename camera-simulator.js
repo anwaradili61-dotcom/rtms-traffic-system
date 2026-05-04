@@ -46,24 +46,19 @@ const PLATES = [
 
 // ─── VIOLATION SCENARIOS ──────────────────────────────────────
 const SCENARIOS = {
-  INTERSECTION: [
-    { type: 'RED_LIGHT',    weight: 40, conf: [0.90, 0.99] },
-    { type: 'PHONE_USE',    weight: 25, conf: [0.85, 0.97] },
-    { type: 'NO_SEATBELT',  weight: 20, conf: [0.87, 0.96] },
-    { type: 'WRONG_WAY',    weight: 15, conf: [0.92, 0.99] },
-  ],
-  SPEED: [
-    { type: 'SPEEDING',     weight: 80, conf: [0.93, 0.99] },
-    { type: 'PHONE_USE',    weight: 20, conf: [0.80, 0.95] },
-  ],
-  PEDESTRIAN: [
-    { type: 'PEDESTRIAN_ZONE', weight: 60, conf: [0.88, 0.97] },
-    { type: 'ILLEGAL_PARKING', weight: 40, conf: [0.85, 0.95] },
+  ALL: [
+    { type: 'RED_LIGHT',       weight: 20, conf: [0.90, 0.99] },
+    { type: 'SPEEDING',        weight: 18, conf: [0.93, 0.99] },
+    { type: 'PHONE_USE',       weight: 15, conf: [0.85, 0.97] },
+    { type: 'NO_SEATBELT',     weight: 14, conf: [0.87, 0.96] },
+    { type: 'ILLEGAL_PARKING', weight: 12, conf: [0.85, 0.95] },
+    { type: 'WRONG_WAY',       weight: 10, conf: [0.92, 0.99] },
+    { type: 'PEDESTRIAN_ZONE', weight: 8,  conf: [0.88, 0.97] },
+    { type: 'EXPIRED_PLATE',   weight: 3,  conf: [0.90, 0.98] },
   ],
 };
-
 // Detection probability — not every check has a violation
-const DETECTION_PROB = { INTERSECTION: 0.3, SPEED: 0.4, PEDESTRIAN: 0.25 };
+const DETECTION_PROB = 0.35; // same probability for all cameras
 
 // ─── HELPERS ──────────────────────────────────────────────────
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -114,10 +109,10 @@ async function authenticate() {
 
 // ─── GENERATE DETECTION ───────────────────────────────────────
 function generateDetection(camera) {
-  const prob = DETECTION_PROB[camera.type] || 0.3;
+  const prob = DETECTION_PROB;
   if (Math.random() > prob) return null; // no violation this time
 
-  const scenarios = SCENARIOS[camera.type] || SCENARIOS.INTERSECTION;
+  const scenarios = SCENARIOS.ALL;
   const scenario  = weightedPick(scenarios);
   const conf      = randBetween(scenario.conf[0], scenario.conf[1]);
   const plate     = pick(PLATES);

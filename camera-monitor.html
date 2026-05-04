@@ -381,15 +381,22 @@ const CAMERAS = [
 ];
 
 const SCENARIOS = {
-  INTERSECTION:[{t:'RED_LIGHT',w:40},{t:'PHONE_USE',w:25},{t:'NO_SEATBELT',w:20},{t:'WRONG_WAY',w:15}],
-  SPEED:       [{t:'SPEEDING',w:80},{t:'PHONE_USE',w:20}],
-  PEDESTRIAN:  [{t:'PEDESTRIAN_ZONE',w:60},{t:'ILLEGAL_PARKING',w:40}],
+  ALL:[
+    {t:'RED_LIGHT',w:20},
+    {t:'SPEEDING',w:18},
+    {t:'PHONE_USE',w:15},
+    {t:'NO_SEATBELT',w:14},
+    {t:'ILLEGAL_PARKING',w:12},
+    {t:'WRONG_WAY',w:10},
+    {t:'PEDESTRIAN_ZONE',w:8},
+    {t:'EXPIRED_PLATE',w:3},
+  ],
 };
 
 const AMOUNTS = {
-  RED_LIGHT:150000,SPEEDING:200000,ILLEGAL_PARKING:50000,
-  WRONG_WAY:300000,NO_SEATBELT:30000,PHONE_USE:50000,
-  PEDESTRIAN_ZONE:100000,EXPIRED_PLATE:80000
+  RED_LIGHT:15000,SPEEDING:20000,ILLEGAL_PARKING:50000,
+  WRONG_WAY:30000,NO_SEATBELT:30000,PHONE_USE:50000,
+  PEDESTRIAN_ZONE:15000,EXPIRED_PLATE:50000
 };
 
 const CAR_COLORS = ['#1a3a5c','#2d5a27','#4a1a1a','#1a1a4a','#3a2a1a','#1a3a3a','#2a2a2a'];
@@ -613,7 +620,7 @@ function generatePayload(camera){
   if(Math.random()>prob)return null;
   if(realPlates.length===0){addLog('No real plates loaded — click Load first','warn');return null;}
   const plate=pick(realPlates);
-  const sc=wpick(SCENARIOS[camera.type]||SCENARIOS.INTERSECTION);
+  const sc=wpick(SCENARIOS.ALL);
   const r=Math.random();
   let conf;
   if(r<0.05)conf=rand(0.60,0.74);
