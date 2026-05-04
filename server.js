@@ -77,7 +77,7 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, username: user.username, full_name: user.full_name },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '7d' }
     );
     res.json({ token, user: { id: user.id, username: user.username, full_name: user.full_name, role: user.role, badge_number: user.badge_number || null } });
   } catch (err) {
