@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RTMS Citizen Portal | &copy; SEUSHI, ANWAR 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f5f3ee;--bg2:#ffffff;--bg3:#edeae3;--ink:#1a1a18;--ink2:#4a4a45;--ink3:#9a9a92;--accent:#c8451a;--accent2:#e05a2b;--green:#1a7a4a;--green-bg:#e8f5ee;--red:#c8451a;--red-bg:#fdf0ec;--amber:#b07a10;--amber-bg:#fdf5e0;--blue:#1a4a8a;--blue-bg:#eaf0fc;--border:#dedad2;--shadow:0 2px 20px rgba(26,26,24,.08);--shadow2:0 8px 40px rgba(26,26,24,.14);--head:'Playfair Display',serif;--body:'Outfit',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:100vh;padding-bottom:50px}
+.wm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
+.wm-text{font-family:var(--head);font-size:72px;font-weight:900;color:rgba(26,26,24,.025);text-transform:uppercase;letter-spacing:.15em;white-space:nowrap;user-select:none;transform:rotate(-20deg)}
+.copyright-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(26,26,24,.97);padding:8px 24px;display:flex;align-items:center;justify-content:space-between;z-index:100;font-family:var(--body);font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.03em}
+.cp-name{color:rgba(255,255,255,.8);font-weight:600}
+.cp-sep{opacity:.3;margin:0 6px}
+.hero{background:var(--ink);position:relative;overflow:hidden;min-height:340px;display:flex;flex-direction:column}
+.hero-pattern{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.04) 39px,rgba(255,255,255,.04) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.04) 39px,rgba(255,255,255,.04) 40px);pointer-events:none}
+.hero-accent{position:absolute;bottom:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(200,69,26,.3) 0%,transparent 70%);pointer-events:none}
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:20px 40px;position:relative;z-index:2;flex-wrap:wrap;gap:10px}
+.logo{font-family:var(--head);font-size:20px;font-weight:900;color:#fff;letter-spacing:-.5px}
+.logo span{color:var(--accent2)}
+.nav-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.owner-badge{font-family:var(--body);font-size:10px;color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:3px 10px;letter-spacing:.04em}
+.gov-badge{font-family:var(--body);font-size:11px;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);border-radius:99px;padding:4px 12px;letter-spacing:.04em;text-transform:uppercase}
+.hero-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 40px 48px;position:relative;z-index:2;text-align:center}
+.hero-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent2);font-weight:600;margin-bottom:14px}
+.hero-title{font-family:var(--head);font-size:clamp(32px,5vw,52px);font-weight:900;color:#fff;line-height:1.1;margin-bottom:12px}
+.hero-title em{color:var(--accent2);font-style:normal}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.55);max-width:460px;line-height:1.6}
+.search-section{max-width:680px;margin:-36px auto 0;padding:0 20px;position:relative;z-index:10;animation:slideUp .5s ease both}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.search-card{background:var(--bg2);border-radius:20px;box-shadow:var(--shadow2);padding:28px 32px;border:1px solid var(--border)}
+.search-label{font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:10px;display:block}
+.search-row{display:flex;gap:10px}
+.plate-input{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:14px 18px;font-family:var(--body);font-size:20px;font-weight:600;color:var(--ink);outline:none;text-transform:uppercase;letter-spacing:.08em;transition:border-color .2s}
+.plate-input:focus{border-color:var(--accent)}
+.plate-input::placeholder{font-size:15px;font-weight:400;letter-spacing:0;color:var(--ink3);text-transform:none}
+.search-btn{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-family:var(--body);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.search-btn:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,69,26,.35)}
+.search-hint{font-size:12px;color:var(--ink3);margin-top:10px;text-align:center}
+.container{max-width:680px;margin:0 auto;padding:32px 20px 60px}
+.state{animation:fadeIn .3s ease both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.state-idle{text-align:center;padding:48px 20px}
+.idle-icon{font-size:48px;margin-bottom:16px;opacity:.35}
+.idle-title{font-family:var(--head);font-size:22px;font-weight:700;color:var(--ink2);margin-bottom:8px}
+.idle-sub{font-size:14px;color:var(--ink3);line-height:1.6}
+.state-loading{text-align:center;padding:48px 20px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--ink3)}
+.state-error{background:var(--red-bg);border:1px solid rgba(200,69,26,.2);border-radius:16px;padding:24px;text-align:center}
+.error-icon{font-size:32px;margin-bottom:10px}
+.error-title{font-size:16px;font-weight:600;color:var(--red);margin-bottom:6px}
+.error-sub{font-size:13px;color:var(--ink2);line-height:1.6}
+.owner-card{background:var(--ink);border-radius:16px;padding:24px 28px;margin-bottom:20px;position:relative;overflow:hidden}
+.owner-card::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(200,69,26,.25)}
+.owner-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px}
+.owner-name{font-family:var(--head);font-size:24px;font-weight:700;color:#fff;margin-bottom:4px}
+.owner-plate{display:inline-block;background:#fff;color:var(--ink);font-size:18px;font-weight:700;letter-spacing:.12em;padding:4px 16px;border-radius:6px;margin-bottom:16px;font-family:var(--body)}
+.owner-meta{display:flex;gap:20px;flex-wrap:wrap}
+.owner-meta-item{font-size:13px;color:rgba(255,255,255,.55)}
+.owner-meta-item strong{color:rgba(255,255,255,.85);display:block;font-size:14px}
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;text-align:center}
+.summary-val{font-family:var(--head);font-size:26px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.summary-val.red{color:var(--red)}.summary-val.green{color:var(--green)}.summary-val.amber{color:var(--amber)}
+.summary-lbl{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em}
+.section-title{font-family:var(--head);font-size:18px;font-weight:700;color:var(--ink);margin-bottom:12px}
+.fine-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.fine-card:hover{box-shadow:var(--shadow2);transform:translateY(-2px)}
+.fine-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.fine-num{font-size:13px;font-weight:600;color:var(--ink);font-family:var(--body);letter-spacing:.04em}
+.fine-date{font-size:12px;color:var(--ink3)}
+.fine-card-body{padding:16px 20px}
+.fine-vtype{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.fine-loc{font-size:12px;color:var(--ink3);margin-bottom:12px}
+.fine-row{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.fine-amount-label{font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.fine-amount{font-family:var(--head);font-size:26px;font-weight:700;color:var(--ink)}
+.fine-amount.overdue{color:var(--red)}
+.fine-due{font-size:12px;color:var(--ink3);margin-top:2px}
+.fine-due.urgent{color:var(--red);font-weight:600}
+.fine-actions{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.badge.issued{background:var(--blue-bg);color:var(--blue)}.badge.paid{background:var(--green-bg);color:var(--green)}
+.badge.overdue{background:var(--red-bg);color:var(--red)}.badge.appealed{background:var(--amber-bg);color:var(--amber)}
+.badge.pending{background:var(--amber-bg);color:var(--amber)}.badge.cancelled{background:var(--bg3);color:var(--ink3)}
+.badge.court{background:var(--red-bg);color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-pay{background:var(--green);color:#fff}.btn-pay:hover{background:#156038;box-shadow:0 4px 12px rgba(26,122,74,.3)}
+.btn-appeal{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}.btn-appeal:hover{border-color:var(--amber);color:var(--amber)}
+.btn-evidence{background:transparent;border:1.5px solid var(--border);color:var(--ink3);font-size:12px;padding:7px 14px}.btn-evidence:hover{border-color:var(--blue);color:var(--blue)}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}.btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,24,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border-radius:20px;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow2);transform:translateY(20px);transition:transform .25s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:var(--head);font-size:20px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink3);transition:all .15s}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{padding:24px 28px}
+.modal-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:var(--body);font-size:14px;color:var(--ink);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:100px}
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.pay-method{border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;text-align:center}
+.pay-method:hover{border-color:var(--green)}.pay-method.selected{border-color:var(--green);background:var(--green-bg)}
+.pay-method-icon{font-size:22px;margin-bottom:4px}
+.pay-method-name{font-size:12px;font-weight:600;color:var(--ink2)}
+.pay-method-sub{font-size:11px;color:var(--ink3)}
+.amount-display{background:var(--bg);border-radius:12px;padding:16px 20px;margin-bottom:16px;text-align:center}
+.amount-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:4px}
+.amount-value{font-family:var(--head);font-size:32px;font-weight:700;color:var(--ink)}
+.amount-breakdown{font-size:12px;color:var(--ink3);margin-top:4px}
+.provider-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.provider-btn{border:1.5px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;text-align:center;transition:all .15s;background:var(--bg)}
+.provider-btn:hover{border-color:var(--green)}.provider-btn.selected{border-color:var(--green);background:var(--green-bg)}
+.provider-name{font-size:11px;font-weight:700}
+.provider-sub{font-size:10px;color:var(--ink3)}
+.mpesa-steps{background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px}
+.mpesa-step{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mpesa-step:last-child{border-bottom:none}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:12px;color:var(--ink2);line-height:1.5}
+.step-text strong{color:var(--ink)}
+.status-box{border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;line-height:1.7}
+.status-pending{background:var(--amber-bg);border:1px solid rgba(176,122,16,.2);color:var(--amber)}
+.status-success{background:var(--green-bg);border:1px solid rgba(26,122,74,.2);color:var(--green)}
+.status-failed{background:var(--red-bg);border:1px solid rgba(200,69,26,.2);color:var(--red)}
+.spinner-sm{width:14px;height:14px;border:2px solid rgba(176,122,16,.3);border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+.success-box{text-align:center;padding:20px 0}
+.success-icon{font-size:52px;margin-bottom:14px;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.5)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-family:var(--head);font-size:22px;font-weight:700;color:var(--green);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--ink2);line-height:1.6}
+.info-box{background:var(--blue-bg);border:1px solid rgba(26,74,138,.15);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--blue);line-height:1.6;margin-bottom:14px}
+.toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:500;z-index:200;opacity:0;transition:all .3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:var(--green)}.toast.error{background:var(--red)}
+.footer{background:var(--ink);padding:28px 40px;text-align:center;margin-bottom:42px}
+.footer-text{font-size:12px;color:rgba(255,255,255,.3);line-height:1.8}
+.conn-warn{background:var(--red-bg);border:1px solid rgba(200,69,26,.25);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--red);margin-bottom:20px;display:none}
+@media(max-width:500px){.summary-row{grid-template-columns:1fr 1fr}.topnav{padding:16px 20px}.hero-content{padding:16px 20px 48px}.search-card{padding:20px}.search-row{flex-direction:column}.copyright-bar{flex-direction:column;gap:4px;text-align:center;padding:6px 12px}}
+</style>
+</head>
+<body>
+
+<div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
+
+<div class="hero">
+  <div class="hero-pattern"></div>
+  <div class="hero-accent"></div>
+  <nav class="topnav">
+    <div class="logo">RTMS<span>.</span>Portal</div>
+    <div class="nav-badges">
+      <span class="owner-badge">&copy; SEUSHI, ANWAR 2025</span>
+      <span class="gov-badge">United Republic of Tanzania</span>
+    </div>
+  </nav>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Smart Traffic Management System</div>
+    <h1 class="hero-title">Check Your <em>Traffic Fines</em></h1>
+    <p class="hero-sub">Enter your vehicle plate number to view outstanding fines, pay via mobile money, and file appeals.</p>
+  </div>
+</div>
+
+<div class="search-section">
+  <div class="search-card">
+    <label class="search-label">Enter Vehicle Plate Number</label>
+    <div class="search-row">
+      <input class="plate-input" id="plate-input" type="text" placeholder="e.g. T123ABC" maxlength="10" onkeydown="if(event.key==='Enter')doSearch()"/>
+      <button class="search-btn" onclick="doSearch()">Search &rarr;</button>
+    </div>
+    <div class="search-hint">Your plate number is printed on your vehicle registration card</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="conn-warn" id="conn-warn">&#x26A0; Cannot reach the server. Make sure the traffic system server is running.</div>
+  <div class="state state-idle" id="state-idle">
+    <div class="idle-icon">&#x1F697;</div>
+    <div class="idle-title">How does this work?</div>
+    <div class="idle-sub">Enter your plate number above to instantly see all traffic fines linked to your vehicle. Pay via M-Pesa, Tigo Pesa, or Airtel Money, or file an appeal if you believe a fine was issued in error.</div>
+  </div>
+  <div class="state state-loading" id="state-loading" style="display:none">
+    <div class="spinner"></div>
+    <div class="loading-text">Searching for fines...</div>
+  </div>
+  <div class="state state-error" id="state-error" style="display:none">
+    <div class="error-icon">&#x1F50D;</div>
+    <div class="error-title" id="error-title">Plate not found</div>
+    <div class="error-sub" id="error-sub">No vehicle registered with this plate number.</div>
+  </div>
+  <div class="state" id="state-results" style="display:none">
+    <div class="owner-card" id="owner-card"></div>
+    <div class="summary-row" id="summary-row"></div>
+    <div class="section-title" id="fines-section-title">Your Fines</div>
+    <div id="fines-list"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-text">
+    Smart Traffic Management System &middot; United Republic of Tanzania<br>
+    For assistance call: <strong style="color:rgba(255,255,255,.6)">+255 800 000 000</strong> &middot; Mon&ndash;Fri 8am&ndash;5pm<br>
+    <span style="opacity:.5;font-size:11px">Developed by SEUSHI, ANWAR &middot; Dar es Salaam, Tanzania</span>
+  </div>
+</footer>
+
+<div class="copyright-bar">
+  <div>
+    <span>&copy;</span><span class="cp-name" style="margin:0 5px">SEUSHI, ANWAR</span>
+    <span class="cp-sep">|</span><span style="margin:0 5px">2025</span>
+    <span class="cp-sep">|</span><span style="margin:0 5px">Dar es Salaam, Tanzania</span>
+    <span class="cp-sep">|</span><span style="margin-left:5px">RTMS &mdash; Citizen Portal</span>
+  </div>
+  <div style="opacity:.4">All rights reserved. Unauthorized use prohibited.</div>
+</div>
+
+<!-- Pay Modal -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">Pay Fine</span><div class="modal-close" onclick="closeModal('pay-modal')">&#x2715;</div></div>
+    <div class="modal-body" id="pay-body"></div>
+    <div class="modal-footer" id="pay-footer"></div>
+  </div>
+</div>
+
+<!-- Appeal Modal -->
+<div class="modal-overlay" id="appeal-modal">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title">File an Appeal</span><div class="modal-close" onclick="closeModal('appeal-modal')">&#x2715;</div></div>
+    <div class="modal-body">
+      <div class="info-box">&#x2139; Appeals are reviewed by a traffic officer within 5&ndash;10 working days. You will be notified by SMS and email of the decision.</div>
+      <div class="field"><label>Fine Number</label><input type="text" id="appeal-fine-num" readonly style="color:var(--ink3)"/></div>
+      <div class="field"><label>Reason for Appeal *</label><textarea id="appeal-reason" placeholder="Explain why you believe this fine was issued in error..."></textarea></div>
+      <div class="field"><label>Supporting Document URL (optional)</label><input type="text" id="appeal-doc" placeholder="Link to photo, dashcam footage, or document"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="submitAppeal()">Submit Appeal</button>
+      <button class="btn btn-ghost" onclick="closeModal('appeal-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:3000';
+let currentFineId  = null;
+let currentFineNum = null;
+let currentTotal   = 0;
+let selectedMethod = 'MOBILE_MONEY';
+let selectedProvider = 'M-Pesa';
+
+async function apiFetch(path, opts = {}) {
+  try {
+    const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    document.getElementById('conn-warn').style.display = 'none';
+    return await r.json();
+  } catch(e) {
+    document.getElementById('conn-warn').style.display = 'block';
+    return null;
+  }
+}
+
+function showState(id) {
+  ['state-idle','state-loading','state-error','state-results']
+    .forEach(s => document.getElementById(s).style.display = s === id ? 'block' : 'none');
+}
+
+async function doSearch() {
+  const plate = document.getElementById('plate-input').value.trim().toUpperCase();
+  if (!plate) { showToast('Please enter a plate number', 'error'); return; }
+  showState('state-loading');
+  const d = await apiFetch('/portal/fines?plate=' + plate);
+  if (!d) { showState('state-idle'); return; }
+  if (!d.data || d.data.length === 0) {
+    document.getElementById('error-title').textContent = 'No fines found';
+    document.getElementById('error-sub').textContent = 'No fines are currently linked to plate ' + plate + '. If you received a notice, check the plate number or contact your nearest traffic office.';
+    showState('state-error'); return;
+  }
+  renderResults(plate, d.data);
+  showState('state-results');
+}
+
+function renderResults(plate, fines) {
+  const s = fines[0];
+  const vehicle = [s.make, s.model, s.color].filter(Boolean).join(' ');
+  document.getElementById('owner-card').innerHTML =
+    '<div class="owner-label">Registered Vehicle</div>' +
+    '<div class="owner-name">' + s.owner_name + '</div>' +
+    '<div class="owner-plate">' + plate + '</div>' +
+    '<div class="owner-meta">' +
+      '<div class="owner-meta-item"><strong>' + (vehicle || 'Vehicle') + '</strong>Make / Model</div>' +
+      '<div class="owner-meta-item"><strong>' + (s.owner_phone || '&mdash;') + '</strong>Phone</div>' +
+    '</div>';
+
+  const total     = fines.length;
+  const unpaid    = fines.filter(f => ['ISSUED','OVERDUE','PENDING'].includes(f.status)).length;
+  const totalOwed = fines.filter(f => ['ISSUED','OVERDUE','PENDING'].includes(f.status))
+    .reduce((sum, f) => sum + Number(f.amount_tzs||0) + Number(f.penalty_amount||0), 0);
+
+  document.getElementById('summary-row').innerHTML =
+    '<div class="summary-card"><div class="summary-val">' + total + '</div><div class="summary-lbl">Total Fines</div></div>' +
+    '<div class="summary-card"><div class="summary-val ' + (unpaid>0?'red':'') + '">' + unpaid + '</div><div class="summary-lbl">Unpaid</div></div>' +
+    '<div class="summary-card"><div class="summary-val ' + (totalOwed>0?'amber':'green') + '">' + (totalOwed>0?Math.round(totalOwed/1000)+'K':'0') + '</div><div class="summary-lbl">TZS Owed</div></div>';
+
+  document.getElementById('fines-section-title').textContent =
+    unpaid > 0 ? unpaid + ' Outstanding Fine' + (unpaid > 1 ? 's' : '') : 'Your Fines';
+
+  const sorted = [...fines].sort((a,b) => {
+    const o = {OVERDUE:0,ISSUED:1,PENDING:2,APPEALED:3,PAID:4,CANCELLED:5};
+    return (o[a.status]||9) - (o[b.status]||9);
+  });
+
+  document.getElementById('fines-list').innerHTML = sorted.map(f => {
+    const status = f.status;
+    const tot    = Number(f.amount_tzs||0) + Number(f.penalty_amount||0);
+    const daysLeft = f.due_date ? Math.ceil((new Date(f.due_date)-new Date())/(1000*60*60*24)) : null;
+    const isActionable = ['ISSUED','OVERDUE','PENDING'].includes(status);
+    const dueStr = daysLeft !== null && isActionable
+      ? '<div class="fine-due ' + (daysLeft<=7?'urgent':'') + '">' + (daysLeft<0?'Overdue by '+Math.abs(daysLeft)+' days':daysLeft===0?'Due today!':'Due in '+daysLeft+' day'+(daysLeft===1?'':'s')) + '</div>'
+      : status==='PAID' ? '<div class="fine-due" style="color:var(--green)">&#x2713; Paid</div>' : '';
+    return '<div class="fine-card">' +
+      '<div class="fine-card-hdr">' +
+        '<span class="fine-num">' + f.fine_number + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px">' + statusBadge(status) +
+          '<span class="fine-date">' + (f.occurred_at?new Date(f.occurred_at).toLocaleDateString('en-TZ',{day:'numeric',month:'short',year:'numeric'}):'&mdash;') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="fine-card-body">' +
+        '<div class="fine-vtype">' + (f.violation_type||'').replace(/_/g,' ') + '</div>' +
+        '<div class="fine-loc">&#x1F4CD; ' + (f.camera_id?'Camera '+f.camera_id:'Traffic camera') + '</div>' +
+        '<div class="fine-row">' +
+          '<div>' +
+            '<div class="fine-amount-label">' + (status==='OVERDUE'?'Total Due (incl. penalty)':'Amount Due') + '</div>' +
+            '<div class="fine-amount ' + (status==='OVERDUE'?'overdue':'') + '">TZS ' + tot.toLocaleString() + '</div>' +
+            dueStr +
+          '</div>' +
+          '<div class="fine-actions">' +
+            (f.evidence_image_url?'<a class="btn btn-evidence" href="'+f.evidence_image_url+'" target="_blank">&#x1F4F7; Evidence</a>':'') +
+            (isActionable?'<button class="btn btn-appeal" onclick="openAppeal(\''+f.id+'\',\''+f.fine_number+'\')">Appeal</button>':'') +
+            (isActionable?'<button class="btn btn-pay" onclick="openPay(\''+f.id+'\','+tot+',\''+f.fine_number+'\','+Number(f.amount_tzs)+','+Number(f.penalty_amount||0)+')">Pay Now</button>':'') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function statusBadge(s) {
+  const m = {ISSUED:'issued',PAID:'paid',OVERDUE:'overdue',APPEALED:'appealed',PENDING:'pending',CANCELLED:'cancelled',COURT_REFERRED:'court'};
+  return '<span class="badge ' + (m[s]||'pending') + '">' + (s||'&mdash;').replace(/_/g,' ') + '</span>';
+}
+
+// ── Payment flow ────────────────────────────────────────────
+function openPay(id, total, fineNum, base, penalty) {
+  currentFineId    = id;
+  currentFineNum   = fineNum;
+  currentTotal     = total;
+  selectedMethod   = 'MOBILE_MONEY';
+  selectedProvider = 'M-Pesa';
+  renderPayBody();
+  openModal('pay-modal');
+}
+
+function renderPayBody() {
+  document.getElementById('pay-body').innerHTML =
+    '<div class="amount-display">' +
+      '<div class="amount-label">Total Amount Due</div>' +
+      '<div class="amount-value">TZS ' + currentTotal.toLocaleString() + '</div>' +
+    '</div>' +
+    '<div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Payment Method</div>' +
+    '<div class="pay-methods">' +
+      '<div class="pay-method ' + (selectedMethod==='MOBILE_MONEY'?'selected':'') + '" id="pm-MOBILE_MONEY" onclick="selectMethod(\'MOBILE_MONEY\')"><div class="pay-method-icon">&#x1F4F1;</div><div class="pay-method-name">Mobile Money</div><div class="pay-method-sub">M-Pesa &middot; Tigo &middot; Airtel</div></div>' +
+      '<div class="pay-method ' + (selectedMethod==='BANK_TRANSFER'?'selected':'') + '" id="pm-BANK_TRANSFER" onclick="selectMethod(\'BANK_TRANSFER\')"><div class="pay-method-icon">&#x1F3E6;</div><div class="pay-method-name">Bank Transfer</div><div class="pay-method-sub">Any Tanzanian bank</div></div>' +
+      '<div class="pay-method ' + (selectedMethod==='CARD'?'selected':'') + '" id="pm-CARD" onclick="selectMethod(\'CARD\')"><div class="pay-method-icon">&#x1F4B3;</div><div class="pay-method-name">Card</div><div class="pay-method-sub">Visa / Mastercard</div></div>' +
+      '<div class="pay-method ' + (selectedMethod==='CASH'?'selected':'') + '" id="pm-CASH" onclick="selectMethod(\'CASH\')"><div class="pay-method-icon">&#x1F4B5;</div><div class="pay-method-name">Cash</div><div class="pay-method-sub">Traffic office</div></div>' +
+    '</div>' +
+    '<div id="method-detail"></div>';
+
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-pay" id="pay-btn" onclick="confirmPayment()">Confirm &mdash; TZS ' + currentTotal.toLocaleString() + '</button>' +
+    '<button class="btn btn-ghost" onclick="closeModal(\'pay-modal\')">Cancel</button>';
+
+  renderMethodDetail();
+}
+
+function selectMethod(m) {
+  selectedMethod = m;
+  if (m === 'MOBILE_MONEY') selectedProvider = 'M-Pesa';
+  document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('selected'));
+  const target = document.getElementById('pm-' + m);
+  if (target) target.classList.add('selected');
+  renderMethodDetail();
+}
+
+function selectProvider(p) {
+  selectedProvider = p;
+  renderMethodDetail();
+}
+
+function renderMethodDetail() {
+  const el = document.getElementById('method-detail');
+  if (!el) return;
+  if (selectedMethod === 'MOBILE_MONEY') {
+    el.innerHTML =
+      '<div style="margin-bottom:12px">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Select Provider</div>' +
+        '<div class="provider-grid">' +
+          '<div class="provider-btn ' + (selectedProvider==='M-Pesa'?'selected':'') + '" onclick="selectProvider(\'M-Pesa\')"><div class="provider-name" style="color:var(--green)">M-PESA</div><div class="provider-sub">Vodacom</div></div>' +
+          '<div class="provider-btn ' + (selectedProvider==='Tigo Pesa'?'selected':'') + '" onclick="selectProvider(\'Tigo Pesa\')"><div class="provider-name" style="color:var(--blue)">TIGO PESA</div><div class="provider-sub">Tigo</div></div>' +
+          '<div class="provider-btn ' + (selectedProvider==='Airtel Money'?'selected':'') + '" onclick="selectProvider(\'Airtel Money\')"><div class="provider-name" style="color:var(--red)">AIRTEL</div><div class="provider-sub">Airtel Money</div></div>' +
+        '</div>' +
+        '<div class="field" style="margin-bottom:10px"><label>Your Mobile Number *</label><input type="tel" id="pay-phone" placeholder="+255712345678"/></div>' +
+        '<div class="mpesa-steps">' +
+          '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">How it works</div>' +
+          '<div class="mpesa-step"><div class="step-num">1</div><div class="step-text">Enter your number and click <strong>Confirm</strong></div></div>' +
+          '<div class="mpesa-step"><div class="step-num">2</div><div class="step-text">A <strong>' + selectedProvider + ' push notification</strong> will appear on your phone</div></div>' +
+          '<div class="mpesa-step"><div class="step-num">3</div><div class="step-text">Enter your <strong>' + selectedProvider + ' PIN</strong> to approve</div></div>' +
+          '<div class="mpesa-step"><div class="step-num">4</div><div class="step-text">Fine marked as <strong>paid</strong> instantly</div></div>' +
+        '</div>' +
+      '</div>';
+  } else if (selectedMethod === 'BANK_TRANSFER') {
+    el.innerHTML =
+      '<div class="info-box">&#x2139; Transfer TZS ' + currentTotal.toLocaleString() + ' to:<br>' +
+        '<strong>Account: 001-234-5678 &middot; CRDB Bank</strong><br>' +
+        '<strong>Name: Tanzania Traffic Authority</strong><br>' +
+        '<strong>Reference: ' + currentFineNum + '</strong></div>' +
+      '<div class="field"><label>Bank Transaction ID *</label><input type="text" id="pay-ref" placeholder="e.g. TRN2025123456"/></div>';
+  } else if (selectedMethod === 'CARD') {
+    el.innerHTML =
+      '<div class="field"><label>Card Number *</label><input type="text" id="pay-card" placeholder="1234 5678 9012 3456" maxlength="19"/></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div class="field"><label>Expiry *</label><input type="text" id="pay-expiry" placeholder="MM/YY" maxlength="5"/></div>' +
+        '<div class="field"><label>CVV *</label><input type="text" id="pay-cvv" placeholder="123" maxlength="3"/></div>' +
+      '</div>';
+  } else {
+    el.innerHTML =
+      '<div class="info-box">&#x1F3E2; Visit your nearest traffic office and pay TZS ' + currentTotal.toLocaleString() + ' in cash.<br>' +
+        'Bring your fine reference: <strong>' + currentFineNum + '</strong></div>';
+  }
+}
+
+async function confirmPayment() {
+  const btn = document.getElementById('pay-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+  if (selectedMethod === 'MOBILE_MONEY') {
+    const phone = document.getElementById('pay-phone')?.value.trim();
+    if (!phone) { showToast('Please enter your mobile number','error'); if(btn){btn.disabled=false;btn.textContent='Confirm — TZS '+currentTotal.toLocaleString();} return; }
+    await initiateMobilePayment(phone);
+  } else if (selectedMethod === 'BANK_TRANSFER') {
+    const ref = document.getElementById('pay-ref')?.value.trim();
+    if (!ref) { showToast('Please enter your bank transaction ID','error'); if(btn){btn.disabled=false;btn.textContent='Confirm — TZS '+currentTotal.toLocaleString();} return; }
+    await recordPayment('BANK-'+ref, 'Bank transfer');
+  } else if (selectedMethod === 'CARD') {
+    const card = document.getElementById('pay-card')?.value.trim();
+    const exp  = document.getElementById('pay-expiry')?.value.trim();
+    const cvv  = document.getElementById('pay-cvv')?.value.trim();
+    if (!card||!exp||!cvv) { showToast('Please fill in all card details','error'); if(btn){btn.disabled=false;btn.textContent='Confirm — TZS '+currentTotal.toLocaleString();} return; }
+    await recordPayment('CARD-'+Date.now(), 'Card payment');
+  } else {
+    showPaymentSuccess('CASH-REF-'+currentFineNum, 'Please visit the traffic office to pay in cash.');
+  }
+}
+
+async function initiateMobilePayment(phone) {
+  let countdown = 120;
+  document.getElementById('pay-body').innerHTML =
+    '<div class="amount-display"><div class="amount-label">Payment in Progress</div><div class="amount-value">TZS ' + currentTotal.toLocaleString() + '</div></div>' +
+    '<div class="status-box status-pending"><span class="spinner-sm"></span><strong>Push notification sent to ' + phone + '</strong><br>Open the notification from <strong>' + selectedProvider + '</strong> on your phone and enter your PIN to approve.</div>' +
+    '<div class="mpesa-steps">' +
+      '<div class="mpesa-step"><div class="step-num" style="background:var(--green-bg);color:var(--green)">&#x2713;</div><div class="step-text">Fine: <strong>' + currentFineNum + '</strong></div></div>' +
+      '<div class="mpesa-step"><div class="step-num" style="background:var(--green-bg);color:var(--green)">&#x2713;</div><div class="step-text">Amount: <strong>TZS ' + currentTotal.toLocaleString() + '</strong></div></div>' +
+      '<div class="mpesa-step"><div class="step-num" style="background:var(--green-bg);color:var(--green)">&#x2713;</div><div class="step-text">Provider: <strong>' + selectedProvider + '</strong></div></div>' +
+      '<div class="mpesa-step"><div class="step-num">4</div><div class="step-text">Waiting for your PIN... expires in <strong id="cd">' + countdown + '</strong>s</div></div>' +
+    '</div>';
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-ghost" onclick="closeModal(\'pay-modal\');showToast(\'Payment cancelled\',\'\')">Cancel</button>';
+
+  const cdInterval = setInterval(() => {
+    countdown--;
+    const cdEl = document.getElementById('cd');
+    if (cdEl) cdEl.textContent = countdown;
+    if (countdown <= 0) {
+      clearInterval(cdInterval);
+      showPaymentFailed('Payment timed out. Please try again.');
+    }
+  }, 1000);
+
+  // Simulate payment confirmation after 3 seconds
+  // In production: replace with Azampay / Selcom API callback
+  setTimeout(async () => {
+    clearInterval(cdInterval);
+    const txnRef = selectedProvider.replace(/\s+/g,'').toUpperCase() + '-' + Date.now();
+    await recordPayment(txnRef, selectedProvider + ' from ' + phone);
+  }, 3000);
+}
+
+async function recordPayment(txnRef, notes) {
+  const r = await apiFetch('/fines/' + currentFineId + '/pay', {
+    method: 'POST',
+    body: JSON.stringify({
+      amount_tzs:      currentTotal,
+      payment_method:  selectedMethod,
+      provider:        selectedProvider,
+      transaction_ref: txnRef,
+    })
+  });
+  if (r && !r.error) {
+    showPaymentSuccess(txnRef, notes);
+  } else {
+    showPaymentFailed(r?.error || 'Payment could not be processed. Please try again.');
+  }
+}
+
+function showPaymentSuccess(txnRef, notes) {
+  document.getElementById('pay-body').innerHTML =
+    '<div class="success-box">' +
+      '<div class="success-icon">&#x2705;</div>' +
+      '<div class="success-title">Payment Successful!</div>' +
+      '<div class="success-sub">Fine <strong>' + currentFineNum + '</strong> has been paid.<br>' +
+        'Transaction ref: <strong>' + txnRef + '</strong><br>' +
+        (notes?'<br>'+notes+'<br>':'') +
+        '<br>A receipt has been sent to your registered phone and email.</div>' +
+    '</div>';
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-primary" onclick="closeModal(\'pay-modal\');doSearch()">Done</button>';
+  showToast('Payment confirmed!', 'success');
+}
+
+function showPaymentFailed(msg) {
+  document.getElementById('pay-body').innerHTML =
+    '<div class="status-box status-failed"><strong>Payment Failed</strong><br>' + msg + '</div>';
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-primary" onclick="renderPayBody()">Try Again</button>' +
+    '<button class="btn btn-ghost" onclick="closeModal(\'pay-modal\')">Cancel</button>';
+  showToast('Payment failed', 'error');
+}
+
+function openAppeal(id, fineNum) {
+  currentFineId = id;
+  document.getElementById('appeal-fine-num').value = fineNum;
+  document.getElementById('appeal-reason').value   = '';
+  document.getElementById('appeal-doc').value      = '';
+  openModal('appeal-modal');
+}
+
+async function submitAppeal() {
+  const reason = document.getElementById('appeal-reason').value.trim();
+  const doc    = document.getElementById('appeal-doc').value.trim();
+  if (!reason) { showToast('Please enter your reason for appeal','error'); return; }
+  const r = await apiFetch('/fines/' + currentFineId + '/appeal', {
+    method: 'POST',
+    body: JSON.stringify({ reason, supporting_docs: doc ? [doc] : [] })
+  });
+  if (r && !r.error) { showToast('Appeal submitted successfully','success'); closeModal('appeal-modal'); doSearch(); }
+  else showToast('Error: ' + (r?.error||'Could not submit appeal'), 'error');
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o =>
+  o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); })
+);
+
+let toastT;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.className = 'toast ' + type + ' show';
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+document.getElementById('plate-input').addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase();
+});
+</script>
+</body>
+</html>

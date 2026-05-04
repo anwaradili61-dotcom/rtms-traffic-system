@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RTMS — Camera Monitor | © SEUSHI, ANWAR 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#060810;--bg2:#0d1117;--bg3:#141b24;--bg4:#1a2333;
+    --border:#1e2d3d;--border2:#243447;
+    --green:#00ff88;--green2:#00cc6a;--green-dim:rgba(0,255,136,.08);
+    --red:#ff3860;--red-dim:rgba(255,56,96,.08);
+    --amber:#ffb800;--amber-dim:rgba(255,184,0,.08);
+    --blue:#0096ff;--blue-dim:rgba(0,150,255,.08);
+    --cyan:#00d4ff;
+    --text:#c9d1d9;--text2:#8b949e;--text3:#3d4f63;
+    --mono:'JetBrains Mono',monospace;
+    --head:'Barlow',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--head);font-size:14px}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:1}
+
+  /* ── WATERMARK ── */
+  .wm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
+  .wm-text{font-family:var(--head);font-size:68px;font-weight:700;color:rgba(0,212,255,.012);text-transform:uppercase;letter-spacing:.2em;white-space:nowrap;user-select:none;transform:rotate(-20deg)}
+
+  /* ── COPYRIGHT BAR ── */
+  .copyright-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(6,8,16,.98);border-top:1px solid var(--border);padding:6px 20px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
+  .cp-name{color:var(--cyan);font-weight:500}
+  .cp-sep{opacity:.3;margin:0 5px}
+
+  /* ── LOGIN ── */
+  .login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100;padding-bottom:32px}
+  .login-screen.hidden{display:none}
+  .login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 40px;width:100%;max-width:420px}
+  .login-logo{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:.15em;margin-bottom:4px}
+  .login-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:6px}
+  .login-owner{font-family:var(--mono);font-size:10px;color:var(--text3);opacity:.5;margin-bottom:20px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s}
+  .field input:focus{border-color:var(--cyan)}
+  .login-btn{width:100%;background:var(--cyan);color:var(--bg);border:none;border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .15s}
+  .login-btn:hover{background:#00b8e0}
+  .login-btn:disabled{opacity:.5;cursor:not-allowed}
+  .login-error{background:var(--red-dim);border:1px solid rgba(255,56,96,.3);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--red);margin-top:12px;display:none;white-space:pre-wrap;line-height:1.6}
+  .login-error.show{display:block}
+  .url-row{display:flex;gap:8px;align-items:center;margin-bottom:20px}
+  .url-row input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text2);font-family:var(--mono);font-size:11px;outline:none}
+  .url-row input:focus{border-color:var(--cyan)}
+  .url-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+
+  /* ── MAIN ── */
+  /* shell height accounts for the 32px copyright bar at bottom */
+  .shell{display:grid;grid-template-rows:52px 1fr;height:calc(100vh - 32px)}
+  .topbar{display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--bg2);border-bottom:1px solid var(--border);position:relative;z-index:10}
+  .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3}
+  .logo{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan);letter-spacing:.15em}
+  .logo span{color:var(--text3)}
+  .top-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live-indicator{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--green)}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s ease infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .clock{font-family:var(--mono);font-size:12px;color:var(--text2)}
+  .user-badge{font-family:var(--mono);font-size:11px;color:var(--green);background:var(--green-dim);border:1px solid rgba(0,255,136,.2);border-radius:6px;padding:4px 10px}
+  .btn-logout{background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+  .btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+  .main{display:grid;grid-template-columns:240px 1fr 290px;overflow:hidden}
+
+  /* Sidebar */
+  .sidebar{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:12px}
+  .sidebar-title{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:4px 8px 10px}
+  .cam-item{padding:10px 12px;border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
+  .cam-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .cam-id{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2)}
+  .cam-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all .3s}
+  .dot-active{background:var(--green);box-shadow:0 0 6px var(--green)}
+  .dot-offline{background:var(--text3)}
+  .cam-name{font-size:12px;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cam-meta{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .cam-stats{display:flex;gap:10px;margin-top:6px}
+  .cs{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .cs span{color:var(--text2)}
+
+  /* Feed */
+  .center{display:flex;flex-direction:column;overflow:hidden}
+  .feed-header{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+  .feed-title{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase}
+  .feed-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+
+  .detection{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;animation:slideIn .3s ease both}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+  .detection.fine{border-left:3px solid var(--green)}
+  .detection.review{border-left:3px solid var(--amber)}
+  .detection.rejected{border-left:3px solid var(--text3);opacity:.55}
+  .detection.duplicate{border-left:3px solid var(--blue);opacity:.6}
+  .detection.alert{border-left:3px solid var(--red);background:var(--red-dim);animation:slideIn .3s ease both,pulseRed 2s ease 3}
+  @keyframes pulseRed{0%,100%{box-shadow:none}50%{box-shadow:0 0 24px rgba(255,56,96,.4)}}
+  .det-time{font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap}
+  .det-plate{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text);letter-spacing:.1em;margin-bottom:3px}
+  .det-info{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .det-cam{font-family:var(--mono);font-size:10px;color:var(--text3)}
+  .det-type{font-size:11px;font-weight:600;color:var(--text2)}
+  .det-conf{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px}
+  .conf-high{background:var(--green-dim);color:var(--green)}
+  .conf-mid{background:var(--amber-dim);color:var(--amber)}
+  .conf-low{background:var(--red-dim);color:var(--red)}
+  .det-owner{font-family:var(--mono);font-size:10px;color:var(--cyan);margin-top:3px}
+  .det-badge{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;letter-spacing:.04em;white-space:nowrap}
+  .b-fine{background:var(--green-dim);color:var(--green)}
+  .b-review{background:var(--amber-dim);color:var(--amber)}
+  .b-reject{background:rgba(100,100,100,.1);color:var(--text3)}
+  .b-alert{background:var(--red-dim);color:var(--red)}
+  .b-dup{background:var(--blue-dim);color:var(--blue)}
+  .det-amount{font-family:var(--mono);font-size:12px;color:var(--green);margin-top:3px}
+  .det-fnum{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px}
+
+  /* Right panel */
+  .right-panel{background:var(--bg2);border-left:1px solid var(--border);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+  .panel-title{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .stat-box{background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)}
+  .stat-num{font-family:var(--mono);font-size:22px;font-weight:700;margin-bottom:2px}
+  .stat-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+  .n-green{color:var(--green)}.n-red{color:var(--red)}.n-amber{color:var(--amber)}.n-cyan{color:var(--cyan)}
+
+  /* Plates panel */
+  .plates-panel{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px}
+  .plates-title{font-family:var(--mono);font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+  .plates-status{font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--mono)}
+  .ps-ok{background:var(--green-dim);color:var(--green)}
+  .ps-warn{background:var(--amber-dim);color:var(--amber)}
+  .plates-list{display:flex;flex-wrap:wrap;gap:5px;max-height:100px;overflow-y:auto}
+  .plate-tag{font-family:var(--mono);font-size:10px;background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;color:var(--text2)}
+  .btn-reload{background:transparent;border:1px solid var(--border2);color:var(--text3);border-radius:5px;padding:3px 8px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+  .btn-reload:hover{border-color:var(--cyan);color:var(--cyan)}
+
+  /* Simulator */
+  .sim-panel{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px}
+  .sim-title{font-family:var(--mono);font-size:10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+  .sim-row{display:flex;gap:6px;margin-bottom:10px}
+  .btn-start{background:var(--green);color:var(--bg);border:none;border-radius:6px;padding:7px 16px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all .15s}
+  .btn-start:hover{background:var(--green2)}
+  .btn-start:disabled{opacity:.4;cursor:not-allowed}
+  .btn-stop{background:transparent;border:1px solid var(--red);color:var(--red);border-radius:6px;padding:7px 16px;font-family:var(--mono);font-size:11px;cursor:pointer;display:none}
+  .sim-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .ss{background:var(--bg);border-radius:6px;padding:6px 8px;text-align:center}
+  .ss-num{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)}
+  .ss-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase}
+
+  /* Log */
+  .log-list{display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;margin-top:8px}
+  .log-entry{font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:4px;background:var(--bg3);display:flex;gap:8px}
+  .log-time{color:var(--text3);flex-shrink:0}
+  .log-msg{flex:1;word-break:break-all;line-height:1.4;color:var(--text2)}
+  .log-entry.ok .log-msg{color:var(--green)}
+  .log-entry.warn .log-msg{color:var(--amber)}
+  .log-entry.err .log-msg{color:var(--red)}
+  .log-entry.info .log-msg{color:var(--cyan)}
+
+  .empty-feed{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);font-family:var(--mono);font-size:12px;text-align:center;gap:10px;padding:40px}
+  .empty-icon{font-size:40px;opacity:.2}
+  .btn-sm{background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:5px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+  .btn-sm:hover{border-color:var(--cyan);color:var(--cyan)}
+  ::-webkit-scrollbar{width:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- Watermark -->
+<div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
+
+<!-- Login -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">RTMS://CAMERAS</div>
+    <div class="login-sub">Camera Monitor — Connect to your server</div>
+    <div class="login-owner">&copy; SEUSHI, ANWAR &middot; 2025 &middot; Dar es Salaam, Tanzania</div>
+    <div class="url-row">
+      <span class="url-lbl">Server:</span>
+      <input type="text" id="server-url" value="http://localhost:3000"/>
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="login-user" value="admin" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Connect to Server</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="shell" id="main-app" style="display:none">
+  <header class="topbar">
+    <div class="logo">RTMS<span>://</span>CAMERAS</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">LIVE MONITOR</div>
+    <div class="top-right">
+      <div class="live-indicator"><div class="live-dot"></div>LIVE</div>
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="user-badge" id="user-badge"></div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-title">Cameras (5)</div>
+      <div id="cam-list"></div>
+    </nav>
+
+    <!-- Feed -->
+    <div class="center">
+      <div class="feed-header">
+        <div class="feed-title">&#9679; Live Detection Feed</div>
+        <div id="feed-count" style="font-family:var(--mono);font-size:10px;color:var(--text3)">0 detections</div>
+        <div style="margin-left:auto"><button class="btn-sm" onclick="clearFeed()">Clear</button></div>
+      </div>
+      <div class="feed-area" id="feed-area">
+        <div class="empty-feed" id="empty-feed">
+          <div class="empty-icon">&#x1F4F7;</div>
+          <div>Waiting for camera detections...</div>
+          <div style="font-size:10px;margin-top:6px">Load real plates then click &#9654; Start Simulator</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+
+      <!-- Stats -->
+      <div>
+        <div class="panel-title">Live Stats</div>
+        <div class="stat-grid" style="margin-top:10px">
+          <div class="stat-box"><div class="stat-num n-green" id="s-fines">0</div><div class="stat-lbl">Fines Issued</div></div>
+          <div class="stat-box"><div class="stat-num n-cyan" id="s-detections">0</div><div class="stat-lbl">Detections</div></div>
+          <div class="stat-box"><div class="stat-num n-amber" id="s-review">0</div><div class="stat-lbl">For Review</div></div>
+          <div class="stat-box"><div class="stat-num n-red" id="s-alerts">0</div><div class="stat-lbl">Alerts</div></div>
+        </div>
+      </div>
+
+      <!-- Real plates loader -->
+      <div class="plates-panel">
+        <div class="plates-title">
+          Real Plates from DB
+          <div style="display:flex;gap:6px;align-items:center">
+            <span class="plates-status ps-warn" id="plates-status">Not loaded</span>
+            <button class="btn-reload" onclick="loadRealPlates()">&#x21BB; Load</button>
+          </div>
+        </div>
+        <div class="plates-list" id="plates-list">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Click Load to fetch plates from your database</span>
+        </div>
+      </div>
+
+      <!-- Simulator -->
+      <div class="sim-panel">
+        <div class="sim-title">&#9654; Camera Simulator</div>
+        <div class="sim-row">
+          <button class="btn-start" id="btn-start" onclick="startSim()">&#9654; Start</button>
+          <button class="btn-stop"  id="btn-stop"  onclick="stopSim()">&#9632; Stop</button>
+        </div>
+        <div class="sim-stats">
+          <div class="ss"><div class="ss-num" id="sim-sent">0</div><div class="ss-lbl">Sent</div></div>
+          <div class="ss"><div class="ss-num" id="sim-rate">0/m</div><div class="ss-lbl">Rate</div></div>
+        </div>
+      </div>
+
+      <!-- Log -->
+      <div>
+        <div class="panel-title">Activity Log</div>
+        <div class="log-list" id="log-list"></div>
+      </div>
+
+      <!-- Copyright credit in sidebar -->
+      <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text3);line-height:1.8;opacity:.5">
+        &copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam, Tanzania
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Copyright bar -->
+<div class="copyright-bar">
+  <div>
+    <span>&copy;</span>
+    <span class="cp-name" style="margin:0 4px">SEUSHI, ANWAR</span>
+    <span class="cp-sep">|</span>
+    <span style="margin:0 4px">2025</span>
+    <span class="cp-sep">|</span>
+    <span style="margin:0 4px">Dar es Salaam, Tanzania</span>
+    <span class="cp-sep">|</span>
+    <span style="margin-left:4px">RTMS &mdash; Camera Monitor</span>
+  </div>
+  <div style="opacity:.4">All rights reserved. Unauthorized use prohibited.</div>
+</div>
+
+<script>
+let API      = 'http://localhost:3000';
+let token    = '';
+let simInt   = null;
+let simSent  = 0;
+let simStart = null;
+let feedCount= 0;
+
+// Real plates fetched from DB
+let realPlates = [];
+
+const counters = { fines:0, detections:0, review:0, alerts:0 };
+
+const CAMERAS = [
+  { id:'CAM-DSM-001', name:'Uhuru Street Junction',     type:'INTERSECTION', gps_lat:-6.8161, gps_lng:39.2894, detections:0, fines:0 },
+  { id:'CAM-DSM-002', name:'Morogoro Road Speed Point', type:'SPEED',        gps_lat:-6.7924, gps_lng:39.2083, detections:0, fines:0 },
+  { id:'CAM-DSM-003', name:'Kariakoo Pedestrian Zone',  type:'PEDESTRIAN',   gps_lat:-6.8219, gps_lng:39.2741, detections:0, fines:0 },
+  { id:'CAM-DSM-004', name:'Bagamoyo Road Junction',    type:'INTERSECTION', gps_lat:-6.7689, gps_lng:39.2456, detections:0, fines:0 },
+  { id:'CAM-DSM-005', name:'Nelson Mandela Expressway', type:'SPEED',        gps_lat:-6.8034, gps_lng:39.2612, detections:0, fines:0 },
+];
+
+const SCENARIOS = {
+  INTERSECTION:[{t:'RED_LIGHT',w:40},{t:'PHONE_USE',w:25},{t:'NO_SEATBELT',w:20},{t:'WRONG_WAY',w:15}],
+  SPEED:       [{t:'SPEEDING',w:80},{t:'PHONE_USE',w:20}],
+  PEDESTRIAN:  [{t:'PEDESTRIAN_ZONE',w:60},{t:'ILLEGAL_PARKING',w:40}],
+};
+
+const AMOUNTS = {
+  RED_LIGHT:150000, SPEEDING:200000, ILLEGAL_PARKING:50000,
+  WRONG_WAY:300000, NO_SEATBELT:30000, PHONE_USE:50000,
+  PEDESTRIAN_ZONE:100000, EXPIRED_PLATE:80000
+};
+
+const pick  = arr => arr[Math.floor(Math.random()*arr.length)];
+const wpick = arr => { const t=arr.reduce((s,v)=>s+v.w,0); let r=Math.random()*t; for(const v of arr){ r-=v.w; if(r<=0) return v; } return arr[0]; };
+const rand  = (a,b) => parseFloat((a + Math.random()*(b-a)).toFixed(3));
+const nowT  = () => new Date().toLocaleTimeString('en-GB');
+const fmt   = n => Number(n).toLocaleString();
+
+// Clock
+setInterval(() => {
+  const e = document.getElementById('clock');
+  if (e) e.textContent = new Date().toLocaleTimeString('en-GB');
+}, 1000);
+
+// ── Login ──────────────────────────────────────────────────────
+async function doLogin() {
+  const btn   = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  const user  = document.getElementById('login-user').value.trim();
+  const pass  = document.getElementById('login-pass').value.trim();
+  API = document.getElementById('server-url').value.trim().replace(/\/$/, '');
+
+  if (!user || !pass) { showErr('Please enter username and password'); return; }
+  btn.disabled = true; btn.textContent = 'Connecting...'; errEl.classList.remove('show');
+
+  try {
+    const res  = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.token) {
+      showErr(data.error || `Login failed (${res.status})`);
+      btn.disabled = false; btn.textContent = 'Connect to Server';
+      return;
+    }
+
+    token = data.token;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-app').style.display = 'grid';
+    document.getElementById('user-badge').textContent = `● ${data.user.full_name} (${data.user.role})`;
+    addLog(`Connected as ${data.user.username}`, 'ok');
+    renderCameras();
+    await loadRealPlates();
+
+  } catch(e) {
+    showErr(`Cannot reach server at ${API}\nMake sure nodemon server.js is running.\nError: ${e.message}`);
+    btn.disabled = false; btn.textContent = 'Connect to Server';
+  }
+}
+
+function showErr(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg; e.classList.add('show');
+}
+
+function doLogout() {
+  token = ''; stopSim(); realPlates = [];
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Connect to Server';
+  document.getElementById('login-error').classList.remove('show');
+  document.getElementById('login-pass').value = '';
+}
+
+// ── Load real plates ───────────────────────────────────────────
+async function loadRealPlates() {
+  addLog('Loading real plates from database...', 'info');
+  document.getElementById('plates-status').textContent = 'Loading...';
+  document.getElementById('plates-status').className   = 'plates-status ps-warn';
+
+  try {
+    const res  = await fetch(`${API}/vehicles?limit=100`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (!data.data || data.data.length === 0) {
+      addLog('No vehicles found — register vehicles via dashboard first', 'warn');
+      document.getElementById('plates-status').textContent = '0 plates';
+      document.getElementById('plates-list').innerHTML =
+        '<span style="font-family:var(--mono);font-size:10px;color:var(--red)">No vehicles registered. Add vehicles via the police dashboard first.</span>';
+      return;
+    }
+
+    realPlates = data.data.map(v => v.plate_number).filter(Boolean);
+    document.getElementById('plates-list').innerHTML =
+      realPlates.map(p => `<span class="plate-tag">${p}</span>`).join('');
+    document.getElementById('plates-status').textContent = `${realPlates.length} plates`;
+    document.getElementById('plates-status').className   = 'plates-status ps-ok';
+    addLog(`Loaded ${realPlates.length} real plates from database`, 'ok');
+
+  } catch(e) {
+    addLog(`Failed to load plates: ${e.message}`, 'err');
+    document.getElementById('plates-status').textContent = 'Error';
+  }
+}
+
+// ── Camera list ────────────────────────────────────────────────
+function renderCameras() {
+  document.getElementById('cam-list').innerHTML = CAMERAS.map(c => `
+    <div class="cam-item" id="cam-${c.id}">
+      <div class="cam-header">
+        <span class="cam-id">${c.id}</span>
+        <div class="cam-dot dot-offline" id="dot-${c.id}"></div>
+      </div>
+      <div class="cam-name">${c.name}</div>
+      <div class="cam-meta">${c.type}</div>
+      <div class="cam-stats">
+        <div class="cs">DET: <span id="cd-${c.id}">0</span></div>
+        <div class="cs">FINES: <span id="cf-${c.id}">0</span></div>
+      </div>
+    </div>`).join('');
+}
+
+function updateCamera(id, isFine) {
+  const cam = CAMERAS.find(c => c.id === id); if (!cam) return;
+  cam.detections++; if (isFine) cam.fines++;
+  const cd = document.getElementById(`cd-${id}`);
+  const cf = document.getElementById(`cf-${id}`);
+  const dt = document.getElementById(`dot-${id}`);
+  if (cd) cd.textContent = cam.detections;
+  if (cf) cf.textContent = cam.fines;
+  if (dt) dt.className = 'cam-dot dot-active';
+}
+
+// ── Feed ───────────────────────────────────────────────────────
+function addDetection({ type, plate, owner, camera, violation, confidence, amount, fine_num }) {
+  const empty = document.getElementById('empty-feed'); if (empty) empty.remove();
+  feedCount++; counters.detections++;
+  document.getElementById('s-detections').textContent = counters.detections;
+  document.getElementById('feed-count').textContent   = `${feedCount} detections`;
+
+  const clsMap = { fine:'fine', review:'review', rejected:'rejected', duplicate:'duplicate', alert:'alert' };
+  const bdgMap = { fine:'FINE ISSUED', review:'NEEDS REVIEW', rejected:'REJECTED', duplicate:'DUPLICATE', alert:'POLICE ALERT' };
+  const bdgCls = { fine:'b-fine', review:'b-review', rejected:'b-reject', duplicate:'b-dup', alert:'b-alert' };
+  const confCls = confidence >= 0.92 ? 'conf-high' : confidence >= 0.75 ? 'conf-mid' : 'conf-low';
+
+  const el = document.createElement('div');
+  el.className = `detection ${clsMap[type] || 'rejected'}`;
+  el.innerHTML = `
+    <div class="det-time">${nowT()}</div>
+    <div>
+      <div class="det-plate">${plate}</div>
+      <div class="det-info">
+        <span class="det-cam">${camera}</span>
+        <span class="det-type">${(violation || '').replace(/_/g, ' ')}</span>
+        <span class="det-conf ${confCls}">CONF ${(confidence * 100).toFixed(0)}%</span>
+      </div>
+      ${owner ? `<div class="det-owner">&#x1F464; ${owner}</div>` : ''}
+    </div>
+    <div style="text-align:right">
+      <div class="det-badge ${bdgCls[type] || 'b-reject'}">${bdgMap[type] || 'UNKNOWN'}</div>
+      ${amount  ? `<div class="det-amount">TZS ${fmt(amount)}</div>`   : ''}
+      ${fine_num? `<div class="det-fnum">${fine_num}</div>`            : ''}
+    </div>`;
+
+  const feed = document.getElementById('feed-area');
+  feed.insertBefore(el, feed.firstChild);
+  while (feed.children.length > 120) feed.removeChild(feed.lastChild);
+}
+
+function clearFeed() {
+  document.getElementById('feed-area').innerHTML =
+    '<div class="empty-feed" id="empty-feed"><div class="empty-icon">&#x1F4F7;</div><div>Feed cleared</div></div>';
+  feedCount = 0;
+  document.getElementById('feed-count').textContent = '0 detections';
+}
+
+// ── Log ────────────────────────────────────────────────────────
+function addLog(msg, type = 'info') {
+  const list = document.getElementById('log-list'); if (!list) return;
+  const el = document.createElement('div');
+  el.className = `log-entry ${type}`;
+  el.innerHTML = `<span class="log-time">${nowT()}</span><span class="log-msg">${msg}</span>`;
+  list.insertBefore(el, list.firstChild);
+  while (list.children.length > 60) list.removeChild(list.lastChild);
+}
+
+// ── Simulator using REAL plates ────────────────────────────────
+function generatePayload(camera) {
+  const prob = { INTERSECTION:0.35, SPEED:0.45, PEDESTRIAN:0.25 }[camera.type] || 0.3;
+  if (Math.random() > prob) return null;
+
+  if (realPlates.length === 0) {
+    addLog('No real plates loaded — click Load first', 'warn');
+    return null;
+  }
+
+  const plate = pick(realPlates);
+  const sc    = wpick(SCENARIOS[camera.type] || SCENARIOS.INTERSECTION);
+  const r     = Math.random();
+  let conf;
+  if      (r < 0.05) conf = rand(0.60, 0.74); // low — rejected
+  else if (r < 0.15) conf = rand(0.75, 0.91); // medium — review
+  else               conf = rand(0.92, 0.99); // high — auto fine
+
+  return {
+    plate_number:       plate,
+    camera_id:          camera.id,
+    violation_type:     sc.t,
+    confidence_score:   conf,
+    evidence_image_url: `https://evidence.rtms.tz/${camera.id}/frame-${Date.now()}.jpg`,
+    occurred_at:        new Date().toISOString(),
+    gps_lat:            camera.gps_lat,
+    gps_lng:            camera.gps_lng,
+  };
+}
+
+async function simTick() {
+  const camera  = pick(CAMERAS);
+  const payload = generatePayload(camera);
+  if (!payload) return;
+
+  try {
+    const res  = await fetch(`${API}/violations`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body:    JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    simSent++;
+    document.getElementById('sim-sent').textContent = simSent;
+    const mins = Math.max(0.017, (Date.now() - simStart) / 60000);
+    document.getElementById('sim-rate').textContent = Math.round(simSent / mins) + '/m';
+
+    if (res.status === 401) {
+      addLog('Session expired — please reconnect', 'err');
+      stopSim(); doLogout(); return;
+    }
+
+    if (res.status === 201) {
+      if (data.status === 'POLICE_ALERT_TRIGGERED') {
+        counters.alerts++;
+        document.getElementById('s-alerts').textContent = counters.alerts;
+        addDetection({ type:'alert', plate:payload.plate_number, camera:payload.camera_id, violation:payload.violation_type, confidence:payload.confidence_score });
+        addLog(`STOLEN VEHICLE: ${payload.plate_number}`, 'err');
+        updateCamera(camera.id, false);
+
+      } else if (data.needsReview) {
+        counters.review++;
+        document.getElementById('s-review').textContent = counters.review;
+        const owner = data.vehicle?.owner_name || '';
+        addDetection({ type:'review', plate:payload.plate_number, owner, camera:payload.camera_id, violation:payload.violation_type, confidence:payload.confidence_score });
+        addLog(`Review queued: ${payload.plate_number} ${owner ? '(' + owner + ')' : ''}`, 'warn');
+        updateCamera(camera.id, false);
+
+      } else {
+        counters.fines++;
+        document.getElementById('s-fines').textContent = counters.fines;
+        const owner = data.vehicle?.owner_name || '';
+        addDetection({
+          type: 'fine',
+          plate: payload.plate_number,
+          owner,
+          camera: payload.camera_id,
+          violation: payload.violation_type,
+          confidence: payload.confidence_score,
+          amount: data.fine?.amount_tzs || AMOUNTS[payload.violation_type],
+          fine_num: data.fine?.fine_number
+        });
+        addLog(`Fine: ${data.fine?.fine_number} → ${payload.plate_number} ${owner ? '(' + owner + ')' : ''}  TZS ${fmt(data.fine?.amount_tzs || 0)}`, 'ok');
+        updateCamera(camera.id, true);
+      }
+
+    } else if (res.status === 202) {
+      const reason = (data.reason || data.message || '').toLowerCase();
+      if (reason.includes('duplicate')) {
+        addDetection({ type:'duplicate', plate:payload.plate_number, camera:payload.camera_id, violation:payload.violation_type, confidence:payload.confidence_score });
+      } else {
+        addDetection({ type:'rejected', plate:payload.plate_number, camera:payload.camera_id, violation:payload.violation_type, confidence:payload.confidence_score });
+        addLog(`Rejected: ${payload.plate_number} — ${data.reason || 'low confidence'}`, 'warn');
+      }
+      updateCamera(camera.id, false);
+    }
+
+  } catch(e) {
+    addLog(`Network error: ${e.message}`, 'err');
+  }
+}
+
+function startSim() {
+  if (simInt) return;
+  if (realPlates.length === 0) { addLog('Load real plates first — click Load', 'warn'); return; }
+  simStart = Date.now();
+  simInt = setInterval(simTick, 2000);
+  CAMERAS.forEach(c => {
+    const d = document.getElementById(`dot-${c.id}`);
+    if (d) d.className = 'cam-dot dot-active';
+  });
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-stop').style.display  = 'block';
+  addLog(`Simulator started with ${realPlates.length} real plates`, 'info');
+}
+
+function stopSim() {
+  clearInterval(simInt); simInt = null;
+  CAMERAS.forEach(c => {
+    const d = document.getElementById(`dot-${c.id}`);
+    if (d) d.className = 'cam-dot dot-offline';
+  });
+  document.getElementById('btn-start').style.display = 'block';
+  document.getElementById('btn-stop').style.display  = 'none';
+  addLog('Simulator stopped', 'warn');
+}
+</script>
+</body>
+</html>
