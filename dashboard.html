@@ -9,30 +9,21 @@
 :root{--bg:#0a0c10;--bg2:#10141c;--bg3:#181d28;--border:#232a38;--accent:#3b82f6;--accent2:#60a5fa;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#a78bfa;--text:#e2e8f0;--text2:#94a3b8;--text3:#4b5563;--mono:"DM Mono",monospace;--head:"Syne",sans-serif;--body:"DM Sans",sans-serif}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px}
-
-/* ── WATERMARK ── */
 .wm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
 .wm-text{font-family:var(--head);font-size:72px;font-weight:800;color:rgba(255,255,255,.018);text-transform:uppercase;letter-spacing:.2em;white-space:nowrap;user-select:none;transform:rotate(-20deg)}
-
-/* ── COPYRIGHT BAR ── */
 .copyright-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(10,12,16,.98);border-top:1px solid var(--border);padding:6px 24px;display:flex;align-items:center;justify-content:space-between;z-index:999;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.04em}
 .cp-name{color:var(--accent2);font-weight:500}
 .cp-sep{opacity:.3;margin:0 6px}
-
-/* ── LOGIN SCREEN ── */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);position:relative;overflow:hidden;padding:20px}
 #login-screen::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.4}
 .login-card{position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:440px;padding:32px 28px 28px;box-shadow:0 24px 64px rgba(0,0,0,.6);animation:cardIn .4s ease both}
 @keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .login-logo{font-family:var(--head);font-size:24px;font-weight:800;color:var(--accent2);letter-spacing:-.5px;margin-bottom:2px}
-.login-subtitle{font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px}
+.login-subtitle{font-size:11px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
 .login-owner{font-size:10px;font-family:var(--mono);color:var(--text3);margin-bottom:16px;opacity:.6}
-
-/* Tabs */
 .tab-switcher{display:flex;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:22px;gap:4px}
 .tab-btn{flex:1;padding:8px;border:none;background:transparent;color:var(--text3);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;border-radius:7px;cursor:pointer;transition:all .15s}
 .tab-btn.active{background:var(--bg2);color:var(--accent2);box-shadow:0 1px 4px rgba(0,0,0,.4)}
-
 .login-field{margin-bottom:12px}
 .login-label{display:block;font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:5px}
 .login-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .15s}
@@ -50,8 +41,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--b
 .span-2{grid-column:1/-1}
 .signup-note{margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono);text-align:center;line-height:1.6}
 .signup-note span{color:var(--purple)}
-
-/* ── SHELL ── */
 .shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:56px 1fr;height:100vh;overflow:hidden;padding-bottom:32px}
 .topbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 24px;background:var(--bg2);border-bottom:1px solid var(--border);z-index:10}
 .logo{font-family:var(--head);font-size:18px;font-weight:800;color:var(--accent2);letter-spacing:-.5px}
@@ -145,91 +134,46 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 </style>
 </head>
 <body>
-
-<!-- Watermark -->
 <div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
 
-<!-- ══ LOGIN / SIGNUP SCREEN ══ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">RTMS</div>
     <div class="login-subtitle">Road Traffic Management System</div>
     <div class="login-owner">© SEUSHI, ANWAR &middot; 2025 &middot; Dar es Salaam, Tanzania</div>
-
     <div class="tab-switcher">
       <button class="tab-btn active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
       <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
     </div>
-
-    <!-- SIGN IN FORM -->
     <div id="signin-form">
       <div class="login-error" id="login-error"></div>
-      <div class="login-field">
-        <label class="login-label">Username</label>
-        <input class="login-input" id="username" type="text" placeholder="your.username" autocomplete="username" onkeydown="if(event.key==='Enter')login()"/>
-      </div>
-      <div class="login-field">
-        <label class="login-label">Password</label>
-        <input class="login-input" id="password" type="password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')login()"/>
-      </div>
+      <div class="login-field"><label class="login-label">Username</label><input class="login-input" id="username" type="text" placeholder="your.username" autocomplete="username" onkeydown="if(event.key==='Enter')login()"/></div>
+      <div class="login-field"><label class="login-label">Password</label><input class="login-input" id="password" type="password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')login()"/></div>
       <button class="login-btn" id="login-btn" onclick="login()">Sign In</button>
-      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--text3);font-family:var(--mono)">
-        No account? <span style="color:var(--accent2);cursor:pointer" onclick="switchTab('signup')">Create one free</span>
-      </div>
+      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--text3);font-family:var(--mono)">No account? <span style="color:var(--accent2);cursor:pointer" onclick="switchTab('signup')">Create one free</span></div>
     </div>
-
-    <!-- SIGN UP FORM -->
     <div id="signup-form" style="display:none">
       <div class="login-error" id="signup-error"></div>
       <div class="login-success" id="signup-success"></div>
       <div class="two-col">
-        <div class="login-field span-2">
-          <label class="login-label">Full Name *</label>
-          <input class="login-input" id="reg-fullname" type="text" placeholder="Juma Hassan Kombo" style="font-family:var(--body)"/>
-        </div>
-        <div class="login-field">
-          <label class="login-label">Username *</label>
-          <input class="login-input" id="reg-username" type="text" placeholder="jumahassan"/>
-        </div>
-        <div class="login-field">
-          <label class="login-label">Phone *</label>
-          <input class="login-input" id="reg-phone" type="tel" placeholder="+255712345678"/>
-        </div>
-        <div class="login-field span-2">
-          <label class="login-label">Email</label>
-          <input class="login-input" id="reg-email" type="email" placeholder="your@email.com" style="font-family:var(--body)"/>
-        </div>
-        <div class="login-field span-2">
-          <label class="login-label">National ID</label>
-          <input class="login-input" id="reg-nid" placeholder="19900101-XXXXX-XXXXX-X"/>
-        </div>
-        <div class="login-field">
-          <label class="login-label">Password *</label>
-          <input class="login-input" id="reg-password" type="password" placeholder="Min 6 characters"/>
-        </div>
-        <div class="login-field">
-          <label class="login-label">Confirm Password *</label>
-          <input class="login-input" id="reg-confirm" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')register()"/>
-        </div>
+        <div class="login-field span-2"><label class="login-label">Full Name *</label><input class="login-input" id="reg-fullname" type="text" placeholder="Juma Hassan Kombo" style="font-family:var(--body)"/></div>
+        <div class="login-field"><label class="login-label">Username *</label><input class="login-input" id="reg-username" type="text" placeholder="jumahassan"/></div>
+        <div class="login-field"><label class="login-label">Phone *</label><input class="login-input" id="reg-phone" type="tel" placeholder="+255712345678"/></div>
+        <div class="login-field span-2"><label class="login-label">Email</label><input class="login-input" id="reg-email" type="email" placeholder="your@email.com" style="font-family:var(--body)"/></div>
+        <div class="login-field span-2"><label class="login-label">National ID</label><input class="login-input" id="reg-nid" placeholder="19900101-XXXXX-XXXXX-X"/></div>
+        <div class="login-field"><label class="login-label">Password *</label><input class="login-input" id="reg-password" type="password" placeholder="Min 6 characters"/></div>
+        <div class="login-field"><label class="login-label">Confirm Password *</label><input class="login-input" id="reg-confirm" type="password" placeholder="Repeat password" onkeydown="if(event.key==='Enter')register()"/></div>
       </div>
       <button class="login-btn" id="reg-btn" onclick="register()">Create My Account</button>
-      <div class="signup-note">
-        Your account will be created as a <span>Vehicle Owner</span> account.<br>
-        Contact admin to request staff access.
-      </div>
-      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--text3);font-family:var(--mono)">
-        Already have an account? <span style="color:var(--accent2);cursor:pointer" onclick="switchTab('signin')">Sign in</span>
-      </div>
+      <div class="signup-note">Your account will be created as a <span>Vehicle Owner</span> account.<br>Contact admin to request staff access.</div>
+      <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--text3);font-family:var(--mono)">Already have an account? <span style="color:var(--accent2);cursor:pointer" onclick="switchTab('signin')">Sign in</span></div>
     </div>
-
-    <div class="login-footer">
-      <div class="login-dot"></div>
-      <span class="login-footer-text">RTMS v2.0 &middot; Developed by SEUSHI, ANWAR</span>
-    </div>
+    <div class="login-footer"><div class="login-dot"></div><span class="login-footer-text">RTMS v2.0 &middot; Developed by SEUSHI, ANWAR</span></div>
   </div>
 </div>
 
-<!-- ══ STAFF DASHBOARD (ADMIN / OFFICER / CASHIER) ══ -->
+<!-- STAFF DASHBOARD -->
 <div class="shell" id="staff-dashboard" style="display:none">
   <header class="topbar">
     <div class="logo">RTMS</div>
@@ -245,7 +189,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
   <main class="main" id="staff-main"></main>
 </div>
 
-<!-- ══ USER PORTAL (car owners) ══ -->
+<!-- USER PORTAL -->
 <div class="shell" id="user-portal" style="display:none">
   <header class="topbar">
     <div class="logo">RTMS</div>
@@ -263,9 +207,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     <div class="nav-section">Help</div>
     <div class="nav-item" onclick="showToast('Contact: rtms@police.go.tz','')"><span class="nav-icon">&#x1F4DE;</span> Contact Support</div>
     <div class="nav-section">System</div>
-    <div style="padding:12px 20px;font-size:10px;font-family:var(--mono);color:var(--text3);line-height:1.8;opacity:.6">
-      &copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam
-    </div>
+    <div style="padding:12px 20px;font-size:10px;font-family:var(--mono);color:var(--text3);line-height:1.8;opacity:.6">&copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam</div>
   </nav>
   <main class="main" id="user-main"></main>
 </div>
@@ -278,7 +220,6 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     <div class="modal-actions" id="modal-actions"></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="vehicle-detail-modal">
   <div class="modal" style="max-width:640px">
     <div class="modal-hdr"><span class="modal-title" id="vd-title">Vehicle Info</span><div class="modal-close" onclick="closeModal('vehicle-detail-modal')">&#x2715;</div></div>
@@ -286,7 +227,6 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     <div class="modal-actions" id="vd-actions"></div>
   </div>
 </div>
-
 <div class="modal-overlay" id="vehicle-modal">
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title">Register New Vehicle</span><div class="modal-close" onclick="closeModal('vehicle-modal')">&#x2715;</div></div>
@@ -294,7 +234,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div style="grid-column:1/-1"><label class="field-label">Plate Number *</label><input class="field-input" id="v-plate" placeholder="T123ABC" style="text-transform:uppercase"/></div>
         <div style="grid-column:1/-1"><label class="field-label">Owner Full Name *</label><input class="field-input" id="v-name" placeholder="Juma Hassan" style="font-family:var(--body)"/></div>
-        <div><label class="field-label">Phone *</label><input class="field-input" id="v-phone" placeholder="+255712345678"/></div>
+        <div><label class="field-label">Phone</label><input class="field-input" id="v-phone" placeholder="+255712345678"/></div>
         <div><label class="field-label">Email</label><input class="field-input" id="v-email" type="email" placeholder="owner@email.com" style="font-family:var(--body)"/></div>
         <div><label class="field-label">National ID</label><input class="field-input" id="v-nid" placeholder="19900101-XXXXX-X"/></div>
         <div style="grid-column:1/-1"><label class="field-label">Address</label><input class="field-input" id="v-addr" placeholder="Msasani, Dar es Salaam" style="font-family:var(--body)"/></div>
@@ -304,7 +244,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
         <div><label class="field-label">Year</label><input class="field-input" id="v-year" type="number" placeholder="2020"/></div>
         <div><label class="field-label">Chassis No.</label><input class="field-input" id="v-chassis" placeholder="JTDBR32E..."/></div>
         <div><label class="field-label">Engine No.</label><input class="field-input" id="v-engine" placeholder="2NZ-FE..."/></div>
-        <div style="grid-column:1/-1"><label class="field-label">Registration Expiry *</label><input class="field-input" id="v-expiry" type="date" style="color-scheme:dark"/></div>
+        <div style="grid-column:1/-1"><label class="field-label">Registration Expiry</label><input class="field-input" id="v-expiry" type="date" style="color-scheme:dark"/></div>
       </div>
     </div>
     <div class="modal-actions">
@@ -313,7 +253,6 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="violation-modal">
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title">Log New Violation</span><div class="modal-close" onclick="closeModal('violation-modal')">&#x2715;</div></div>
@@ -322,14 +261,14 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
         <div style="grid-column:1/-1"><label class="field-label">Plate Number *</label><input class="field-input" id="vl-plate" placeholder="T123ABC" style="text-transform:uppercase"/></div>
         <div style="grid-column:1/-1"><label class="field-label">Violation Type *</label>
           <select class="field-input" id="vl-type">
-            <option value="RED_LIGHT">Red Light — TZS 20,000</option>
-            <option value="SPEEDING">Speeding — TZS 20,000</option>
+            <option value="RED_LIGHT">Red Light — TZS 150,000</option>
+            <option value="SPEEDING">Speeding — TZS 200,000</option>
             <option value="ILLEGAL_PARKING">Illegal Parking — TZS 50,000</option>
-            <option value="WRONG_WAY">Wrong Way — TZS 30,000</option>
+            <option value="WRONG_WAY">Wrong Way — TZS 300,000</option>
             <option value="NO_SEATBELT">No Seatbelt — TZS 30,000</option>
             <option value="PHONE_USE">Phone Use — TZS 50,000</option>
-            <option value="PEDESTRIAN_ZONE">Pedestrian Zone — TZS 15,000</option>
-            <option value="EXPIRED_PLATE">Expired Plate — TZS 50,000</option>
+            <option value="PEDESTRIAN_ZONE">Pedestrian Zone — TZS 100,000</option>
+            <option value="EXPIRED_PLATE">Expired Plate — TZS 80,000</option>
           </select>
         </div>
         <div><label class="field-label">Camera ID</label><input class="field-input" id="vl-camera" placeholder="CAM-001"/></div>
@@ -343,7 +282,6 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="add-user-modal">
   <div class="modal">
     <div class="modal-hdr"><span class="modal-title">Add New Staff User</span><div class="modal-close" onclick="closeModal('add-user-modal')">&#x2715;</div></div>
@@ -373,19 +311,8 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- Copyright bar -->
 <div class="copyright-bar">
-  <div>
-    <span>&#169;</span>
-    <span class="cp-name" style="margin:0 4px">SEUSHI, ANWAR</span>
-    <span class="cp-sep">|</span>
-    <span style="margin:0 4px">2025</span>
-    <span class="cp-sep">|</span>
-    <span style="margin:0 4px">Dar es Salaam, Tanzania</span>
-    <span class="cp-sep">|</span>
-    <span style="margin-left:4px">RTMS — Road Traffic Management System</span>
-  </div>
+  <div><span>&#169;</span><span class="cp-name" style="margin:0 4px">SEUSHI, ANWAR</span><span class="cp-sep">|</span><span style="margin:0 4px">2025</span><span class="cp-sep">|</span><span style="margin:0 4px">Dar es Salaam, Tanzania</span><span class="cp-sep">|</span><span style="margin-left:4px">RTMS — Road Traffic Management System</span></div>
   <div style="opacity:.4">All rights reserved. Unauthorized use prohibited.</div>
 </div>
 
@@ -394,7 +321,11 @@ const API = "https://rtms-traffic-system.onrender.com";
 let CURRENT_USER = {}, currentPage = 1, currentStatus = "", currentPlate = "";
 let userVehicles = [], userFines = [];
 
-// ══ TAB SWITCHER ══
+// ── Session duration: 30 days in ms ──────────────────────────
+// We store login time and keep user logged in for 30 days
+// regardless of JWT expiry — re-login only when token is truly rejected
+const SESSION_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 function switchTab(tab) {
   const isSignin = tab === "signin";
   document.getElementById("signin-form").style.display = isSignin ? "block" : "none";
@@ -406,7 +337,6 @@ function switchTab(tab) {
   document.getElementById("signup-success").style.display = "none";
 }
 
-// ══ SIGN IN ══
 async function login() {
   const btn = document.getElementById("login-btn");
   const errBox = document.getElementById("login-error");
@@ -429,7 +359,7 @@ async function login() {
       showLoginErr(data.error || "Login failed — check your username and password");
     }
   } catch(e) {
-    showLoginErr("Cannot reach server — make sure nodemon server.js is running");
+    showLoginErr("Cannot reach server at " + API);
   } finally {
     btn.disabled = false; btn.textContent = "Sign In";
   }
@@ -440,13 +370,11 @@ function showLoginErr(msg) {
   e.textContent = msg; e.style.display = "block";
 }
 
-// ══ SIGN UP ══
 async function register() {
-  const btn    = document.getElementById("reg-btn");
+  const btn = document.getElementById("reg-btn");
   const errBox = document.getElementById("signup-error");
   const sucBox = document.getElementById("signup-success");
   errBox.style.display = "none"; sucBox.style.display = "none";
-
   const fullname = document.getElementById("reg-fullname").value.trim();
   const username = document.getElementById("reg-username").value.trim().toLowerCase();
   const phone    = document.getElementById("reg-phone").value.trim();
@@ -454,84 +382,67 @@ async function register() {
   const nid      = document.getElementById("reg-nid").value.trim();
   const password = document.getElementById("reg-password").value;
   const confirm  = document.getElementById("reg-confirm").value;
-
-  if (!fullname || !username || !phone || !password) {
-    errBox.textContent = "Full name, username, phone and password are required";
-    errBox.style.display = "block"; return;
-  }
-  if (username.length < 3) {
-    errBox.textContent = "Username must be at least 3 characters";
-    errBox.style.display = "block"; return;
-  }
-  if (password.length < 6) {
-    errBox.textContent = "Password must be at least 6 characters";
-    errBox.style.display = "block"; return;
-  }
-  if (password !== confirm) {
-    errBox.textContent = "Passwords do not match — please check and try again";
-    errBox.style.display = "block"; return;
-  }
-
+  if (!fullname || !username || !phone || !password) { errBox.textContent="Full name, username, phone and password are required"; errBox.style.display="block"; return; }
+  if (username.length < 3) { errBox.textContent="Username must be at least 3 characters"; errBox.style.display="block"; return; }
+  if (password.length < 6) { errBox.textContent="Password must be at least 6 characters"; errBox.style.display="block"; return; }
+  if (password !== confirm) { errBox.textContent="Passwords do not match"; errBox.style.display="block"; return; }
   btn.disabled = true; btn.textContent = "Creating account...";
   try {
     const res = await fetch(API + "/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username, password,
-        full_name: fullname,
-        email: email || null,
-        phone,
-        national_id: nid || null
-      })
+      body: JSON.stringify({ username, password, full_name: fullname, email: email||null, phone, national_id: nid||null })
     });
     const data = await res.json();
     if (data.token) {
-      sucBox.textContent = "Account created successfully! Logging you in...";
-      sucBox.style.display = "block";
-      setTimeout(() => {
-        saveSession(data);
-        CURRENT_USER = data.user;
-        bootPortal();
-      }, 1500);
+      sucBox.textContent = "Account created! Logging you in..."; sucBox.style.display = "block";
+      setTimeout(() => { saveSession(data); CURRENT_USER = data.user; bootPortal(); }, 1500);
     } else {
-      errBox.textContent = data.error || "Registration failed — please try again";
-      errBox.style.display = "block";
+      errBox.textContent = data.error || "Registration failed"; errBox.style.display = "block";
     }
   } catch(e) {
-    errBox.textContent = "Cannot reach server — make sure nodemon server.js is running";
-    errBox.style.display = "block";
+    errBox.textContent = "Cannot reach server"; errBox.style.display = "block";
   } finally {
     btn.disabled = false; btn.textContent = "Create My Account";
   }
 }
 
 function saveSession(data) {
-  localStorage.setItem("rtms_token",    data.token);
-  localStorage.setItem("rtms_role",     data.user.role);
-  localStorage.setItem("rtms_username", data.user.username);
-  localStorage.setItem("rtms_fullname", data.user.full_name);
-  localStorage.setItem("rtms_badge",    data.user.badge_number || "");
+  localStorage.setItem("rtms_token",      data.token);
+  localStorage.setItem("rtms_role",       data.user.role);
+  localStorage.setItem("rtms_username",   data.user.username);
+  localStorage.setItem("rtms_fullname",   data.user.full_name);
+  localStorage.setItem("rtms_badge",      data.user.badge_number || "");
+  // Store login time — session lasts 30 days from this moment
+  localStorage.setItem("rtms_login_time", Date.now().toString());
+}
+
+function isSessionValid() {
+  const token     = localStorage.getItem("rtms_token");
+  const loginTime = parseInt(localStorage.getItem("rtms_login_time") || "0");
+  if (!token) return false;
+  // Check if 30-day session has expired
+  if (Date.now() - loginTime > SESSION_DURATION_MS) return false;
+  return true;
 }
 
 function logout() {
-  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge"]
+  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_login_time"]
     .forEach(k => localStorage.removeItem(k));
   document.getElementById("staff-dashboard").style.display = "none";
   document.getElementById("user-portal").style.display     = "none";
   document.getElementById("login-screen").style.display    = "flex";
-  document.getElementById("username").value  = "";
-  document.getElementById("password").value  = "";
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
   switchTab("signin");
 }
 
 function bootPortal() {
-  const role     = CURRENT_USER.role      || localStorage.getItem("rtms_role");
+  const role     = CURRENT_USER.role       || localStorage.getItem("rtms_role");
   const fullname = CURRENT_USER.full_name  || localStorage.getItem("rtms_fullname");
   const badge    = CURRENT_USER.badge_number || localStorage.getItem("rtms_badge");
   const username = CURRENT_USER.username   || localStorage.getItem("rtms_username");
   document.getElementById("login-screen").style.display = "none";
-
   if (role === "USER") {
     document.getElementById("user-portal").style.display = "grid";
     document.getElementById("user-portal-badge").textContent = "👤 " + (fullname || username);
@@ -543,8 +454,7 @@ function bootPortal() {
       role === "CASHIER" ? "Cashier: " + fullname :
                            "Officer: " + fullname + (badge ? " | " + badge : "");
     document.getElementById("portal-label").textContent =
-      role === "ADMIN" ? "Admin Portal" :
-      role === "CASHIER" ? "Cashier Portal" : "Officer Portal";
+      role === "ADMIN" ? "Admin Portal" : role === "CASHIER" ? "Cashier Portal" : "Officer Portal";
     buildSidebar(role);
     renderStatsAndFines();
   }
@@ -555,17 +465,16 @@ async function apiFetch(path, opts = {}) {
   const token = localStorage.getItem("rtms_token");
   try {
     const r = await fetch(API + path, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token ? "Bearer " + token : ""
-      },
+      headers: { "Content-Type": "application/json", "Authorization": token ? "Bearer " + token : "" },
       ...opts
     });
     const el = document.getElementById("conn-warn");
     if (el) el.style.display = "none";
-    if (r.status === 401 || r.status === 403) {
+    // Only logout on 401 — means server rejected the token
+    // Do NOT logout on other errors
+    if (r.status === 401) {
       showToast("Session expired — please log in again", "error");
-      setTimeout(logout, 4000);
+      setTimeout(logout, 3000);
       return null;
     }
     return await r.json();
@@ -576,7 +485,6 @@ async function apiFetch(path, opts = {}) {
   }
 }
 
-// ── Sidebar ───────────────────────────────────────────────────
 function buildSidebar(role) {
   const isAdmin   = role === "ADMIN";
   const isOfficer = role === "OFFICER";
@@ -585,7 +493,7 @@ function buildSidebar(role) {
     '<div class="nav-item active" onclick="showStaffTab(\'fines\',this)"><span class="nav-icon">&#x1F4CB;</span> All Fines <span class="nav-count" id="nav-total">-</span></div>' +
     '<div class="nav-item" onclick="showStaffTab(\'overdue\',this)"><span class="nav-icon">&#x23F0;</span> Overdue <span class="nav-count red" id="nav-overdue">-</span></div>' +
     '<div class="nav-item" onclick="showStaffTab(\'appeals\',this)"><span class="nav-icon">&#x2696;</span> Appeals <span class="nav-count amber" id="nav-appeals">-</span></div>' +
-    (isAdmin || isOfficer ?
+    ((isAdmin||isOfficer) ?
       '<div class="nav-section">Actions</div>' +
       '<div class="nav-item" onclick="showStaffTab(\'vehicles\',this)"><span class="nav-icon">&#x1F697;</span> Vehicles</div>' +
       '<div class="nav-item" onclick="openModal(\'violation-modal\')"><span class="nav-icon">&#x1F4F8;</span> Log Violation</div>' +
@@ -595,9 +503,7 @@ function buildSidebar(role) {
       '<div class="nav-item" onclick="showStaffTab(\'users\',this)"><span class="nav-icon">&#x1F465;</span> Manage Users</div>' : '') +
     '<div class="nav-section">System</div>' +
     '<div class="nav-item" onclick="renderStatsAndFines()"><span class="nav-icon">&#x1F504;</span> Refresh</div>' +
-    '<div style="padding:12px 20px;font-size:10px;font-family:var(--mono);color:var(--text3);line-height:1.8;opacity:.6;margin-top:auto">' +
-      '&copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam' +
-    '</div>';
+    '<div style="padding:12px 20px;font-size:10px;font-family:var(--mono);color:var(--text3);line-height:1.8;opacity:.6;margin-top:auto">&copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam</div>';
 }
 
 async function renderStatsAndFines() {
@@ -611,12 +517,12 @@ async function loadStats() {
   const s = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   s("s-total",     Number(d.total_fines).toLocaleString());
   s("s-overdue",   Number(d.overdue).toLocaleString());
-  s("s-appeal",    Number(d.appealed || d.under_appeal || 0).toLocaleString());
+  s("s-appeal",    Number(d.appealed||0).toLocaleString());
   const col = Number(d.total_collected_tzs);
   s("s-collected", col >= 1e6 ? (col/1e6).toFixed(1)+"M" : (col/1000).toFixed(0)+"K");
   s("nav-total",   d.total_fines);
   s("nav-overdue", d.overdue);
-  s("nav-appeals", d.appealed || d.under_appeal || 0);
+  s("nav-appeals", d.appealed||0);
 }
 
 function showStaffTab(tab, el) {
@@ -633,7 +539,7 @@ function showStaffTab(tab, el) {
 function renderFinesView(title, status) {
   currentStatus = status;
   document.getElementById("staff-main").innerHTML =
-    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API — run nodemon server.js</div>' +
+    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>' +
     '<div class="stats-row">' +
       '<div class="stat-card blue"><div class="stat-label">Total Fines</div><div class="stat-value" id="s-total">-</div><div class="stat-sub">all time</div></div>' +
       '<div class="stat-card green"><div class="stat-label">Collected (TZS)</div><div class="stat-value" id="s-collected">-</div><div class="stat-sub">paid</div></div>' +
@@ -641,10 +547,8 @@ function renderFinesView(title, status) {
       '<div class="stat-card amber"><div class="stat-label">Under Appeal</div><div class="stat-value" id="s-appeal">-</div><div class="stat-sub">reviewing</div></div>' +
     '</div>' +
     '<div>' +
-      '<div class="section-hdr" style="margin-bottom:12px">' +
-        '<div><div class="section-title" id="table-title">' + title + '</div><div class="section-sub" id="table-sub">Loading...</div></div>' +
-        '<button class="btn btn-primary" onclick="loadStats();loadFines()">Refresh</button>' +
-      '</div>' +
+      '<div class="section-hdr" style="margin-bottom:12px"><div><div class="section-title" id="table-title">' + title + '</div><div class="section-sub" id="table-sub">Loading...</div></div>' +
+      '<button class="btn btn-primary" onclick="loadStats();loadFines()">Refresh</button></div>' +
       '<div class="toolbar" style="margin-bottom:12px">' +
         '<div class="search-wrap"><span class="search-icon">&#x1F50D;</span>' +
         '<input type="text" id="search-plate" placeholder="Search by plate e.g. T123ABC" onkeydown="if(event.key===\'Enter\')searchPlate()"/></div>' +
@@ -670,7 +574,8 @@ function renderFinesView(title, status) {
       '</div>' +
     '</div>';
   loadStats(); loadFines();
-  setInterval(loadStats, 30000);
+  // Auto-refresh stats every 60 seconds — not session check
+  setInterval(loadStats, 60000);
 }
 
 async function loadFines() {
@@ -683,16 +588,12 @@ async function loadFines() {
   if (currentStatus) url += "&status=" + currentStatus;
   if (currentPlate)  url += "&plate="  + currentPlate;
   const d = await apiFetch(url);
-  if (!d) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div></td></tr>';
-    return;
-  }
+  if (!d) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div></td></tr>'; return; }
   const sub = document.getElementById("table-sub");
   if (sub) sub.textContent = d.data.length + " records — page " + d.page;
   if (!d.data.length) {
     tbody.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-text">No fines found</div></div></td></tr>';
-    const pg = document.getElementById("pagination");
-    if (pg) pg.style.display = "none";
+    const pg = document.getElementById("pagination"); if (pg) pg.style.display = "none";
     return;
   }
   tbody.innerHTML = d.data.map(f =>
@@ -724,8 +625,8 @@ async function openFine(id) {
   document.getElementById("modal-body").innerHTML =
     '<div style="text-align:center;padding:8px 0 16px"><div class="amount large">TZS ' + total.toLocaleString() + '</div><div style="margin-top:6px">' + statusBadge(d.status) + '</div></div><div>' +
     row("Fine Number", d.fine_number) + row("Plate", d.plate_number) + row("Owner", d.owner_name) +
-    row("Phone", d.owner_phone || "--") + row("Email", d.owner_email || "--") +
-    row("Vehicle", [d.vehicle_make,d.vehicle_model,d.vehicle_color].filter(Boolean).join(" ") || "--") +
+    row("Phone", d.owner_phone||"--") + row("Email", d.owner_email||"--") +
+    row("Vehicle", [d.vehicle_make,d.vehicle_model,d.vehicle_color].filter(Boolean).join(" ")||"--") +
     row("Violation", (d.violation_type||"").replace(/_/g," ")) +
     row("Occurred", d.occurred_at ? new Date(d.occurred_at).toLocaleString() : "--") +
     row("Base Fine", "TZS " + Number(d.amount_tzs).toLocaleString()) +
@@ -752,7 +653,7 @@ async function openFine(id) {
 function row(k,v){ return '<div class="detail-row"><span class="detail-key">'+k+'</span><span class="detail-val">'+v+'</span></div>'; }
 
 async function recordPayment(id, fineNum) {
-  const method = prompt("Payment method for "+fineNum+"?\nMOBILE_MONEY / BANK_TRANSFER / CASH / CARD","MOBILE_MONEY");
+  const method = prompt("Payment method for "+fineNum+"?\nMOBILE_MONEY / BANK_TRANSFER / CASH / CARD","CASH");
   if (!method) return;
   const amount = prompt("Amount paid (TZS):");
   if (!amount) return;
@@ -760,28 +661,28 @@ async function recordPayment(id, fineNum) {
     method: "POST",
     body: JSON.stringify({ amount_tzs:Number(amount), payment_method:method.trim().toUpperCase(), provider:"Counter", transaction_ref:"TXN-"+Date.now() })
   });
-  if (r && !r.error) { showToast("Payment recorded successfully", "success"); closeModal("fine-modal"); loadFines(); loadStats(); }
-  else showToast("Error: " + (r?.error||"Unknown"), "error");
+  if (r && !r.error) { showToast("Payment recorded successfully","success"); closeModal("fine-modal"); loadFines(); loadStats(); }
+  else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
 async function appealFine(id) {
   const reason = prompt("State the reason for this appeal:");
   if (!reason) return;
-  const r = await apiFetch("/fines/"+id+"/appeal", { method:"POST", body:JSON.stringify({ reason, supporting_docs:[] }) });
-  if (r && !r.error) { showToast("Appeal filed successfully", "success"); closeModal("fine-modal"); loadFines(); loadStats(); }
-  else showToast("Error: " + (r?.error||"Unknown"), "error");
+  const r = await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});
+  if (r && !r.error) { showToast("Appeal filed successfully","success"); closeModal("fine-modal"); loadFines(); loadStats(); }
+  else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
 async function dismissFine(id) {
   if (!confirm("Cancel this fine? This cannot be undone.")) return;
-  const r = await apiFetch("/fines/"+id+"/cancel", { method:"POST" });
-  if (r && !r.error) { showToast("Fine cancelled", "success"); closeModal("fine-modal"); loadFines(); loadStats(); }
-  else showToast("Error: " + (r?.error||"Unknown"), "error");
+  const r = await apiFetch("/fines/"+id+"/cancel",{method:"POST"});
+  if (r && !r.error) { showToast("Fine cancelled","success"); closeModal("fine-modal"); loadFines(); loadStats(); }
+  else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-function searchPlate() { currentPlate = (document.getElementById("search-plate")?.value||"").trim().toUpperCase(); currentPage=1; loadFines(); }
-function clearSearch()  { currentPlate=""; currentStatus=""; currentPage=1; const sp=document.getElementById("search-plate"); if(sp)sp.value=""; const sf=document.getElementById("status-filter"); if(sf)sf.value=""; loadFines(); }
-function changePage(d)  { currentPage=Math.max(1,currentPage+d); loadFines(); }
+function searchPlate(){ currentPlate=(document.getElementById("search-plate")?.value||"").trim().toUpperCase(); currentPage=1; loadFines(); }
+function clearSearch(){ currentPlate=""; currentStatus=""; currentPage=1; const sp=document.getElementById("search-plate"); if(sp)sp.value=""; const sf=document.getElementById("status-filter"); if(sf)sf.value=""; loadFines(); }
+function changePage(d){ currentPage=Math.max(1,currentPage+d); loadFines(); }
 
 async function renderVehiclesView() {
   document.getElementById("staff-main").innerHTML =
@@ -816,7 +717,7 @@ async function loadVehicles() {
 
 async function openVehicleDetail(plate) {
   const d = await apiFetch("/vehicles/" + plate);
-  if (!d || d.error) { showToast("Vehicle not found", "error"); return; }
+  if (!d || d.error) { showToast("Vehicle not found","error"); return; }
   document.getElementById("vd-title").textContent = "Vehicle — " + d.plate_number;
   document.getElementById("vd-body").innerHTML =
     '<div style="background:var(--bg3);border-radius:10px;padding:16px;margin-bottom:8px">' +
@@ -830,19 +731,17 @@ async function openVehicleDetail(plate) {
       '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px;text-align:center">' +
         '<div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--amber)">'+(d.issued_fines||0)+'</div>' +
         '<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">PENDING</div></div>' +
-    '</div>' +
-    '<div>' +
-      '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Owner Information</div>' +
-      row("Full Name",   d.owner_name) + row("Phone", d.owner_phone||"--") + row("Email", d.owner_email||"--") +
-      row("National ID", d.owner_national_id||"--") + row("Address", d.owner_address||"--") +
-      '<div style="font-size:11px;font-weight:700;color:var(--text2);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.05em">Vehicle Details</div>' +
-      row("Chassis No.", d.chassis_number||"--") + row("Engine No.", d.engine_number||"--") +
-      row("Reg. Expiry", d.registration_expiry ? d.registration_expiry.split("T")[0] : "--") +
-      row("Total Fines", d.total_fines||0) + row("Fines Paid", d.paid_fines||0) +
-      row("Outstanding", "TZS " + Number(d.total_outstanding||0).toLocaleString()) +
-    '</div>';
+    '</div><div>' +
+    '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Owner Information</div>' +
+    row("Full Name",d.owner_name)+row("Phone",d.owner_phone||"--")+row("Email",d.owner_email||"--")+
+    row("National ID",d.owner_national_id||"--")+row("Address",d.owner_address||"--")+
+    '<div style="font-size:11px;font-weight:700;color:var(--text2);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.05em">Vehicle Details</div>' +
+    row("Chassis No.",d.chassis_number||"--")+row("Engine No.",d.engine_number||"--")+
+    row("Reg. Expiry",d.registration_expiry?d.registration_expiry.split("T")[0]:"--")+
+    row("Total Fines",d.total_fines||0)+row("Fines Paid",d.paid_fines||0)+
+    row("Outstanding","TZS "+Number(d.total_outstanding||0).toLocaleString())+'</div>';
   document.getElementById("vd-actions").innerHTML =
-    '<button class="btn btn-primary" onclick="closeModal(\'vehicle-detail-modal\');renderFinesView(\'Fines\',\'\');currentPlate=\'' + d.plate_number + '\';setTimeout(loadFines,50)">View Fines</button>' +
+    '<button class="btn btn-primary" onclick="closeModal(\'vehicle-detail-modal\');renderFinesView(\'Fines\',\'\');currentPlate=\''+d.plate_number+'\';setTimeout(loadFines,50)">View Fines</button>' +
     '<button class="btn btn-ghost" onclick="closeModal(\'vehicle-detail-modal\')">Close</button>';
   openModal("vehicle-detail-modal");
 }
@@ -862,8 +761,7 @@ async function loadUsers() {
   if (!tbody) return;
   if (!d) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty">Error loading users</div></td></tr>'; return; }
   tbody.innerHTML = d.data.map(u =>
-    '<tr>' +
-    '<td class="mono">'+u.username+'</td><td class="primary">'+u.full_name+'</td><td>'+roleBadge(u.role)+'</td>' +
+    '<tr><td class="mono">'+u.username+'</td><td class="primary">'+u.full_name+'</td><td>'+roleBadge(u.role)+'</td>' +
     '<td class="mono">'+(u.badge_number||"--")+'</td>' +
     '<td class="mono" style="font-size:11px">'+(u.email||"--")+'</td>' +
     '<td class="mono" style="font-size:11px">'+(u.last_login?new Date(u.last_login).toLocaleDateString():"Never")+'</td>' +
@@ -872,11 +770,11 @@ async function loadUsers() {
   ).join("");
 }
 
-async function toggleUser(id, uname, active) {
-  if (!confirm((active==="true"?"Disable":"Enable") + " user " + uname + "?")) return;
-  const r = await apiFetch("/users/"+id+"/toggle", { method:"PATCH" });
-  if (r && !r.error) { showToast("User status updated", "success"); loadUsers(); }
-  else showToast("Error: " + (r?.error||"Unknown"), "error");
+async function toggleUser(id,uname,active) {
+  if (!confirm((active==="true"?"Disable":"Enable")+" user "+uname+"?")) return;
+  const r = await apiFetch("/users/"+id+"/toggle",{method:"PATCH"});
+  if (r && !r.error) { showToast("User status updated","success"); loadUsers(); }
+  else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
 async function submitUser() {
@@ -889,43 +787,37 @@ async function submitUser() {
     role:         document.getElementById("u-role").value,
     badge_number: document.getElementById("u-badge").value.trim()
   };
-  if (!body.username || !body.password || !body.full_name) {
-    showToast("Username, password and full name required", "error"); return;
-  }
-  const r = await apiFetch("/users", { method:"POST", body:JSON.stringify(body) });
-  if (r && !r.error) { showToast("User created: "+body.username, "success"); closeModal("add-user-modal"); loadUsers(); }
-  else showToast("Error: "+(r?.error||"Unknown"), "error");
+  if (!body.username || !body.password || !body.full_name) { showToast("Username, password and full name required","error"); return; }
+  const r = await apiFetch("/users",{method:"POST",body:JSON.stringify(body)});
+  if (r && !r.error) { showToast("User created: "+body.username,"success"); closeModal("add-user-modal"); loadUsers(); }
+  else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
 async function submitVehicle() {
   const body = {
     plate_number:       document.getElementById("v-plate").value.trim().toUpperCase(),
     owner_name:         document.getElementById("v-name").value.trim(),
-    owner_phone:        document.getElementById("v-phone").value.trim(),
-    owner_email:        document.getElementById("v-email").value.trim(),
-    owner_national_id:  document.getElementById("v-nid").value.trim(),
-    owner_address:      document.getElementById("v-addr").value.trim(),
-    make:               document.getElementById("v-make").value.trim(),
-    model:              document.getElementById("v-model").value.trim(),
-    color:              document.getElementById("v-color").value.trim(),
+    owner_phone:        document.getElementById("v-phone").value.trim() || null,
+    owner_email:        document.getElementById("v-email").value.trim() || null,
+    owner_national_id:  document.getElementById("v-nid").value.trim() || null,
+    owner_address:      document.getElementById("v-addr").value.trim() || null,
+    make:               document.getElementById("v-make").value.trim() || null,
+    model:              document.getElementById("v-model").value.trim() || null,
+    color:              document.getElementById("v-color").value.trim() || null,
     year:               parseInt(document.getElementById("v-year").value) || null,
-    chassis_number:     document.getElementById("v-chassis").value.trim(),
-    engine_number:      document.getElementById("v-engine").value.trim(),
-    registration_expiry:document.getElementById("v-expiry").value
+    chassis_number:     document.getElementById("v-chassis").value.trim() || null,
+    engine_number:      document.getElementById("v-engine").value.trim() || null,
+    registration_expiry:document.getElementById("v-expiry").value || null
   };
-  if (!body.plate_number || !body.owner_name || !body.owner_phone || !body.registration_expiry) {
-    showToast("Fill in all required fields", "error"); return;
-  }
-  const r = await apiFetch("/vehicles", { method:"POST", body:JSON.stringify(body) });
+  if (!body.plate_number || !body.owner_name) { showToast("Plate number and owner name are required","error"); return; }
+  const r = await apiFetch("/vehicles",{method:"POST",body:JSON.stringify(body)});
   if (r && !r.error) {
-    showToast("Vehicle registered: "+body.plate_number, "success");
+    showToast("Vehicle registered: "+body.plate_number,"success");
     closeModal("vehicle-modal");
     ["v-plate","v-name","v-phone","v-email","v-nid","v-addr","v-make","v-model","v-color","v-year","v-chassis","v-engine","v-expiry"]
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
     if (document.getElementById("v-tbody")) loadVehicles();
-  } else {
-    showToast("Error: "+(r?.error||"Unknown"), "error");
-  }
+  } else { showToast("Error: "+(r?.error||"Unknown"),"error"); }
 }
 
 async function submitViolation() {
@@ -937,26 +829,21 @@ async function submitViolation() {
     evidence_image_url: document.getElementById("vl-img").value.trim() || "https://placeholder.com/evidence.jpg",
     occurred_at:        new Date().toISOString()
   };
-  if (!body.plate_number) { showToast("Enter a plate number", "error"); return; }
-  const r = await apiFetch("/violations", { method:"POST", body:JSON.stringify(body) });
+  if (!body.plate_number) { showToast("Enter a plate number","error"); return; }
+  const r = await apiFetch("/violations",{method:"POST",body:JSON.stringify(body)});
   if (r && !r.error && r.fine) {
-    showToast("Fine issued: "+r.fine.fine_number, "success");
+    showToast("Fine issued: "+r.fine.fine_number,"success");
     closeModal("violation-modal");
     loadFines(); loadStats();
-  } else {
-    showToast("Error: "+(r?.error||r?.message||"Server error"), "error");
-  }
+  } else { showToast("Error: "+(r?.error||r?.message||"Server error"),"error"); }
 }
 
-// ══ USER PORTAL ══
+// ── USER PORTAL ──────────────────────────────────────────────
 async function userLoadVehicles() {
   const main = document.getElementById("user-main");
   main.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading your vehicles...</div>';
   const [vData, fData] = await Promise.all([apiFetch("/my/vehicles"), apiFetch("/my/fines")]);
-  if (!vData || !fData) {
-    main.innerHTML = '<div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div>';
-    return;
-  }
+  if (!vData || !fData) { main.innerHTML = '<div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div>'; return; }
   userVehicles = vData.data; userFines = fData.data;
   const u = fData.user || {};
   const unpaid = userFines.filter(f => ["ISSUED","OVERDUE"].includes(f.status)).length;
@@ -967,15 +854,15 @@ async function userLoadVehicles() {
       '<div class="profile-avatar">'+initials+'</div>' +
       '<div><div class="profile-name">'+(u.full_name||"")+'</div><div class="profile-meta">'+(u.email||"")+(u.phone?" | "+u.phone:"")+'</div></div>' +
       '<div style="margin-left:auto;text-align:right">' +
-        '<div style="font-family:var(--head);font-size:22px;font-weight:700;color:'+(unpaid?"var(--red)":"var(--green))")+'">'+(unpaid)+'</div>' +
+        '<div style="font-family:var(--head);font-size:22px;font-weight:700;color:'+(unpaid?'var(--red)':'var(--green)')+'">'+unpaid+'</div>' +
         '<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">UNPAID FINE'+(unpaid!==1?"S":"")+'</div>' +
       '</div>' +
     '</div>' +
     '<div><div class="section-title" style="margin-bottom:12px">My Vehicles ('+userVehicles.length+')</div>' +
-    (userVehicles.length === 0
-      ? '<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.<br>Contact the traffic office to link your vehicle.</div></div>'
+    (userVehicles.length===0
+      ? '<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.</div></div>'
       : userVehicles.map(v =>
-          '<div class="vehicle-card" onclick="userOpenVehicle(\'' + v.plate_number + '\')">' +
+          '<div class="vehicle-card" onclick="userOpenVehicle(\''+v.plate_number+'\')">' +
             '<div style="display:flex;align-items:flex-start;justify-content:space-between">' +
               '<div class="vehicle-plate">'+v.plate_number+'</div>' +
               '<div style="text-align:right">' +
@@ -986,21 +873,20 @@ async function userLoadVehicles() {
             '</div>' +
             '<div class="vehicle-info"><span>'+([v.make,v.model].filter(Boolean).join(" ")||"Unknown")+'</span><span>'+(v.color||"--")+'</span><span>'+(v.year||"--")+'</span><span>'+(v.total_fines||0)+' fine'+(v.total_fines!=1?"s":"")+'</span></div>' +
           '</div>'
-        ).join("")) +
-    '</div>';
+        ).join("")) + '</div>';
 }
 
-function userShowTab(tab, el) {
-  document.querySelectorAll("#user-portal .nav-item").forEach(n => n.classList.remove("active"));
-  if (el) el.classList.add("active");
-  if (tab === "vehicles") userLoadVehicles();
-  else if (tab === "fines") userLoadFinesView();
+function userShowTab(tab,el) {
+  document.querySelectorAll("#user-portal .nav-item").forEach(n=>n.classList.remove("active"));
+  if(el)el.classList.add("active");
+  if(tab==="vehicles") userLoadVehicles();
+  else if(tab==="fines") userLoadFinesView();
 }
 
 function userLoadFinesView() {
   document.getElementById("user-main").innerHTML =
     '<div class="section-hdr" style="margin-bottom:12px"><div><div class="section-title">My Fines ('+userFines.length+')</div></div></div>' +
-    (userFines.length === 0
+    (userFines.length===0
       ? '<div class="empty"><div class="empty-icon">&#x2705;</div><div class="empty-text">No fines on record — drive safe!</div></div>'
       : '<div class="table-wrap"><table><thead><tr><th>Fine #</th><th>Plate</th><th>Violation</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>' +
         userFines.map(f =>
@@ -1010,27 +896,23 @@ function userLoadFinesView() {
           '<td>'+statusBadge(f.status)+'</td>' +
           '<td class="mono">'+(f.due_date?f.due_date.split("T")[0]:"--")+'</td>' +
           '<td>'+( ["ISSUED","OVERDUE","PENDING"].includes(f.status)
-            ? '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="userAppeal(\'' + f.id + '\',\'' + f.fine_number + '\')">Appeal</button>'
+            ? '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="userAppeal(\''+f.id+'\',\''+f.fine_number+'\')">Appeal</button>'
             : "--" )+'</td></tr>'
-        ).join("") +
-        '</tbody></table></div>');
+        ).join("") + '</tbody></table></div>');
 }
 
 async function userOpenVehicle(plate) {
-  const v = userVehicles.find(x => x.plate_number === plate);
-  if (!v) return;
-  const vFines = userFines.filter(f => f.plate_number === plate);
+  const v = userVehicles.find(x=>x.plate_number===plate); if (!v) return;
+  const vFines = userFines.filter(f=>f.plate_number===plate);
   document.getElementById("vd-title").textContent = "My Vehicle — " + v.plate_number;
   document.getElementById("vd-body").innerHTML =
     '<div style="background:var(--bg3);border-radius:10px;padding:16px;margin-bottom:8px">' +
       '<div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--accent2);letter-spacing:3px">'+v.plate_number+'</div>' +
       '<div style="margin-top:6px;font-size:13px;color:var(--text2)">' + [v.make,v.model,v.color,v.year].filter(Boolean).join(" | ") + '</div>' +
     '</div><div>' +
-    row("Owner",      v.owner_name) + row("Phone", v.owner_phone||"--") + row("Email", v.owner_email||"--") +
-    row("Address",    v.owner_address||"--") + row("Chassis No.", v.chassis_number||"--") +
-    row("Engine No.", v.engine_number||"--") +
-    row("Reg. Expiry",v.registration_expiry ? v.registration_expiry.split("T")[0] : "--") +
-    row("Total Fines",v.total_fines||0) + row("Outstanding","TZS "+Number(v.total_outstanding||0).toLocaleString()) + '</div>' +
+    row("Owner",v.owner_name)+row("Phone",v.owner_phone||"--")+row("Email",v.owner_email||"--")+
+    row("Reg. Expiry",v.registration_expiry?v.registration_expiry.split("T")[0]:"--")+
+    row("Total Fines",v.total_fines||0)+row("Outstanding","TZS "+Number(v.total_outstanding||0).toLocaleString())+'</div>' +
     (vFines.length ?
       '<div><div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Fines on this vehicle</div>' +
       vFines.map(f =>
@@ -1039,68 +921,54 @@ async function userOpenVehicle(plate) {
           '<div style="text-align:right"><div class="amount">TZS '+Number(f.amount_tzs).toLocaleString()+'</div>'+statusBadge(f.status)+'</div>' +
         '</div>'
       ).join("") + '</div>' : "");
-  document.getElementById("vd-actions").innerHTML =
-    '<button class="btn btn-ghost" onclick="closeModal(\'vehicle-detail-modal\')">Close</button>';
+  document.getElementById("vd-actions").innerHTML = '<button class="btn btn-ghost" onclick="closeModal(\'vehicle-detail-modal\')">Close</button>';
   openModal("vehicle-detail-modal");
 }
 
-async function userAppeal(id, fineNum) {
+async function userAppeal(id,fineNum) {
   const reason = prompt("Appeal fine "+fineNum+"?\nState your reason:");
   if (!reason) return;
-  const r = await apiFetch("/fines/"+id+"/appeal", { method:"POST", body:JSON.stringify({reason, supporting_docs:[]}) });
+  const r = await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});
   if (r && !r.error) { showToast("Appeal submitted successfully","success"); userLoadVehicles(); }
   else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-function statusBadge(s){
-  const m={ISSUED:"issued",PAID:"paid",OVERDUE:"overdue",APPEALED:"appealed",PENDING:"pending",CANCELLED:"cancelled",COURT_REFERRED:"court"};
-  return '<span class="badge '+(m[s]||"pending")+'">' + ((s||"--").replace(/_/g," ")) + '</span>';
-}
-function roleBadge(r){ return '<span class="badge '+r.toLowerCase()+'">'+r+'</span>'; }
-function openModal(id) { document.getElementById(id).classList.add("open"); }
-function closeModal(id){ document.getElementById(id).classList.remove("open"); }
-document.querySelectorAll(".modal-overlay").forEach(o => {
-  o.addEventListener("click", e => { if(e.target===o) o.classList.remove("open"); });
-});
+function statusBadge(s){const m={ISSUED:"issued",PAID:"paid",OVERDUE:"overdue",APPEALED:"appealed",PENDING:"pending",CANCELLED:"cancelled",COURT_REFERRED:"court"};return '<span class="badge '+(m[s]||"pending")+'">'+(s||"--").replace(/_/g," ")+'</span>';}
+function roleBadge(r){return '<span class="badge '+r.toLowerCase()+'">'+r+'</span>';}
+function openModal(id){document.getElementById(id).classList.add("open");}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+document.querySelectorAll(".modal-overlay").forEach(o=>{o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open");});});
 let toastTimer;
-function showToast(msg, type) {
-  const t=document.getElementById("toast");
-  t.textContent=msg; t.className="toast "+(type||"")+" show";
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),3500);
-}
+function showToast(msg,type){const t=document.getElementById("toast");t.textContent=msg;t.className="toast "+(type||"")+" show";clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3500);}
 
-// ══ INIT — restore session on page reload ══
+// ── INIT — restore session ────────────────────────────────────
 window.addEventListener("load", () => {
-  const token = localStorage.getItem("rtms_token");
-  const role  = localStorage.getItem("rtms_role");
-  if (token && role) {
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      if (payload.exp * 1000 < Date.now()) { logout(); return; }
-    } catch(e) { logout(); return; }
-    CURRENT_USER = {
-      role,
-      username:     localStorage.getItem("rtms_username"),
-      full_name:    localStorage.getItem("rtms_fullname"),
-      badge_number: localStorage.getItem("rtms_badge")
-    };
-    bootPortal();
+  if (!isSessionValid()) {
+    // Clear any stale session data
+    ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_login_time"]
+      .forEach(k => localStorage.removeItem(k));
+    return;
   }
+  const role = localStorage.getItem("rtms_role");
+  if (!role) return;
+  CURRENT_USER = {
+    role,
+    username:     localStorage.getItem("rtms_username"),
+    full_name:    localStorage.getItem("rtms_fullname"),
+    badge_number: localStorage.getItem("rtms_badge")
+  };
+  bootPortal();
 });
 
-// Auto-check token expiry every 30 minutes
+// ── Check session validity every 6 hours — NOT every 30 mins ─
+// Only logs out if the 30-day local session has expired
+// Server will reject the token with 401 if it is truly expired
 setInterval(() => {
-  const token = localStorage.getItem("rtms_token");
-  if (!token) return;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    if (payload.exp * 1000 < Date.now()) {
-      showToast("Session expired — please log in again", "error");
-      setTimeout(logout, 4000);
-    }
-  } catch(e) { logout(); }
-}, 30 * 60 * 1000);
+  if (!isSessionValid()) {
+    showToast("Session expired — please log in again", "error");
+    setTimeout(logout, 3000);
+  }
+}, 6 * 60 * 60 * 1000); // check every 6 hours
 </script>
 </body>
 </html>
