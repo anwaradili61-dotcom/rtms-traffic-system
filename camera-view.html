@@ -246,7 +246,7 @@ function pickViolation() {
 
 const PLATE_COLORS = ['#FFFFFF','#FFFF00','#FF4444'];
 const CAR_COLORS   = ['#1a3a5c','#2d5a27','#4a1a1a','#1a1a4a','#3a2a1a','#1a3a3a','#2a2a2a','#4a3a1a','#1a4a2a','#3a1a3a'];
-const AMOUNTS      = { RED_LIGHT:15000, SPEEDING:20000, ILLEGAL_PARKING:50000, WRONG_WAY:30000, NO_SEATBELT:30000, PHONE_USE:50000, PEDESTRIAN_ZONE:15000 };
+const AMOUNTS      = { RED_LIGHT:150000, SPEEDING:200000, ILLEGAL_PARKING:50000, WRONG_WAY:300000, NO_SEATBELT:30000, PHONE_USE:50000, PEDESTRIAN_ZONE:100000 };
 
 let currentCam = 0;
 let cars = [];
@@ -430,14 +430,14 @@ class Car {
   }
 
   randomPlate() {
-    const prefixes = ['T','SU'];
-    const p = prefixes[Math.floor(Math.random()*prefixes.length)];
+    // Tanzanian format: T + 3 digits (100-999) + 3 letters (A-Z)
+    // Range: T100AAA to T999ZZZ
     const n = String(Math.floor(Math.random()*900)+100);
     const l = 'ABCDEFGHJKLMNPRSTUVWXYZ';
     const s = l[Math.floor(Math.random()*l.length)] +
               l[Math.floor(Math.random()*l.length)] +
               l[Math.floor(Math.random()*l.length)];
-    return `${p}${n}${s}`;
+    return `T${n}${s}`;
   }
 
   get pos() {

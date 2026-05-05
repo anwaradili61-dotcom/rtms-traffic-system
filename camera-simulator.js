@@ -37,12 +37,16 @@ const CAMERA_CONFIGS = [
 ];
 
 // ─── REALISTIC TANZANIAN PLATES ───────────────────────────────
-const PLATES = [
-  'T123ABC', 'T456DEF', 'T789GHI', 'T321JKL', 'T654MNO',
-  'T987PQR', 'T111STU', 'T222VWX', 'T333YZA', 'T444BCD',
-  'SU001EFG', 'SU002HIJ', 'SU003KLM', 'T555NOP', 'T666QRS',
-  'T777TUV', 'T888WXY', 'T999ZAB', 'T000CDE', 'T112FGH',
-];
+// Format: T + 3 digits (100-999) + 3 letters (A-Z): T100AAA to T999ZZZ
+function generateTanzanianPlate() {
+  const n = String(Math.floor(Math.random()*900)+100);
+  const l = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+  const s = l[Math.floor(Math.random()*l.length)] +
+            l[Math.floor(Math.random()*l.length)] +
+            l[Math.floor(Math.random()*l.length)];
+  return 'T' + n + s;
+}
+const PLATES = Array.from({length:50}, () => generateTanzanianPlate());
 
 // ─── VIOLATION SCENARIOS ──────────────────────────────────────
 const SCENARIOS = {
