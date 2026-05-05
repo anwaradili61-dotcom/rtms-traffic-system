@@ -4,14 +4,16 @@
 // ============================================================
 
 require('dotenv').config();
-const express   = require('express');
-const cors      = require('cors');
-const { Pool }  = require('pg');
-const cron      = require('node-cron');
-const processor = require('./processor');
-const payment   = require('./payment');
-const bcrypt    = require('bcryptjs');
-const jwt       = require('jsonwebtoken');
+const express      = require('express');
+const cors         = require('cors');
+const { Pool }     = require('pg');
+const cron         = require('node-cron');
+const processor    = require('./processor');
+const payment      = require('./payment');
+const integrations = require('./integrations');
+const alerts       = require('./alerts');
+const bcrypt       = require('bcryptjs');
+const jwt          = require('jsonwebtoken');
 
 const app = express();
 
@@ -255,6 +257,32 @@ app.post('/violations', authenticateToken, requireRole('ADMIN','OFFICER'), async
         }).catch(err => console.error('[SMS]', err.message));
       }
     }
+
+    // ── Run LATRA / TIRA / TRA integration checks ─────────────
+    if (result.vehicle?.id) {
+      integrations.runAllChecks(
+        req.body.plate_number,
+        result.vehicle.id,
+        req.body.camera_id,
+        req.body.gps_lat,
+        req.body.gps_lng
+      ).then(async checkResult => {
+        if (!checkResult.allPassed) {
+          await alerts.triggerIntegrationAlert({
+            plateNumber:        req.body.plate_number,
+            vehicleId:          result.vehicle.id,
+            cameraId:           req.body.camera_id,
+            violations:         checkResult.violations,
+            gpsLat:             req.body.gps_lat,
+            gpsLng:             req.body.gps_lng,
+            direction:          req.body.direction || 'UNKNOWN',
+            ownerName:          result.vehicle.owner_name,
+            vehicleDescription: [result.vehicle.make, result.vehicle.model, result.vehicle.color].filter(Boolean).join(' '),
+          });
+        }
+      }).catch(err => console.error('[INTEGRATION CHECK ERROR]', err.message));
+    }
+
     res.status(201).json(result);
   } catch (err) { console.error('[VIOLATIONS ERROR]', err.message); res.status(500).json({ error: err.message }); }
 });
@@ -581,6 +609,144 @@ app.get('/notifications', authenticateToken, requireRole('ADMIN','OFFICER'), asy
     );
     res.json({ data: rows, page: Number(page) });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── INTEGRATION ROUTES ───────────────────────────────────────
+
+// SSE: Officer alert stream
+app.get('/alerts/stream', authenticateToken, requireRole('ADMIN','OFFICER'), (req, res) => {
+  alerts.registerOfficer(req.user.id, req.user.role, res);
+});
+
+// GET recent alerts
+app.get('/alerts/recent', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 50;
+    const rows  = await alerts.getRecentAlerts(limit);
+    res.json({ data: rows, connected_officers: alerts.getConnectedCount() });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Acknowledge alert
+app.patch('/alerts/:id/acknowledge', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { rows } = await db(
+      `UPDATE officer_alerts SET acknowledged=TRUE, acknowledged_by=$1, acknowledged_at=NOW() WHERE id=$2 RETURNING *`,
+      [req.user.id, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Alert not found' });
+    res.json(rows[0]);
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Manual plate check against LATRA/TIRA/TRA
+app.get('/integrations/check/:plate', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const plate = req.params.plate.trim().toUpperCase();
+    const { rows: vRows } = await db(
+      'SELECT id, owner_name, make, model, color FROM vehicles WHERE plate_number = $1',
+      [plate]
+    );
+    const vehicle = vRows[0] || null;
+    const result = await integrations.runAllChecks(plate, vehicle?.id || null, 'MANUAL-CHECK', null, null);
+    if (!result.allPassed) {
+      await alerts.triggerIntegrationAlert({
+        plateNumber: plate, vehicleId: vehicle?.id || null,
+        cameraId: 'MANUAL-CHECK', violations: result.violations,
+        gpsLat: null, gpsLng: null, direction: 'UNKNOWN',
+        ownerName: vehicle?.owner_name || 'Unknown',
+        vehicleDescription: vehicle ? [vehicle.make, vehicle.model, vehicle.color].filter(Boolean).join(' ') : 'Unknown',
+      });
+    }
+    res.json(result);
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Check history for a plate
+app.get('/integrations/history/:plate', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const rows = await integrations.getCheckHistory(req.params.plate.toUpperCase());
+    res.json({ data: rows });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Integration stats
+app.get('/integrations/stats', authenticateToken, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const { rows } = await db('SELECT * FROM v_integration_stats');
+    const { rows: alertStats } = await db(
+      `SELECT severity, COUNT(*) AS count, COUNT(*) FILTER (WHERE acknowledged=TRUE) AS acknowledged FROM officer_alerts GROUP BY severity`
+    );
+    res.json({
+      checks: rows, alerts: alertStats,
+      connected_officers: alerts.getConnectedCount(),
+      latra_enabled: process.env.LATRA_ENABLED === 'true',
+      tira_enabled:  process.env.TIRA_ENABLED  === 'true',
+      tra_enabled:   process.env.TRA_ENABLED    === 'true',
+    });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// TRA webhook — auto-register imported vehicles
+app.post('/tra/webhook', async (req, res) => {
+  try {
+    const result = await integrations.handleTraWebhook(req.body);
+    res.status(201).json({ success: true, ...result });
+  } catch(err) {
+    console.error('[TRA WEBHOOK ERROR]', err.message);
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Get all vehicles by owner national ID
+app.get('/owners/:nationalId/vehicles', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const rows = await integrations.getOwnerVehicles(req.params.nationalId);
+    res.json({ data: rows, count: rows.length, national_id: req.params.nationalId });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// Register owner
+app.post('/owners', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  const { national_id, full_name, phone, email, address, owner_type, company_name, tin_number } = req.body;
+  if (!national_id || !full_name) return res.status(400).json({ error: 'national_id and full_name are required' });
+  try {
+    const { rows } = await db(
+      `INSERT INTO vehicle_owners (national_id, full_name, phone, email, address, owner_type, company_name, tin_number)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (national_id) DO UPDATE SET
+         full_name=EXCLUDED.full_name, phone=EXCLUDED.phone,
+         email=EXCLUDED.email, address=EXCLUDED.address, updated_at=NOW()
+       RETURNING *`,
+      [national_id, full_name, phone||null, email||null, address||null, owner_type||'INDIVIDUAL', company_name||null, tin_number||null]
+    );
+    res.status(201).json(rows[0]);
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// List owners
+app.get('/owners', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  const { search, page = 1, limit = 20 } = req.query;
+  const params = [];
+  let where = '';
+  if (search) {
+    params.push('%'+search+'%');
+    where = `WHERE o.national_id ILIKE $1 OR o.full_name ILIKE $1 OR o.tin_number ILIKE $1`;
+  }
+  params.push(Number(limit), (Number(page)-1)*Number(limit));
+  try {
+    const { rows } = await db(
+      `SELECT o.*, COUNT(v.id) AS total_vehicles
+       FROM vehicle_owners o
+       LEFT JOIN vehicles v ON v.owner_national_id = o.national_id
+       ${where}
+       GROUP BY o.id
+       ORDER BY o.created_at DESC
+       LIMIT $${params.length-1} OFFSET $${params.length}`,
+      params
+    );
+    res.json({ data: rows, page: Number(page) });
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── START ────────────────────────────────────────────────────
