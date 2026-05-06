@@ -228,6 +228,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     <div class="nav-section">My Account</div>
     <div class="nav-item active" onclick="userShowTab('vehicles',this)"><span class="nav-icon">&#x1F697;</span> My Vehicles</div>
     <div class="nav-item" onclick="userShowTab('fines',this)"><span class="nav-icon">&#x1F4CB;</span> My Fines <span class="nav-count red" id="user-nav-unpaid">0</span></div>
+    <div class="nav-item" onclick="openUserVehicleModal()"><span class="nav-icon">&#x2795;</span> Register My Vehicle</div>
     <div class="nav-section">Help</div>
     <div class="nav-item" onclick="showToast('Contact: rtms@police.go.tz','')"><span class="nav-icon">&#x1F4DE;</span> Contact Support</div>
     <div class="nav-section">System</div>
@@ -756,7 +757,7 @@ async function submitVehicle(){
   const body={plate_number:document.getElementById("v-plate").value.trim().toUpperCase(),owner_name:document.getElementById("v-name").value.trim(),owner_phone:document.getElementById("v-phone").value.trim(),owner_email:document.getElementById("v-email").value.trim(),owner_national_id:document.getElementById("v-nid").value.trim(),owner_address:document.getElementById("v-addr").value.trim(),make:document.getElementById("v-make").value.trim(),model:document.getElementById("v-model").value.trim(),color:document.getElementById("v-color").value.trim(),year:parseInt(document.getElementById("v-year").value)||null,chassis_number:document.getElementById("v-chassis").value.trim(),engine_number:document.getElementById("v-engine").value.trim(),registration_expiry:document.getElementById("v-expiry").value};
   if(!body.plate_number||!body.owner_name||!body.owner_phone||!body.registration_expiry){showToast("Fill in all required fields","error");return;}
   const r=await apiFetch("/vehicles",{method:"POST",body:JSON.stringify(body)});
-  if(r&&!r.error){showToast("Vehicle registered: "+body.plate_number,"success");closeModal("vehicle-modal");["v-plate","v-name","v-phone","v-email","v-nid","v-addr","v-make","v-model","v-color","v-year","v-chassis","v-engine","v-expiry"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});if(document.getElementById("v-tbody"))loadVehicles();}
+  if(r&&!r.error){showToast("Vehicle registered: "+body.plate_number,"success");closeModal("vehicle-modal");["v-plate","v-name","v-phone","v-email","v-nid","v-addr","v-make","v-model","v-color","v-year","v-chassis","v-engine","v-expiry"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});if(document.getElementById("v-tbody"))loadVehicles();else if(localStorage.getItem("rtms_role")==="USER")userLoadVehicles();}
   else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
@@ -784,7 +785,7 @@ async function userLoadVehicles(){
       '<div><div class="profile-name">'+(u.full_name||"")+'</div><div class="profile-meta">'+(u.email||"")+(u.phone?" | "+u.phone:"")+'</div></div>'+
       '<div style="margin-left:auto;text-align:right"><div style="font-family:var(--head);font-size:22px;font-weight:700;color:'+(unpaid?"var(--red)":"var(--green)")+'">'+(unpaid)+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">UNPAID FINE'+(unpaid!==1?"S":"")+'</div></div>'+
     '</div>'+
-    '<div><div class="section-title" style="margin-bottom:12px">My Vehicles ('+userVehicles.length+')</div>'+
+    '<div><div class="section-hdr" style="margin-bottom:12px"><div class="section-title">My Vehicles ('+userVehicles.length+')</div><button class="btn btn-primary" onclick="openUserVehicleModal()">+ Register My Vehicle</button></div>'+
     (userVehicles.length===0?'<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.<br>Contact the traffic office to link your vehicle.</div></div>':
     userVehicles.map(v=>
       '<div class="vehicle-card" onclick="userOpenVehicle(\''+v.plate_number+'\')">'+
@@ -857,22 +858,22 @@ function stopAlertStream() {
   setAlertDot(false);
 }
 
-let lastAlertTime = new Date().toISOString();
+const seenAlertIds = new Set();
 
 async function pollAlerts() {
-  const d = await apiFetch("/alerts/recent?limit=5");
+  const d = await apiFetch("/alerts/recent?limit=10");
   if (!d || !d.data) return;
   setAlertDot(true);
-  const newAlerts = d.data.filter(a => !a.acknowledged && a.created_at > lastAlertTime);
+  const newAlerts = d.data.filter(a => !a.acknowledged && !seenAlertIds.has(a.id));
   if (newAlerts.length > 0) {
-    lastAlertTime = newAlerts[0].created_at;
     newAlerts.reverse().forEach(a => {
+      seenAlertIds.add(a.id);
       alertQueue.push({
         type:        'INTEGRATION_ALERT',
         alertId:     a.id,
         plateNumber: a.plate_number,
         cameraId:    a.camera_id,
-        violations:  a.violations || [],
+        violations:  typeof a.violations === 'string' ? JSON.parse(a.violations||'[]') : (a.violations||[]),
         ownerName:   '',
         vehicleDesc: '',
         location:    { direction: a.direction || 'UNKNOWN' },
@@ -912,8 +913,20 @@ function renderAlertPopup(alert) {
     `<div class="alert-meta">📡 ${alert.cameraId||"Camera"} &bull; ${alert.location?.direction&&alert.location.direction!=="UNKNOWN"?"➡ Heading "+alert.location.direction:"Direction unknown"} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
     `<div class="alert-actions"><button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button><button class="alert-btn-dismiss" onclick="dismissAlert()">Dismiss</button></div>`;
   popup.classList.add("show");
-  // Alert sound
-  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[440,550,440].forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(0.3,ctx.currentTime+i*.15);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*.15+.1);o.start(ctx.currentTime+i*.15);o.stop(ctx.currentTime+i*.15+.1);});}catch(e){}
+  // Alert sound — resumes AudioContext after user interaction
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==="suspended")ctx.resume();
+    [440,550,660,550].forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);o.type="square";
+      o.frequency.value=freq;
+      g.gain.setValueAtTime(0,ctx.currentTime+i*.12);
+      g.gain.linearRampToValueAtTime(0.15,ctx.currentTime+i*.12+.03);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*.12+.12);
+      o.start(ctx.currentTime+i*.12);o.stop(ctx.currentTime+i*.12+.12);
+    });
+  }catch(e){}
   setTimeout(()=>{if(alertShowing)dismissAlert();},30000);
 }
 
@@ -932,6 +945,14 @@ function updateQueueBadge() {
   const badge=document.getElementById("alert-queue-badge");if(!badge)return;
   if(alertQueue.length>0){badge.style.display="block";badge.textContent=alertQueue.length+" pending alert"+(alertQueue.length>1?"s":"");}
   else badge.style.display="none";
+}
+
+// ── VEHICLE OWNER SELF-REGISTRATION ─────────────────────────
+function openUserVehicleModal() {
+  const fullname = localStorage.getItem("rtms_fullname") || "";
+  const el = document.getElementById("v-name");
+  if (el) el.value = fullname;
+  openModal("vehicle-modal");
 }
 
 // ── INIT ──────────────────────────────────────────────────────
