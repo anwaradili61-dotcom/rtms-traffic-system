@@ -458,6 +458,10 @@ function saveSession(data) {
   localStorage.setItem("rtms_fullname",   data.user.full_name);
   localStorage.setItem("rtms_badge",      data.user.badge_number||"");
   localStorage.setItem("rtms_expires_at", String(expiresAt));
+  // Save extra fields for vehicle pre-fill
+  localStorage.setItem("rtms_phone",      data.user.phone||"");
+  localStorage.setItem("rtms_email",      data.user.email||"");
+  localStorage.setItem("rtms_nid",        data.user.national_id||"");
 }
 
 function isSessionValid() {
@@ -479,7 +483,7 @@ function isSessionValid() {
 
 function logout() {
   stopAlertStream();
-  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at"].forEach(k=>localStorage.removeItem(k));
+  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at","rtms_phone","rtms_email","rtms_nid"].forEach(k=>localStorage.removeItem(k));
   document.getElementById("staff-dashboard").style.display="none";
   document.getElementById("user-portal").style.display="none";
   document.getElementById("login-screen").style.display="flex";
@@ -966,9 +970,16 @@ function updateQueueBadge() {
 
 // ── VEHICLE OWNER SELF-REGISTRATION ─────────────────────────
 function openUserVehicleModal() {
+  // Pre-fill all owner details from logged-in user account
   const fullname = localStorage.getItem("rtms_fullname") || "";
-  const el = document.getElementById("v-name");
-  if (el) el.value = fullname;
+  const phone    = localStorage.getItem("rtms_phone")    || "";
+  const email    = localStorage.getItem("rtms_email")    || "";
+  const nid      = localStorage.getItem("rtms_nid")      || "";
+  const el = (id) => document.getElementById(id);
+  if (el("v-name"))  el("v-name").value  = fullname;
+  if (el("v-phone")) el("v-phone").value = phone;
+  if (el("v-email")) el("v-email").value = email;
+  if (el("v-nid"))   el("v-nid").value   = nid;
   openModal("vehicle-modal");
 }
 

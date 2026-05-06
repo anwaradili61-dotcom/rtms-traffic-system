@@ -83,7 +83,7 @@ app.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, username: user.username, full_name: user.full_name, role: user.role, badge_number: user.badge_number || null } });
+    res.json({ token, user: { id: user.id, username: user.username, full_name: user.full_name, role: user.role, badge_number: user.badge_number || null, phone: user.phone || null, email: user.email || null, national_id: user.national_id || null } });
   } catch (err) {
     console.error('[LOGIN ERROR]', err.message, err.stack);
     res.status(500).json({ error: 'Server error — check your DATABASE_URL in .env' });
@@ -115,7 +115,7 @@ app.post('/register', async (req, res) => {
       { id: newUser.id, role: 'USER', username: newUser.username, full_name: newUser.full_name },
       JWT_SECRET, { expiresIn: '30d' }
     );
-    res.status(201).json({ message: 'Account created successfully', token, user: { id: newUser.id, username: newUser.username, full_name: newUser.full_name, role: newUser.role } });
+    res.status(201).json({ message: 'Account created successfully', token, user: { id: newUser.id, username: newUser.username, full_name: newUser.full_name, role: newUser.role, phone: newUser.phone || null, email: newUser.email || null, national_id: newUser.national_id || null } });
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Username or email already exists' });
     console.error('[REGISTER ERROR]', err.message);

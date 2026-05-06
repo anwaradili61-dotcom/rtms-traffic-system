@@ -450,6 +450,7 @@ async function processDetection(payload) {
       stage:        'COMPLETE',
       elapsed_ms:   elapsed,
       needsReview:  finalNeedsReview,
+      vehicle,
       violation:    caseResult.violation,
       fine:         caseResult.fine,
       notifications: caseResult.notifications,
