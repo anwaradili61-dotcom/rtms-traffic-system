@@ -175,7 +175,33 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 .alert-queue-badge{position:fixed;top:66px;right:20px;background:var(--red);color:#fff;border-radius:99px;padding:3px 10px;font-size:11px;font-family:var(--mono);font-weight:700;z-index:10000;display:none;cursor:pointer;box-shadow:0 2px 8px rgba(239,68,68,.4)}
 .alert-stream-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;margin-right:4px;vertical-align:middle}
 .alert-stream-dot.on{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+::-webkit-scrollbar{width:6px;height:6px}
+/* ── LATRA/TIRA SECTION ── */
+.integration-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;transition:box-shadow .2s}
+.integration-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.integration-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.integration-card-plate{font-family:var(--head);font-size:20px;font-weight:800;color:var(--accent2);letter-spacing:2px}
+.integration-card-time{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.integration-card-body{padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.integration-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.integration-source{display:flex;align-items:center;gap:8px}
+.integration-icon{font-size:18px}
+.integration-label{font-size:13px;font-weight:600;color:var(--text)}
+.integration-desc{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.integration-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:6px;font-weight:600;white-space:nowrap}
+.integration-status.violation{background:rgba(239,68,68,.15);color:var(--red)}
+.integration-status.paid{background:rgba(34,197,94,.15);color:var(--green)}
+.integration-status.pending{background:rgba(245,158,11,.15);color:var(--amber)}
+.integration-card-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--bg3)}
+.int-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.int-stat{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;text-align:center}
+.int-stat-val{font-family:var(--head);font-size:28px;font-weight:700;margin-bottom:4px}
+.int-stat-val.red{color:var(--red)}.int-stat-val.green{color:var(--green)}.int-stat-val.amber{color:var(--amber)}
+.int-stat-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono)}
+.filter-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.filter-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s}
+.filter-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 </style>
 </head>
 <body>
@@ -579,6 +605,10 @@ function buildSidebar(role) {
     '<div class="nav-item active" onclick="showStaffTab(\'fines\',this)"><span class="nav-icon">&#x1F4CB;</span> All Fines <span class="nav-count" id="nav-total">-</span></div>'+
     '<div class="nav-item" onclick="showStaffTab(\'overdue\',this)"><span class="nav-icon">&#x23F0;</span> Overdue <span class="nav-count red" id="nav-overdue">-</span></div>'+
     '<div class="nav-item" onclick="showStaffTab(\'appeals\',this)"><span class="nav-icon">&#x2696;</span> Appeals <span class="nav-count amber" id="nav-appeals">-</span></div>'+
+    '<div class="nav-section">Integrations</div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'latra\',this)"><span class="nav-icon">&#x1F69B;</span> LATRA Violations <span class="nav-count red" id="nav-latra">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'tira\',this)"><span class="nav-icon">&#x1F6E1;&#xFE0F;</span> TIRA Insurance <span class="nav-count red" id="nav-tira">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'alerts-log\',this)"><span class="nav-icon">&#x1F514;</span> Alert Log <span class="nav-count amber" id="nav-alerts-log">-</span></div>'+
     (isAdmin||isOfficer?
       '<div class="nav-section">Actions</div>'+
       '<div class="nav-item" onclick="showStaffTab(\'vehicles\',this)"><span class="nav-icon">&#x1F697;</span> Vehicles</div>'+
@@ -602,6 +632,15 @@ async function loadStats(){
   const col=Number(d.total_collected_tzs);
   s("s-collected",col>=1e6?(col/1e6).toFixed(1)+"M":(col/1000).toFixed(0)+"K");
   s("nav-total",d.total_fines);s("nav-overdue",d.overdue);s("nav-appeals",d.appealed||0);
+  // Load integration counts
+  apiFetch("/integrations/stats").then(r=>{
+    if(!r)return;
+    const latra = r.checks?.find(c=>c.source==='LATRA');
+    const tira  = r.checks?.find(c=>c.source==='TIRA');
+    s("nav-latra", latra?.violations||0);
+    s("nav-tira",  tira?.violations||0);
+    s("nav-alerts-log", r.alerts?.reduce((t,a)=>t+Number(a.count||0),0)||0);
+  }).catch(()=>{});
 }
 
 function showStaffTab(tab,el){
@@ -613,6 +652,9 @@ function showStaffTab(tab,el){
   else if(tab==="appeals")renderFinesView("Fines Under Appeal","APPEALED");
   else if(tab==="vehicles")renderVehiclesView();
   else if(tab==="users")renderUsersView();
+  else if(tab==="latra")renderIntegrationView("LATRA");
+  else if(tab==="tira")renderIntegrationView("TIRA");
+  else if(tab==="alerts-log")renderAlertsLogView();
 }
 
 function renderFinesView(title,status){
@@ -885,6 +927,196 @@ async function userAppeal(id,fineNum){
   const reason=prompt("Appeal fine "+fineNum+"?\nState your reason:");if(!reason)return;
   const r=await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});
   if(r&&!r.error){showToast("Appeal submitted successfully","success");userLoadVehicles();}else showToast("Error: "+(r?.error||"Unknown"),"error");
+}
+
+// ── LATRA / TIRA INTEGRATION VIEW ────────────────────────────
+let intFilter = "ALL";
+
+async function renderIntegrationView(source) {
+  const main = document.getElementById("staff-main");
+  main.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading '+source+' violations...</div>';
+
+  const [checksRes, alertsRes] = await Promise.all([
+    apiFetch("/integrations/stats"),
+    apiFetch("/alerts/recent?limit=100")
+  ]);
+
+  const stats  = checksRes?.checks?.find(c => c.source === source) || {};
+  const allAlerts = (alertsRes?.data || []).filter(a => {
+    const v = Array.isArray(a.violations) ? a.violations : (()=>{try{return JSON.parse(a.violations||'[]')}catch(e){return[]}})();
+    return v.some(vv => (vv.source||vv.Source||'') === source);
+  });
+
+  const total     = Number(stats.total_checks || 0);
+  const violations= Number(stats.violations   || 0);
+  const compliant = Number(stats.compliant    || 0);
+
+  const sourceIcon  = source==="LATRA" ? "🚛" : "🛡️";
+  const sourceColor = source==="LATRA" ? "var(--amber)" : "var(--accent2)";
+  const sourceDesc  = source==="LATRA"
+    ? "Transit Permit Violations — Vehicles without valid LATRA permits"
+    : "Insurance Violations — Vehicles without valid TIRA insurance";
+
+  main.innerHTML =
+    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>'+
+    // Header
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
+      '<span style="font-size:32px">'+sourceIcon+'</span>'+
+      '<div><div class="section-title">'+source+' Violations</div><div class="section-sub">'+sourceDesc+'</div></div>'+
+      '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderIntegrationView(''+source+'')">&#x1F504; Refresh</button>'+
+    '</div>'+
+    // Stats
+    '<div class="int-stats-row">'+
+      '<div class="int-stat"><div class="int-stat-val amber">'+violations+'</div><div class="int-stat-lbl">Violations</div></div>'+
+      '<div class="int-stat"><div class="int-stat-val green">'+compliant+'</div><div class="int-stat-lbl">Compliant</div></div>'+
+      '<div class="int-stat"><div class="int-stat-val" style="color:'+sourceColor+'">'+total+'</div><div class="int-stat-lbl">Total Checks</div></div>'+
+    '</div>'+
+    // Filter tabs
+    '<div class="filter-tabs">'+
+      '<div class="filter-tab '+(intFilter==="ALL"?"active":"")+'" onclick="intFilter='ALL';renderIntegrationView(''+source+'')">All ('+allAlerts.length+')</div>'+
+      '<div class="filter-tab '+(intFilter==="UNACK"?"active":"")+'" onclick="intFilter='UNACK';renderIntegrationView(''+source+'')">Unresolved ('+allAlerts.filter(a=>!a.acknowledged).length+')</div>'+
+      '<div class="filter-tab '+(intFilter==="ACK"?"active":"")+'" onclick="intFilter='ACK';renderIntegrationView(''+source+'')">Resolved ('+allAlerts.filter(a=>a.acknowledged).length+')</div>'+
+    '</div>'+
+    // Cards
+    '<div id="integration-cards">'+buildIntegrationCards(allAlerts, source)+'</div>';
+}
+
+function buildIntegrationCards(alerts, source) {
+  const filtered = intFilter==="ALL" ? alerts
+    : intFilter==="UNACK" ? alerts.filter(a=>!a.acknowledged)
+    : alerts.filter(a=>a.acknowledged);
+
+  if (!filtered.length) return '<div class="empty"><div class="empty-icon">'+
+    (source==="LATRA"?"🚛":"🛡️")+'</div><div class="empty-text">No '+source+
+    ' violations found</div></div>';
+
+  return filtered.map(a => {
+    const violations = (()=>{
+      let v = a.violations;
+      if (typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=[];}}
+      if (!Array.isArray(v)) v=[];
+      return v.filter(vv=>(vv.source||vv.Source||'')===source)
+               .map(vv=>({
+                 source:     vv.source||vv.Source||source,
+                 type:       vv.type||vv.violation||vv.violation_type||'UNKNOWN',
+                 fineAmount: vv.fineAmount||vv.fine_amount||0,
+               }));
+    })();
+
+    const names={
+      NO_LATRA_PERMIT:"No LATRA Transit Permit",
+      EXPIRED_LATRA:"Expired LATRA Permit",
+      NO_INSURANCE:"No Insurance Policy",
+      EXPIRED_INSURANCE:"Expired Insurance",
+    };
+    const cam = getCameraInfo(a.camera_id);
+    const isAck = a.acknowledged;
+    const totalFines = violations.reduce((s,v)=>s+Number(v.fineAmount||0),0);
+    const time = new Date(a.created_at).toLocaleString('en-TZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+
+    return '<div class="integration-card">'+
+      '<div class="integration-card-hdr">'+
+        '<div>'+
+          '<div class="integration-card-plate">'+a.plate_number+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">📡 '+cam.name+' &bull; '+cam.area+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div class="integration-card-time">'+time+'</div>'+
+          (isAck
+            ? '<span class="integration-status paid">✓ Resolved</span>'
+            : '<span class="integration-status violation">⚠ Unresolved</span>')+
+        '</div>'+
+      '</div>'+
+      '<div class="integration-card-body">'+
+        violations.map(v=>'<div class="integration-row">'+
+          '<div class="integration-source">'+
+            '<span class="integration-icon">'+(source==="LATRA"?"🚛":"🛡️")+'</span>'+
+            '<div>'+
+              '<div class="integration-label">'+(names[v.type]||v.type)+'</div>'+
+              '<div class="integration-desc">'+source+' Violation &bull; Fine: TZS '+Number(v.fineAmount||0).toLocaleString()+'</div>'+
+            '</div>'+
+          '</div>'+
+          '<span class="integration-status '+(isAck?"paid":"violation")+'">'+(isAck?"PAID / RESOLVED":"OUTSTANDING")+'</span>'+
+        '</div>').join('')+
+        '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);padding-top:6px;border-top:1px solid var(--border);margin-top:4px">'+
+          'Total fines: <strong style="color:var(--text)">TZS '+totalFines.toLocaleString()+'</strong>'+
+          (a.direction&&a.direction!=="UNKNOWN"?' &bull; ➡ '+a.direction:'')+
+        '</div>'+
+      '</div>'+
+      '<div class="integration-card-footer">'+
+        (!isAck
+          ? '<button class="btn btn-primary" style="font-size:12px;padding:7px 14px" onclick="markIntegrationResolved(''+a.id+'',this)">✓ Mark as Resolved / Paid</button>'+
+            '<a href="https://www.google.com/maps?q='+cam.lat+','+cam.lng+'" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none">🗺️ View Location</a>'+
+            '<a href="https://www.google.com/maps/dir/?api=1&destination='+cam.lat+','+cam.lng+'&travelmode=driving" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none;color:var(--green);border-color:var(--green)">🧭 Directions</a>'
+          : '<span style="font-size:12px;color:var(--green);font-family:var(--mono)">✓ Officer has resolved this violation</span>')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function markIntegrationResolved(alertId, btn) {
+  btn.disabled = true; btn.textContent = "Saving...";
+  const r = await apiFetch("/alerts/"+alertId+"/acknowledge", {method:"PATCH"});
+  if (r && !r.error) {
+    showToast("Marked as resolved — owner paid / vehicle compliant", "success");
+    // Update the card visually
+    const card = btn.closest(".integration-card");
+    if (card) {
+      card.querySelectorAll(".integration-status").forEach(s=>{
+        s.className="integration-status paid"; s.textContent="PAID / RESOLVED";
+      });
+      card.querySelector(".integration-card-footer").innerHTML=
+        '<span style="font-size:12px;color:var(--green);font-family:var(--mono)">✓ Officer has resolved this violation</span>';
+      const hdrStatus = card.querySelector(".integration-card-hdr .integration-status");
+      if(hdrStatus){hdrStatus.className="integration-status paid";hdrStatus.textContent="✓ Resolved";}
+    }
+    loadStats();
+  } else {
+    btn.disabled=false; btn.textContent="✓ Mark as Resolved / Paid";
+    showToast("Error: "+(r?.error||"Unknown"),"error");
+  }
+}
+
+// ── ALERTS LOG VIEW ───────────────────────────────────────────
+async function renderAlertsLogView() {
+  const main = document.getElementById("staff-main");
+  main.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading alert log...</div>';
+  const r = await apiFetch("/alerts/recent?limit=100");
+  if (!r) { main.innerHTML='<div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot load alerts</div></div>'; return; }
+  const allAlerts = r.data || [];
+  const unresolved = allAlerts.filter(a=>!a.acknowledged).length;
+  main.innerHTML =
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
+      '<span style="font-size:32px">🔔</span>'+
+      '<div><div class="section-title">Integration Alert Log</div><div class="section-sub">All LATRA, TIRA and TRA alerts — '+unresolved+' unresolved</div></div>'+
+      '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderAlertsLogView()">&#x1F504; Refresh</button>'+
+    '</div>'+
+    (allAlerts.length===0
+      ? '<div class="empty"><div class="empty-icon">🔔</div><div class="empty-text">No alerts yet — run the camera simulator to generate detections</div></div>'
+      : '<div class="table-wrap"><table><thead><tr>'+
+          '<th>Plate</th><th>Camera</th><th>Violations</th><th>Direction</th><th>Time</th><th>Status</th><th>Action</th>'+
+        '</tr></thead><tbody>'+
+        allAlerts.map(a=>{
+          const vs=(()=>{let v=a.violations;if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=[];}}return Array.isArray(v)?v:[];})();
+          const sources=[...new Set(vs.map(v=>v.source||v.Source||'').filter(Boolean))].join(', ')||'Unknown';
+          const cam=getCameraInfo(a.camera_id);
+          return '<tr>'+
+            '<td class="mono primary">'+a.plate_number+'</td>'+
+            '<td class="mono" style="font-size:11px">'+cam.name+'</td>'+
+            '<td><span style="font-size:11px;color:var(--amber)">'+sources+'</span></td>'+
+            '<td style="font-size:11px;color:var(--text3)">'+((a.direction&&a.direction!=="UNKNOWN")?"➡ "+a.direction:"—")+'</td>'+
+            '<td class="mono" style="font-size:11px">'+new Date(a.created_at).toLocaleString('en-TZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'</td>'+
+            '<td>'+(a.acknowledged
+              ? '<span class="badge paid">Resolved</span>'
+              : '<span class="badge overdue">Unresolved</span>')+
+            '</td>'+
+            '<td>'+(!a.acknowledged
+              ? '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="markIntegrationResolved(''+a.id+'',this)">✓ Resolve</button>'
+              : '—')+
+            '</td>'+
+          '</tr>';
+        }).join('')+
+        '</tbody></table></div>');
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
