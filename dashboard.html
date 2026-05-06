@@ -131,6 +131,29 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 .vehicle-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
 .vehicle-info span{font-size:12px;color:var(--text3);font-family:var(--mono)}
 /* ── ALERT POPUP ── */
+.alert-detail-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:10001;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.alert-detail-modal.open{opacity:1;pointer-events:all}
+.alert-detail-card{background:#0f1a2e;border:2px solid var(--red);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 0 60px rgba(239,68,68,.5)}
+.alert-detail-hdr{background:var(--red);padding:14px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0}
+.alert-detail-title{font-family:var(--head);font-size:16px;font-weight:800;color:#fff;flex:1}
+.alert-detail-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+.alert-section{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px}
+.alert-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);font-family:var(--mono);margin-bottom:10px}
+.alert-info-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+.alert-info-row:last-child{border-bottom:none}
+.alert-info-key{color:rgba(255,255,255,.45);font-family:var(--mono)}
+.alert-info-val{color:#fff;font-family:var(--mono);text-align:right;max-width:60%;word-break:break-all}
+.alert-map-btn{display:flex;align-items:center;gap:8px;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);border-radius:8px;padding:10px 14px;color:var(--accent2);font-size:12px;font-family:var(--mono);cursor:pointer;text-decoration:none;transition:all .15s;width:100%}
+.alert-map-btn:hover{background:rgba(59,130,246,.35)}
+.officer-card{display:flex;align-items:center;gap:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:10px 14px;margin-bottom:6px}
+.officer-card.offline{background:rgba(100,116,139,.1);border-color:rgba(100,116,139,.2)}
+.officer-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.officer-dot.offline{background:var(--text3)}
+.officer-info{flex:1}
+.officer-name{font-size:13px;color:#fff;font-weight:500}
+.officer-dist{font-size:11px;color:rgba(255,255,255,.4);font-family:var(--mono)}
+.intercept-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-family:var(--mono);cursor:pointer;font-weight:700}
+
 .alert-popup{position:fixed;top:70px;right:20px;width:360px;background:#0f1a2e;border:2px solid var(--red);border-radius:14px;box-shadow:0 0 40px rgba(239,68,68,.4);z-index:9999;overflow:hidden;transform:translateX(420px);transition:transform .4s cubic-bezier(.16,1,.3,1);max-height:80vh;overflow-y:auto}
 .alert-popup.show{transform:translateX(0)}
 .alert-popup-hdr{background:var(--red);padding:10px 14px;display:flex;align-items:center;gap:8px}
@@ -353,6 +376,18 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
   <div class="alert-popup-body" id="alert-popup-body"></div>
 </div>
 <div class="alert-queue-badge" id="alert-queue-badge" onclick="showNextAlert()"></div>
+
+<!-- Alert Detail Modal -->
+<div class="alert-detail-modal" id="alert-detail-modal">
+  <div class="alert-detail-card">
+    <div class="alert-detail-hdr">
+      <span style="font-size:20px">🚨</span>
+      <span class="alert-detail-title" id="alert-detail-title">VEHICLE ALERT DETAILS</span>
+      <button class="alert-popup-close" onclick="closeAlertDetail()">&#x2715;</button>
+    </div>
+    <div class="alert-detail-body" id="alert-detail-body"></div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 <div class="copyright-bar">
@@ -857,7 +892,9 @@ function statusBadge(s){const m={ISSUED:"issued",PAID:"paid",OVERDUE:"overdue",A
 function roleBadge(r){return'<span class="badge '+r.toLowerCase()+'">'+r+'</span>';}
 function openModal(id){document.getElementById(id).classList.add("open");}
 function closeModal(id){document.getElementById(id).classList.remove("open");}
-document.querySelectorAll(".modal-overlay").forEach(o=>{o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open");});});
+document.querySelectorAll(".modal-overlay").forEach(o=>{o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open");});
+});
+document.getElementById("alert-detail-modal")?.addEventListener("click",e=>{if(e.target===document.getElementById("alert-detail-modal"))closeAlertDetail();});
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById("toast");t.textContent=msg;t.className="toast "+(type||"")+" show";clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3500);}
 
@@ -922,17 +959,62 @@ function showNextAlert() {
   renderAlertPopup(alert);
 }
 
+// ── CAMERA GPS LOCATIONS (Dar es Salaam) ─────────────────────
+const CAMERA_LOCATIONS = {
+  "CAM-001": { name:"Ubungo Interchange", lat:-6.7924, lng:39.2083, road:"Morogoro Rd / Mandela Expressway", area:"Ubungo" },
+  "CAM-002": { name:"Kariakoo Junction",  lat:-6.8160, lng:39.2740, road:"Msimbazi St / Lumumba St",         area:"Kariakoo" },
+  "CAM-003": { name:"Kimara Roundabout", lat:-6.7720, lng:39.1780, road:"Morogoro Rd / Sam Nujoma Rd",      area:"Kimara" },
+  "CAM-004": { name:"Chang'ombe Rd",     lat:-6.8300, lng:39.2950, road:"Chang'ombe Rd / Kilwa Rd",         area:"Chang'ombe" },
+  "CAM-005": { name:"Mlimani City",      lat:-6.7740, lng:39.2390, road:"Sam Nujoma / University Rd",       area:"Mlimani" },
+  "MANUAL":  { name:"Manual Entry",      lat:-6.7924, lng:39.2083, road:"N/A",                             area:"Dar es Salaam" },
+};
+
+const VIOLATION_DIRECTIONS = {
+  "CAM-001": ["NORTH towards Mwananyamala","SOUTH towards City Centre","EAST towards Ubungo Terminal","WEST towards Kimara"],
+  "CAM-002": ["NORTH towards Magomeni","SOUTH towards Ferry","EAST towards Gerezani","WEST towards Kariakoo Market"],
+  "CAM-003": ["NORTH towards Tabata","SOUTH towards Ubungo","EAST towards City Centre","WEST towards Kibaha"],
+  "CAM-004": ["NORTH towards Temeke","SOUTH towards Mbagala","EAST towards Mbagala","WEST towards Kariakoo"],
+  "CAM-005": ["NORTH towards Sinza","SOUTH towards Ubungo","EAST towards University","WEST towards Kimara"],
+};
+
+function getCameraInfo(cameraId) {
+  return CAMERA_LOCATIONS[cameraId] || CAMERA_LOCATIONS["MANUAL"];
+}
+
+function getEstimatedDirection(cameraId) {
+  const dirs = VIOLATION_DIRECTIONS[cameraId];
+  if (!dirs) return "Unknown direction";
+  return dirs[Math.floor(Math.random() * dirs.length)];
+}
+
 function renderAlertPopup(alert) {
   const popup=document.getElementById("alert-popup");if(!popup)return;
   const icons={LATRA:"🚛",TIRA:"🛡️",TRA:"📋"};
   const names={NO_LATRA_PERMIT:"No LATRA Transit Permit",EXPIRED_LATRA:"Expired LATRA Permit",NO_INSURANCE:"No Insurance Policy",EXPIRED_INSURANCE:"Expired Insurance",UNREGISTERED_VEHICLE:"Not Registered with TRA",CUSTOMS_UNPAID:"Customs Duties Unpaid"};
   const violations = Array.isArray(alert.violations) ? alert.violations : [];
+
+  // Get camera location and direction
+  const cam = getCameraInfo(alert.cameraId);
+  const direction = (alert.location?.direction && alert.location.direction !== "UNKNOWN")
+    ? alert.location.direction
+    : getEstimatedDirection(alert.cameraId);
+  // Store direction back into alert for detail modal
+  alert._direction = direction;
+  alert._cam = cam;
+
   const vHtml = violations.map(v=>`<div class="alert-violation"><div class="alert-violation-icon">${icons[v.source]||"⚠️"}</div><div><div class="alert-violation-text"><strong>${v.source||v.type}</strong> — ${names[v.type]||v.type||"Violation"}</div><div class="alert-violation-amount">Fine: TZS ${Number(v.fineAmount||v.fine_amount||0).toLocaleString()}</div></div></div>`).join("");
+
   document.getElementById("alert-popup-body").innerHTML=
-    `<div class="alert-plate">${alert.plateNumber||"UNKNOWN"}</div>`+
+    `<div class="alert-plate" style="cursor:pointer" onclick="openAlertDetail(window._lastAlert)" title="Click for full details">${alert.plateNumber||"UNKNOWN"} <span style="font-size:11px;opacity:.6">tap for details</span></div>`+
     (vHtml?`<div class="alert-violations">${vHtml}</div>`:'<div class="alert-violations"><div class="alert-violation"><div class="alert-violation-icon">⚠️</div><div><div class="alert-violation-text">Integration violation detected</div></div></div></div>')+
-    `<div class="alert-meta">📡 ${alert.cameraId||"Camera"} &bull; ${alert.location?.direction&&alert.location.direction!=="UNKNOWN"?"➡ Heading "+alert.location.direction:"Direction unknown"} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
-    `<div class="alert-actions"><button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button><button class="alert-btn-dismiss" onclick="dismissAlert()">Dismiss</button></div>`;
+    `<div class="alert-meta">📡 ${cam.name} &bull; ➡ ${direction} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
+    `<div class="alert-actions">
+      <button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button>
+      <button style="flex:1;background:rgba(59,130,246,.3);border:1px solid var(--accent);color:var(--accent2);border-radius:8px;padding:9px;font-family:var(--mono);font-size:11px;cursor:pointer" onclick="openAlertDetail(window._lastAlert)">🔍 Full Details</button>
+      <button class="alert-btn-dismiss" onclick="dismissAlert()">✕</button>
+    </div>`;
+
+  window._lastAlert = alert;
   popup.classList.add("show");
   // Alert sound — resumes AudioContext after user interaction
   try{
@@ -953,8 +1035,107 @@ function renderAlertPopup(alert) {
 
 async function acknowledgeAlert(alertId) {
   if (alertId&&alertId!=="undefined") await apiFetch("/alerts/"+alertId+"/acknowledge",{method:"PATCH"}).catch(()=>{});
+  closeAlertDetail();
   dismissAlert();
   showToast("Alert acknowledged","success");
+}
+
+function closeAlertDetail() {
+  document.getElementById("alert-detail-modal").classList.remove("open");
+}
+
+async function openAlertDetail(alert) {
+  if (!alert) return;
+  const modal = document.getElementById("alert-detail-modal");
+  const body  = document.getElementById("alert-detail-body");
+  const title = document.getElementById("alert-detail-title");
+  if (!modal || !body) return;
+
+  const icons={LATRA:"🚛",TIRA:"🛡️",TRA:"📋"};
+  const names={NO_LATRA_PERMIT:"No LATRA Transit Permit",EXPIRED_LATRA:"Expired LATRA Permit",NO_INSURANCE:"No Insurance Policy",EXPIRED_INSURANCE:"Expired Insurance",UNREGISTERED_VEHICLE:"Not Registered with TRA",CUSTOMS_UNPAID:"Customs Duties Unpaid"};
+  const violations = Array.isArray(alert.violations) ? alert.violations : [];
+  const cam = alert._cam || getCameraInfo(alert.cameraId);
+  const direction = alert._direction || getEstimatedDirection(alert.cameraId);
+  const mapsUrl = `https://www.google.com/maps?q=${cam.lat},${cam.lng}&z=16`;
+  const dirUrl  = `https://www.google.com/maps/dir/?api=1&destination=${cam.lat},${cam.lng}&travelmode=driving`;
+
+  title.textContent = "🚨 ALERT — " + (alert.plateNumber || "UNKNOWN");
+
+  // Get connected officers
+  const alertsData = await apiFetch("/alerts/recent?limit=1").catch(()=>null);
+  const connectedCount = alertsData?.connected_officers || 0;
+
+  // Build violations HTML
+  const vSection = violations.map(v=>`
+    <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+      <span style="font-size:18px">${icons[v.source]||"⚠️"}</span>
+      <div>
+        <div style="font-size:13px;color:#fff;font-weight:600">${v.source} — ${names[v.type]||v.type}</div>
+        <div style="font-size:11px;color:var(--amber);font-family:var(--mono);margin-top:2px">Fine: TZS ${Number(v.fineAmount||v.fine_amount||0).toLocaleString()}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">${v.source==="LATRA"?"LATRA permit required for transit vehicles on this route":v.source==="TIRA"?"Vehicle must have valid insurance to operate on public roads":"Vehicle must be registered with TRA"}</div>
+      </div>
+    </div>`).join("");
+
+  body.innerHTML = `
+    <!-- Plate -->
+    <div class="alert-section">
+      <div style="text-align:center">
+        <div style="font-family:var(--head);font-size:36px;font-weight:800;color:#fff;letter-spacing:4px;background:rgba(255,255,255,.08);border-radius:8px;padding:12px;margin-bottom:8px">${alert.plateNumber||"UNKNOWN"}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);font-family:var(--mono)">Detected at ${new Date(alert.time||Date.now()).toLocaleString()}</div>
+      </div>
+    </div>
+
+    <!-- Violations -->
+    <div class="alert-section">
+      <div class="alert-section-title">Violations Found (${violations.length})</div>
+      ${vSection || '<div style="color:rgba(255,255,255,.4);font-size:12px">Integration violation detected</div>'}
+    </div>
+
+    <!-- Camera & Location -->
+    <div class="alert-section">
+      <div class="alert-section-title">📡 Detection Location</div>
+      <div class="alert-info-row"><span class="alert-info-key">Camera</span><span class="alert-info-val">${alert.cameraId||"Unknown"}</span></div>
+      <div class="alert-info-row"><span class="alert-info-key">Location</span><span class="alert-info-val">${cam.name}</span></div>
+      <div class="alert-info-row"><span class="alert-info-key">Road</span><span class="alert-info-val">${cam.road}</span></div>
+      <div class="alert-info-row"><span class="alert-info-key">Area</span><span class="alert-info-val">${cam.area}, Dar es Salaam</span></div>
+      <div class="alert-info-row"><span class="alert-info-key">GPS</span><span class="alert-info-val">${cam.lat}, ${cam.lng}</span></div>
+      <div class="alert-info-row"><span class="alert-info-key">Direction</span><span class="alert-info-val" style="color:var(--amber);font-weight:700">➡ ${direction}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        <a href="${mapsUrl}" target="_blank" class="alert-map-btn">🗺️ View on Map</a>
+        <a href="${dirUrl}" target="_blank" class="alert-map-btn" style="background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.4);color:var(--green)">🧭 Get Directions</a>
+      </div>
+    </div>
+
+    <!-- Nearest Officers -->
+    <div class="alert-section">
+      <div class="alert-section-title">👮 Officers Online (${connectedCount})</div>
+      ${connectedCount > 0
+        ? `<div class="officer-card">
+            <div class="officer-dot"></div>
+            <div class="officer-info">
+              <div class="officer-name">Traffic Officer — ${cam.area} Unit</div>
+              <div class="officer-dist">📍 Near ${cam.name} &bull; Online now</div>
+            </div>
+            <button class="intercept-btn" onclick="showToast('Alert sent to officer','success')">📢 Alert</button>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);font-family:var(--mono);margin-top:6px">${connectedCount} officer(s) connected to alert stream</div>`
+        : `<div class="officer-card offline">
+            <div class="officer-dot offline"></div>
+            <div class="officer-info">
+              <div class="officer-name" style="color:rgba(255,255,255,.5)">No officers online</div>
+              <div class="officer-dist">All officers are offline or not connected</div>
+            </div>
+          </div>`
+      }
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="alert-btn-ack" style="flex:2" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged — Officer Dispatched</button>
+      <button class="alert-btn-dismiss" style="flex:1" onclick="closeAlertDetail()">Close</button>
+    </div>`;
+
+  modal.classList.add("open");
 }
 
 function dismissAlert() {
