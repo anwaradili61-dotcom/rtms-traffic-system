@@ -931,8 +931,11 @@ async function userAppeal(id,fineNum){
 
 // ── LATRA / TIRA INTEGRATION VIEW ────────────────────────────
 let intFilter = "ALL";
+let currentIntSource = "LATRA";
+function setIntFilter(f) { intFilter = f; renderIntegrationView(currentIntSource); }
 
 async function renderIntegrationView(source) {
+  currentIntSource = source;
   const main = document.getElementById("staff-main");
   main.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading '+source+' violations...</div>';
 
@@ -943,117 +946,46 @@ async function renderIntegrationView(source) {
 
   const stats  = checksRes?.checks?.find(c => c.source === source) || {};
   const allAlerts = (alertsRes?.data || []).filter(a => {
-    const v = Array.isArray(a.violations) ? a.violations : (()=>{try{return JSON.parse(a.violations||'[]')}catch(e){return[]}})();
-    return v.some(vv => (vv.source||vv.Source||'') === source);
+    let v = a.violations;
+    if (typeof v === "string") { try { v = JSON.parse(v); } catch(e) { v = []; } }
+    if (!Array.isArray(v)) v = [];
+    return v.some(vv => (vv.source || vv.Source || "") === source);
   });
 
-  const total     = Number(stats.total_checks || 0);
-  const violations= Number(stats.violations   || 0);
-  const compliant = Number(stats.compliant    || 0);
-
-  const sourceIcon  = source==="LATRA" ? "🚛" : "🛡️";
-  const sourceColor = source==="LATRA" ? "var(--amber)" : "var(--accent2)";
-  const sourceDesc  = source==="LATRA"
+  const total      = Number(stats.total_checks || 0);
+  const violations = Number(stats.violations   || 0);
+  const compliant  = Number(stats.compliant    || 0);
+  const sourceIcon = source === "LATRA" ? "🚛" : "🛡️";
+  const sourceDesc = source === "LATRA"
     ? "Transit Permit Violations — Vehicles without valid LATRA permits"
     : "Insurance Violations — Vehicles without valid TIRA insurance";
 
+  const unresolved = allAlerts.filter(a => !a.acknowledged).length;
+  const resolved   = allAlerts.filter(a =>  a.acknowledged).length;
+
   main.innerHTML =
-    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>'+
-    // Header
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'+
-      '<span style="font-size:32px">'+sourceIcon+'</span>'+
-      '<div><div class="section-title">'+source+' Violations</div><div class="section-sub">'+sourceDesc+'</div></div>'+
-      '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderIntegrationView(''+source+'')">&#x1F504; Refresh</button>'+
-    '</div>'+
-    // Stats
-    '<div class="int-stats-row">'+
-      '<div class="int-stat"><div class="int-stat-val amber">'+violations+'</div><div class="int-stat-lbl">Violations</div></div>'+
-      '<div class="int-stat"><div class="int-stat-val green">'+compliant+'</div><div class="int-stat-lbl">Compliant</div></div>'+
-      '<div class="int-stat"><div class="int-stat-val" style="color:'+sourceColor+'">'+total+'</div><div class="int-stat-lbl">Total Checks</div></div>'+
-    '</div>'+
-    // Filter tabs
-    '<div class="filter-tabs">'+
-      '<div class="filter-tab '+(intFilter==="ALL"?"active":"")+'" onclick="intFilter='ALL';renderIntegrationView(''+source+'')">All ('+allAlerts.length+')</div>'+
-      '<div class="filter-tab '+(intFilter==="UNACK"?"active":"")+'" onclick="intFilter='UNACK';renderIntegrationView(''+source+'')">Unresolved ('+allAlerts.filter(a=>!a.acknowledged).length+')</div>'+
-      '<div class="filter-tab '+(intFilter==="ACK"?"active":"")+'" onclick="intFilter='ACK';renderIntegrationView(''+source+'')">Resolved ('+allAlerts.filter(a=>a.acknowledged).length+')</div>'+
-    '</div>'+
-    // Cards
-    '<div id="integration-cards">'+buildIntegrationCards(allAlerts, source)+'</div>';
+    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">' +
+      '<span style="font-size:32px">' + sourceIcon + '</span>' +
+      '<div><div class="section-title">' + source + ' Violations</div>' +
+      '<div class="section-sub">' + sourceDesc + '</div></div>' +
+      '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderIntegrationView(currentIntSource)">&#x1F504; Refresh</button>' +
+    '</div>' +
+    '<div class="int-stats-row">' +
+      '<div class="int-stat"><div class="int-stat-val amber">' + violations + '</div><div class="int-stat-lbl">Violations</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val green">' + compliant + '</div><div class="int-stat-lbl">Compliant</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val" style="color:var(--accent2)">' + total + '</div><div class="int-stat-lbl">Total Checks</div></div>' +
+    '</div>' +
+    '<div class="filter-tabs">' +
+      '<div class="filter-tab ' + (intFilter==="ALL"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ALL") + ')">All (' + allAlerts.length + ')</div>' +
+      '<div class="filter-tab ' + (intFilter==="UNACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("UNACK") + ')">Unresolved (' + unresolved + ')</div>' +
+      '<div class="filter-tab ' + (intFilter==="ACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ACK") + ')">Resolved (' + resolved + ')</div>' +
+    '</div>' +
+    '<div id="integration-cards">' + buildIntegrationCards(allAlerts, source) + '</div>';
 }
 
-function buildIntegrationCards(alerts, source) {
-  const filtered = intFilter==="ALL" ? alerts
-    : intFilter==="UNACK" ? alerts.filter(a=>!a.acknowledged)
-    : alerts.filter(a=>a.acknowledged);
 
-  if (!filtered.length) return '<div class="empty"><div class="empty-icon">'+
-    (source==="LATRA"?"🚛":"🛡️")+'</div><div class="empty-text">No '+source+
-    ' violations found</div></div>';
-
-  return filtered.map(a => {
-    const violations = (()=>{
-      let v = a.violations;
-      if (typeof v==='string'){try{v=JSON.parse(v)}catch(e){v=[];}}
-      if (!Array.isArray(v)) v=[];
-      return v.filter(vv=>(vv.source||vv.Source||'')===source)
-               .map(vv=>({
-                 source:     vv.source||vv.Source||source,
-                 type:       vv.type||vv.violation||vv.violation_type||'UNKNOWN',
-                 fineAmount: vv.fineAmount||vv.fine_amount||0,
-               }));
-    })();
-
-    const names={
-      NO_LATRA_PERMIT:"No LATRA Transit Permit",
-      EXPIRED_LATRA:"Expired LATRA Permit",
-      NO_INSURANCE:"No Insurance Policy",
-      EXPIRED_INSURANCE:"Expired Insurance",
-    };
-    const cam = getCameraInfo(a.camera_id);
-    const isAck = a.acknowledged;
-    const totalFines = violations.reduce((s,v)=>s+Number(v.fineAmount||0),0);
-    const time = new Date(a.created_at).toLocaleString('en-TZ',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-
-    return '<div class="integration-card">'+
-      '<div class="integration-card-hdr">'+
-        '<div>'+
-          '<div class="integration-card-plate">'+a.plate_number+'</div>'+
-          '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">📡 '+cam.name+' &bull; '+cam.area+'</div>'+
-        '</div>'+
-        '<div style="text-align:right">'+
-          '<div class="integration-card-time">'+time+'</div>'+
-          (isAck
-            ? '<span class="integration-status paid">✓ Resolved</span>'
-            : '<span class="integration-status violation">⚠ Unresolved</span>')+
-        '</div>'+
-      '</div>'+
-      '<div class="integration-card-body">'+
-        violations.map(v=>'<div class="integration-row">'+
-          '<div class="integration-source">'+
-            '<span class="integration-icon">'+(source==="LATRA"?"🚛":"🛡️")+'</span>'+
-            '<div>'+
-              '<div class="integration-label">'+(names[v.type]||v.type)+'</div>'+
-              '<div class="integration-desc">'+source+' Violation &bull; Fine: TZS '+Number(v.fineAmount||0).toLocaleString()+'</div>'+
-            '</div>'+
-          '</div>'+
-          '<span class="integration-status '+(isAck?"paid":"violation")+'">'+(isAck?"PAID / RESOLVED":"OUTSTANDING")+'</span>'+
-        '</div>').join('')+
-        '<div style="font-size:12px;color:var(--text3);font-family:var(--mono);padding-top:6px;border-top:1px solid var(--border);margin-top:4px">'+
-          'Total fines: <strong style="color:var(--text)">TZS '+totalFines.toLocaleString()+'</strong>'+
-          (a.direction&&a.direction!=="UNKNOWN"?' &bull; ➡ '+a.direction:'')+
-        '</div>'+
-      '</div>'+
-      '<div class="integration-card-footer">'+
-        (!isAck
-          ? '<button class="btn btn-primary" style="font-size:12px;padding:7px 14px" onclick="markIntegrationResolved(''+a.id+'',this)">✓ Mark as Resolved / Paid</button>'+
-            '<a href="https://www.google.com/maps?q='+cam.lat+','+cam.lng+'" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none">🗺️ View Location</a>'+
-            '<a href="https://www.google.com/maps/dir/?api=1&destination='+cam.lat+','+cam.lng+'&travelmode=driving" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none;color:var(--green);border-color:var(--green)">🧭 Directions</a>'
-          : '<span style="font-size:12px;color:var(--green);font-family:var(--mono)">✓ Officer has resolved this violation</span>')+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
+function markIntResolved(btn, alertId) { markIntegrationResolved(alertId, btn); }
 async function markIntegrationResolved(alertId, btn) {
   btn.disabled = true; btn.textContent = "Saving...";
   const r = await apiFetch("/alerts/"+alertId+"/acknowledge", {method:"PATCH"});
@@ -1111,7 +1043,7 @@ async function renderAlertsLogView() {
               : '<span class="badge overdue">Unresolved</span>')+
             '</td>'+
             '<td>'+(!a.acknowledged
-              ? '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="markIntegrationResolved(''+a.id+'',this)">✓ Resolve</button>'
+              ? '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="markIntResolved(this,\'' + a.id + '\')">✓ Resolve</button>'
               : '—')+
             '</td>'+
           '</tr>';
