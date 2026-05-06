@@ -806,15 +806,15 @@ async function userLoadVehicles(){
       '<div><div class="profile-name">'+(u.full_name||"")+'</div><div class="profile-meta">'+(u.email||"")+(u.phone?" | "+u.phone:"")+'</div></div>'+
       '<div style="margin-left:auto;text-align:right"><div style="font-family:var(--head);font-size:22px;font-weight:700;color:'+(unpaid?"var(--red)":"var(--green)")+'">'+(unpaid)+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">UNPAID FINE'+(unpaid!==1?"S":"")+'</div></div>'+
     '</div>'+
-    '<div><div class="section-hdr" style="margin-bottom:12px"><div class="section-title">My Vehicles ('+userVehicles.length+')</div><button class="btn btn-primary" onclick="openUserVehicleModal()">+ Register My Vehicle</button></div>'+
-    (userVehicles.length===0?'<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.<br>Contact the traffic office to link your vehicle.</div></div>':
+    '<div><div class="section-hdr" style="margin-bottom:12px"><div class="section-title">My Vehicles ('+userVehicles.length+')</div><div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="syncMyVehicles()" title="Find vehicles registered under your name">&#x1F504; Sync</button><button class="btn btn-primary" onclick="openUserVehicleModal()">+ Register My Vehicle</button></div></div>'+
+    (userVehicles.length===0?'<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered yet.<br>Click <strong>Register My Vehicle</strong> above, or ask an officer to link your existing vehicle by name.</div></div>':
     userVehicles.map(v=>
       '<div class="vehicle-card" onclick="userOpenVehicle(\''+v.plate_number+'\')">'+
         '<div style="display:flex;align-items:flex-start;justify-content:space-between">'+
           '<div class="vehicle-plate">'+v.plate_number+'</div>'+
           '<div style="text-align:right">'+(Number(v.total_outstanding)>0?'<div style="font-family:var(--head);font-size:16px;font-weight:700;color:var(--red)">TZS '+Number(v.total_outstanding).toLocaleString()+'</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">OUTSTANDING</div>':'<div style="font-size:12px;color:var(--green);font-family:var(--mono)">No outstanding fines</div>')+'</div>'+
         '</div>'+
-        '<div class="vehicle-info"><span>'+([v.make,v.model].filter(Boolean).join(" ")||"Unknown")+'</span><span>'+(v.color||"--")+'</span><span>'+(v.year||"--")+'</span><span>'+(v.total_fines||0)+' fine'+(v.total_fines!=1?"s":"")+'</span></div>'+
+        '<div class="vehicle-info"><span>'+([v.make,v.model].filter(Boolean).join(" ")||"Make/model not set")+'</span><span>'+(v.color||"--")+'</span><span>'+(v.year||"--")+'</span><span>'+(v.total_fines||0)+' fine'+(v.total_fines!=1?"s":"")+'</span></div>'+
       '</div>').join(""))+'</div>';
 }
 
@@ -968,6 +968,19 @@ function updateQueueBadge() {
   else badge.style.display="none";
 }
 
+// ── SYNC VEHICLES ────────────────────────────────────────────
+async function syncMyVehicles() {
+  showToast("Searching for your vehicles...", "");
+  // Call admin sync endpoint if admin, otherwise just reload
+  const role = localStorage.getItem("rtms_role");
+  if (role === "ADMIN") {
+    const r = await apiFetch("/admin/sync-vehicles", {method:"POST"});
+    if (r && r.success) showToast("Synced! " + r.vehicles_linked + " vehicle(s) linked", "success");
+  }
+  await userLoadVehicles();
+  showToast("Vehicles refreshed", "success");
+}
+
 // ── VEHICLE OWNER SELF-REGISTRATION ─────────────────────────
 function openUserVehicleModal() {
   // Pre-fill all owner details from logged-in user account
@@ -1081,11 +1094,11 @@ window.addEventListener("load", () => {
   }
 });
 
-// Session check every 6 hours
+// Session check every 12 hours — only warn, don't force logout unless truly expired
 setInterval(()=>{
   const token=localStorage.getItem("rtms_token");if(!token)return;
-  if(!isSessionValid()){showToast("Session expired — please log in again","error");setTimeout(logout,3000);}
-},6*60*60*1000);
+  if(!isSessionValid()){showToast("Session expired — please log in again","error");setTimeout(logout,5000);}
+},12*60*60*1000);
 </script>
 </body>
 </html>

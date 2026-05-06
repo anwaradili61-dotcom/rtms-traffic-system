@@ -111,6 +111,17 @@ app.post('/register', async (req, res) => {
       [username.trim().toLowerCase(), hash, full_name, email || null, phone, national_id || null]
     );
     const newUser = rows[0];
+    // AUTO-LINK: find any vehicles registered under this name/phone/email
+    // so vehicles registered by officers before the owner had an account show up immediately
+    await db(
+      `UPDATE vehicles SET
+         owner_email = COALESCE(NULLIF(owner_email,''), $1),
+         owner_phone = COALESCE(NULLIF(owner_phone,''), $2),
+         owner_national_id = COALESCE(NULLIF(owner_national_id,''), $3)
+       WHERE (LOWER(TRIM(owner_name)) = LOWER(TRIM($4)))
+         AND (owner_email IS NULL OR owner_email = '' OR owner_phone IS NULL OR owner_phone = '')`,
+      [newUser.email||'', newUser.phone||'', newUser.national_id||'', newUser.full_name]
+    ).catch(() => {}); // non-blocking
     const token = jwt.sign(
       { id: newUser.id, role: 'USER', username: newUser.username, full_name: newUser.full_name },
       JWT_SECRET, { expiresIn: '30d' }
@@ -480,7 +491,6 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
-    // Match by email, phone, OR national_id so vehicles registered by the owner show up
     const { rows } = await db(
       `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status,
               f.due_date, f.issued_at, f.paid_at,
@@ -491,9 +501,10 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
        JOIN vehicles   vh ON vh.id = v.vehicle_id
        WHERE (vh.owner_email = $1 AND $1 != '')
           OR (vh.owner_phone = $2 AND $2 != '')
-          OR (vh.owner_national_id = $3 AND $3 IS NOT NULL)
+          OR (vh.owner_national_id = $3 AND $3 IS NOT NULL AND $3 != '')
+          OR (LOWER(TRIM(vh.owner_name)) = LOWER(TRIM($4)) AND $4 != '')
        ORDER BY f.issued_at DESC NULLS LAST`,
-      [u.email || '', u.phone || '', u.national_id || null]
+      [u.email || '', u.phone || '', u.national_id || '', u.full_name || '']
     );
     res.json({ data: rows, user: { full_name: u.full_name, email: u.email, phone: u.phone } });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -503,7 +514,8 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
-    // Match by email, phone, OR national_id so self-registered vehicles show up
+    // Match by email, phone, national_id, OR owner_name (case-insensitive)
+    // This ensures vehicles registered by officers for this owner are shown
     const { rows } = await db(
       `SELECT v.*,
               COUNT(f.id) AS total_fines,
@@ -515,9 +527,10 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
        LEFT JOIN fines      f  ON f.violation_id = vi.id
        WHERE (v.owner_email = $1 AND $1 != '')
           OR (v.owner_phone = $2 AND $2 != '')
-          OR (v.owner_national_id = $3 AND $3 IS NOT NULL)
+          OR (v.owner_national_id = $3 AND $3 IS NOT NULL AND $3 != '')
+          OR (LOWER(TRIM(v.owner_name)) = LOWER(TRIM($4)) AND $4 != '')
        GROUP BY v.id ORDER BY v.created_at DESC`,
-      [u.email || '', u.phone || '', u.national_id || null]
+      [u.email || '', u.phone || '', u.national_id || '', u.full_name || '']
     );
     res.json({ data: rows });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -692,6 +705,31 @@ app.get('/owners', authenticateToken, requireRole('ADMIN','OFFICER'), async (req
       params
     );
     res.json({ data: rows, page: Number(page) });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── SYNC VEHICLES TO USER ACCOUNTS ───────────────────────────
+// Matches unlinked vehicles to existing user accounts by name/phone/email
+// Run this after fixing existing data
+app.post('/admin/sync-vehicles', authenticateToken, requireRole('ADMIN'), async (req, res) => {
+  try {
+    const { rows: users } = await db(
+      `SELECT id, full_name, email, phone, national_id FROM users WHERE role = 'USER'`
+    );
+    let linked = 0;
+    for (const u of users) {
+      const { rowCount } = await db(
+        `UPDATE vehicles SET
+           owner_email       = COALESCE(NULLIF(owner_email,''), $1),
+           owner_phone       = COALESCE(NULLIF(owner_phone,''), $2),
+           owner_national_id = COALESCE(NULLIF(owner_national_id,''), $3)
+         WHERE LOWER(TRIM(owner_name)) = LOWER(TRIM($4))
+           AND ($1 != '' OR $2 != '' OR $3 != '')`,
+        [u.email||'', u.phone||'', u.national_id||'', u.full_name]
+      );
+      linked += rowCount;
+    }
+    res.json({ success: true, vehicles_linked: linked, users_checked: users.length });
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
