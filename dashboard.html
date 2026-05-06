@@ -119,29 +119,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 .empty{padding:48px;text-align:center}.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}.empty-text{font-size:14px;color:var(--text3)}
 .toast{position:fixed;bottom:40px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text);z-index:9999;transform:translateY(80px);opacity:0;transition:all .25s;max-width:320px}
 .toast.show{transform:translateY(0);opacity:1}.toast.success{border-color:var(--green)}.toast.error{border-color:var(--red)}
-/* ── ALERT POPUP ── */
-.alert-popup{position:fixed;top:70px;right:20px;width:360px;background:#0f1a2e;border:2px solid var(--red);border-radius:14px;box-shadow:0 0 40px rgba(239,68,68,.4);z-index:9999;overflow:hidden;transform:translateX(400px);transition:transform .4s cubic-bezier(.16,1,.3,1);max-height:80vh;overflow-y:auto}
-.alert-popup.show{transform:translateX(0)}
-.alert-popup-hdr{background:var(--red);padding:10px 14px;display:flex;align-items:center;gap:8px}
-.alert-popup-icon{font-size:20px;animation:alertPulse 1s ease infinite}
-@keyframes alertPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
-.alert-popup-title{font-family:var(--head);font-size:14px;font-weight:800;color:#fff;flex:1;letter-spacing:.05em}
-.alert-popup-close{background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
-.alert-popup-body{padding:14px}
-.alert-plate{font-family:var(--head);font-size:28px;font-weight:800;color:#fff;letter-spacing:3px;text-align:center;background:rgba(255,255,255,.08);border-radius:8px;padding:8px;margin-bottom:12px}
-.alert-violations{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.alert-violation{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:flex-start}
-.alert-violation-icon{font-size:16px;flex-shrink:0}
-.alert-violation-text{font-size:12px;color:#fff;line-height:1.5;font-family:var(--mono)}
-.alert-violation-amount{font-size:11px;color:var(--amber);margin-top:2px;font-family:var(--mono)}
-.alert-meta{font-size:11px;color:rgba(255,255,255,.5);font-family:var(--mono);text-align:center;margin-bottom:12px}
-.alert-actions{display:flex;gap:8px}
-.alert-btn-ack{flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer}
-.alert-btn-dismiss{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:8px;padding:9px 14px;font-family:var(--mono);font-size:11px;cursor:pointer}
-.alert-queue-badge{position:fixed;top:66px;right:20px;background:var(--red);color:#fff;border-radius:99px;padding:3px 10px;font-size:11px;font-family:var(--mono);font-weight:700;z-index:10000;display:none;cursor:pointer}
-.alert-stream-status{position:fixed;bottom:40px;left:20px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;font-family:var(--mono);color:var(--text3);z-index:999;display:none}
-.alert-stream-status.connected{border-color:var(--green);color:var(--green)}
-
+.conn-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);font-family:var(--mono)}
 .amount{font-family:var(--mono);font-size:13px;color:var(--text)}.amount.large{font-size:22px;font-weight:500;color:var(--green)}
 .profile-header{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(167,139,250,.08));border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px}
 .profile-avatar{width:52px;height:52px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--head);font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
@@ -152,6 +130,28 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 .vehicle-plate{font-family:var(--head);font-size:22px;font-weight:800;color:var(--accent2);letter-spacing:2px}
 .vehicle-info{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
 .vehicle-info span{font-size:12px;color:var(--text3);font-family:var(--mono)}
+/* ── ALERT POPUP ── */
+.alert-popup{position:fixed;top:70px;right:20px;width:360px;background:#0f1a2e;border:2px solid var(--red);border-radius:14px;box-shadow:0 0 40px rgba(239,68,68,.4);z-index:9999;overflow:hidden;transform:translateX(420px);transition:transform .4s cubic-bezier(.16,1,.3,1);max-height:80vh;overflow-y:auto}
+.alert-popup.show{transform:translateX(0)}
+.alert-popup-hdr{background:var(--red);padding:10px 14px;display:flex;align-items:center;gap:8px}
+.alert-popup-icon{font-size:20px;animation:alertPulse 1s ease infinite}
+@keyframes alertPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.alert-popup-title{font-family:var(--head);font-size:14px;font-weight:800;color:#fff;flex:1;letter-spacing:.05em}
+.alert-popup-close{background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.alert-popup-body{padding:14px}
+.alert-plate{font-family:var(--head);font-size:28px;font-weight:800;color:#fff;letter-spacing:3px;text-align:center;background:rgba(255,255,255,.08);border-radius:8px;padding:8px;margin-bottom:12px}
+.alert-violations{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.alert-violation{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:flex-start}
+.alert-violation-icon{font-size:16px;flex-shrink:0}
+.alert-violation-text{font-size:12px;color:#fff;line-height:1.5;font-family:var(--mono)}
+.alert-violation-amount{font-size:11px;color:var(--amber);margin-top:2px;font-family:var(--mono)}
+.alert-meta{font-size:11px;color:rgba(255,255,255,.5);font-family:var(--mono);text-align:center;margin-bottom:10px}
+.alert-actions{display:flex;gap:8px}
+.alert-btn-ack{flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px;font-family:var(--head);font-size:13px;font-weight:700;cursor:pointer}
+.alert-btn-dismiss{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);border-radius:8px;padding:9px 14px;font-family:var(--mono);font-size:11px;cursor:pointer}
+.alert-queue-badge{position:fixed;top:66px;right:20px;background:var(--red);color:#fff;border-radius:99px;padding:3px 10px;font-size:11px;font-family:var(--mono);font-weight:700;z-index:10000;display:none;cursor:pointer;box-shadow:0 2px 8px rgba(239,68,68,.4)}
+.alert-stream-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;margin-right:4px;vertical-align:middle}
+.alert-stream-dot.on{background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 </style>
 </head>
@@ -203,6 +203,7 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
     <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
     <span style="font-size:12px;color:var(--text3);font-family:var(--mono)" id="portal-label">Dashboard</span>
     <div class="topbar-right">
+      <span id="alert-stream-indicator" style="font-size:11px;font-family:var(--mono);color:var(--text3)"><span class="alert-stream-dot" id="alert-dot"></span><span id="alert-dot-label">Alerts off</span></span>
       <div class="live-dot"></div><span class="live-label">LIVE</span>
       <div class="officer-badge" id="user-role-badge">--</div>
       <button class="logout-btn" onclick="logout()">Sign Out</button>
@@ -333,6 +334,17 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
   </div>
 </div>
 
+<!-- Alert popup -->
+<div class="alert-popup" id="alert-popup">
+  <div class="alert-popup-hdr">
+    <span class="alert-popup-icon">🚨</span>
+    <span class="alert-popup-title">VEHICLE ALERT</span>
+    <button class="alert-popup-close" onclick="dismissAlert()">&#x2715;</button>
+  </div>
+  <div class="alert-popup-body" id="alert-popup-body"></div>
+</div>
+<div class="alert-queue-badge" id="alert-queue-badge" onclick="showNextAlert()"></div>
+
 <div class="toast" id="toast"></div>
 <div class="copyright-bar">
   <div><span>&#169;</span><span class="cp-name" style="margin:0 4px">SEUSHI, ANWAR</span><span class="cp-sep">|</span><span style="margin:0 4px">2025</span><span class="cp-sep">|</span><span style="margin:0 4px">Dar es Salaam, Tanzania</span><span class="cp-sep">|</span><span style="margin-left:4px">RTMS — Road Traffic Management System</span></div>
@@ -340,11 +352,18 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 </div>
 
 <script>
+// ── CONFIG ────────────────────────────────────────────────────
 const API = "https://rtms-traffic-system.onrender.com";
 let CURRENT_USER = {}, currentPage = 1, currentStatus = "", currentPlate = "";
 let userVehicles = [], userFines = [];
 
-// ── Tab switcher ──────────────────────────────────────────────
+// ── ALERT SYSTEM STATE ────────────────────────────────────────
+let alertSSE       = null;
+let alertQueue     = [];
+let alertShowing   = false;
+let alertPollTimer = null;
+
+// ── TAB SWITCHER ──────────────────────────────────────────────
 function switchTab(tab) {
   const isSignin = tab === "signin";
   document.getElementById("signin-form").style.display = isSignin ? "block" : "none";
@@ -356,7 +375,7 @@ function switchTab(tab) {
   document.getElementById("signup-success").style.display = "none";
 }
 
-// ── Login ─────────────────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────────
 async function login() {
   const btn = document.getElementById("login-btn");
   const errBox = document.getElementById("login-error");
@@ -390,7 +409,7 @@ function showLoginErr(msg) {
   e.textContent = msg; e.style.display = "block";
 }
 
-// ── Register ──────────────────────────────────────────────────
+// ── REGISTER ──────────────────────────────────────────────────
 async function register() {
   const btn = document.getElementById("reg-btn");
   const errBox = document.getElementById("signup-error");
@@ -403,66 +422,51 @@ async function register() {
   const nid      = document.getElementById("reg-nid").value.trim();
   const password = document.getElementById("reg-password").value;
   const confirm  = document.getElementById("reg-confirm").value;
-  if (!fullname || !username || !phone || !password) { errBox.textContent="Full name, username, phone and password are required"; errBox.style.display="block"; return; }
-  if (username.length < 3) { errBox.textContent="Username must be at least 3 characters"; errBox.style.display="block"; return; }
-  if (password.length < 6) { errBox.textContent="Password must be at least 6 characters"; errBox.style.display="block"; return; }
-  if (password !== confirm) { errBox.textContent="Passwords do not match"; errBox.style.display="block"; return; }
-  btn.disabled = true; btn.textContent = "Creating account...";
+  if (!fullname||!username||!phone||!password){errBox.textContent="Full name, username, phone and password are required";errBox.style.display="block";return;}
+  if (username.length<3){errBox.textContent="Username must be at least 3 characters";errBox.style.display="block";return;}
+  if (password.length<6){errBox.textContent="Password must be at least 6 characters";errBox.style.display="block";return;}
+  if (password!==confirm){errBox.textContent="Passwords do not match";errBox.style.display="block";return;}
+  btn.disabled=true;btn.textContent="Creating account...";
   try {
-    const res = await fetch(API + "/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, full_name: fullname, email: email||null, phone, national_id: nid||null })
-    });
+    const res = await fetch(API+"/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password,full_name:fullname,email:email||null,phone,national_id:nid||null})});
     const data = await res.json();
     if (data.token) {
-      sucBox.textContent = "Account created successfully! Logging you in...";
-      sucBox.style.display = "block";
-      setTimeout(() => { saveSession(data); CURRENT_USER = data.user; bootPortal(); }, 1500);
+      sucBox.textContent="Account created successfully! Logging you in...";sucBox.style.display="block";
+      setTimeout(()=>{saveSession(data);CURRENT_USER=data.user;bootPortal();},1500);
     } else {
-      errBox.textContent = data.error || "Registration failed";
-      errBox.style.display = "block";
+      errBox.textContent=data.error||"Registration failed";errBox.style.display="block";
     }
-  } catch(e) {
-    errBox.textContent = "Cannot reach server";
-    errBox.style.display = "block";
-  } finally {
-    btn.disabled = false; btn.textContent = "Create My Account";
-  }
+  } catch(e){errBox.textContent="Cannot reach server";errBox.style.display="block";}
+  finally{btn.disabled=false;btn.textContent="Create My Account";}
 }
 
-// ── Session management — 30 day expiry ───────────────────────
+// ── SESSION MANAGEMENT (30 days) ──────────────────────────────
 function saveSession(data) {
-  // Store token expiry as 30 days from now (regardless of JWT exp)
-  const expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 days
+  const expiresAt = Date.now() + (30*24*60*60*1000);
   localStorage.setItem("rtms_token",      data.token);
   localStorage.setItem("rtms_role",       data.user.role);
   localStorage.setItem("rtms_username",   data.user.username);
   localStorage.setItem("rtms_fullname",   data.user.full_name);
-  localStorage.setItem("rtms_badge",      data.user.badge_number || "");
+  localStorage.setItem("rtms_badge",      data.user.badge_number||"");
   localStorage.setItem("rtms_expires_at", String(expiresAt));
 }
 
 function isSessionValid() {
   const token     = localStorage.getItem("rtms_token");
-  const expiresAt = Number(localStorage.getItem("rtms_expires_at") || 0);
+  const expiresAt = Number(localStorage.getItem("rtms_expires_at")||0);
   if (!token) return false;
-  // If no expiry stored (old sessions), allow 30 more days
-  if (!expiresAt) {
-    localStorage.setItem("rtms_expires_at", String(Date.now() + 30*24*60*60*1000));
-    return true;
-  }
+  if (!expiresAt) { localStorage.setItem("rtms_expires_at",String(Date.now()+30*24*60*60*1000)); return true; }
   return Date.now() < expiresAt;
 }
 
 function logout() {
-  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at"]
-    .forEach(k => localStorage.removeItem(k));
-  document.getElementById("staff-dashboard").style.display = "none";
-  document.getElementById("user-portal").style.display     = "none";
-  document.getElementById("login-screen").style.display    = "flex";
-  document.getElementById("username").value = "";
-  document.getElementById("password").value = "";
+  stopAlertStream();
+  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at"].forEach(k=>localStorage.removeItem(k));
+  document.getElementById("staff-dashboard").style.display="none";
+  document.getElementById("user-portal").style.display="none";
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("username").value="";
+  document.getElementById("password").value="";
   switchTab("signin");
 }
 
@@ -474,7 +478,7 @@ function bootPortal() {
   document.getElementById("login-screen").style.display = "none";
   if (role === "USER") {
     document.getElementById("user-portal").style.display = "grid";
-    document.getElementById("user-portal-badge").textContent = "👤 " + (fullname || username);
+    document.getElementById("user-portal-badge").textContent = "👤 " + (fullname||username);
     userLoadVehicles();
   } else {
     document.getElementById("staff-dashboard").style.display = "grid";
@@ -486,167 +490,141 @@ function bootPortal() {
       role==="ADMIN" ? "Admin Portal" : role==="CASHIER" ? "Cashier Portal" : "Officer Portal";
     buildSidebar(role);
     renderStatsAndFines();
+    // Start alert stream for ADMIN and OFFICER
+    if (["ADMIN","OFFICER"].includes(role)) setTimeout(startAlertStream, 1500);
   }
 }
 
-// ── API helper ─────────────────────────────────────────────────
-async function apiFetch(path, opts = {}) {
+// ── API HELPER ────────────────────────────────────────────────
+async function apiFetch(path, opts={}) {
   const token = localStorage.getItem("rtms_token");
   try {
-    const r = await fetch(API + path, {
-      headers: { "Content-Type": "application/json", "Authorization": token ? "Bearer " + token : "" },
+    const r = await fetch(API+path, {
+      headers:{"Content-Type":"application/json","Authorization":token?"Bearer "+token:""},
       ...opts
     });
     const el = document.getElementById("conn-warn");
-    if (el) el.style.display = "none";
-    // Only logout on 401 — NOT on 403 (that's just permission denied for a specific action)
-    if (r.status === 401) {
-      showToast("Session expired — please log in again", "error");
-      setTimeout(logout, 3000);
-      return null;
-    }
+    if (el) el.style.display="none";
+    if (r.status===401) { showToast("Session expired — please log in again","error"); setTimeout(logout,3000); return null; }
     return await r.json();
   } catch(e) {
     const el = document.getElementById("conn-warn");
-    if (el) el.style.display = "block";
+    if (el) el.style.display="block";
     return null;
   }
 }
 
-// ── Sidebar ───────────────────────────────────────────────────
+// ── SIDEBAR ───────────────────────────────────────────────────
 function buildSidebar(role) {
-  const isAdmin   = role === "ADMIN";
-  const isOfficer = role === "OFFICER";
-  document.getElementById("staff-sidebar").innerHTML =
-    '<div class="nav-section">Monitor</div>' +
-    '<div class="nav-item active" onclick="showStaffTab(\'fines\',this)"><span class="nav-icon">&#x1F4CB;</span> All Fines <span class="nav-count" id="nav-total">-</span></div>' +
-    '<div class="nav-item" onclick="showStaffTab(\'overdue\',this)"><span class="nav-icon">&#x23F0;</span> Overdue <span class="nav-count red" id="nav-overdue">-</span></div>' +
-    '<div class="nav-item" onclick="showStaffTab(\'appeals\',this)"><span class="nav-icon">&#x2696;</span> Appeals <span class="nav-count amber" id="nav-appeals">-</span></div>' +
-    (isAdmin||isOfficer ?
-      '<div class="nav-section">Actions</div>' +
-      '<div class="nav-item" onclick="showStaffTab(\'vehicles\',this)"><span class="nav-icon">&#x1F697;</span> Vehicles</div>' +
-      '<div class="nav-item" onclick="openModal(\'violation-modal\')"><span class="nav-icon">&#x1F4F8;</span> Log Violation</div>' +
-      '<div class="nav-item" onclick="openModal(\'vehicle-modal\')"><span class="nav-icon">&#x2795;</span> Add Vehicle</div>' : '') +
-    (isAdmin ?
-      '<div class="nav-section">Admin</div>' +
-      '<div class="nav-item" onclick="showStaffTab(\'users\',this)"><span class="nav-icon">&#x1F465;</span> Manage Users</div>' : '') +
-    '<div class="nav-section">System</div>' +
-    '<div class="nav-item" onclick="renderStatsAndFines()"><span class="nav-icon">&#x1F504;</span> Refresh</div>' +
+  const isAdmin=role==="ADMIN", isOfficer=role==="OFFICER";
+  document.getElementById("staff-sidebar").innerHTML=
+    '<div class="nav-section">Monitor</div>'+
+    '<div class="nav-item active" onclick="showStaffTab(\'fines\',this)"><span class="nav-icon">&#x1F4CB;</span> All Fines <span class="nav-count" id="nav-total">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'overdue\',this)"><span class="nav-icon">&#x23F0;</span> Overdue <span class="nav-count red" id="nav-overdue">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'appeals\',this)"><span class="nav-icon">&#x2696;</span> Appeals <span class="nav-count amber" id="nav-appeals">-</span></div>'+
+    (isAdmin||isOfficer?
+      '<div class="nav-section">Actions</div>'+
+      '<div class="nav-item" onclick="showStaffTab(\'vehicles\',this)"><span class="nav-icon">&#x1F697;</span> Vehicles</div>'+
+      '<div class="nav-item" onclick="openModal(\'violation-modal\')"><span class="nav-icon">&#x1F4F8;</span> Log Violation</div>'+
+      '<div class="nav-item" onclick="openModal(\'vehicle-modal\')"><span class="nav-icon">&#x2795;</span> Add Vehicle</div>':'')+
+    (isAdmin?
+      '<div class="nav-section">Admin</div>'+
+      '<div class="nav-item" onclick="showStaffTab(\'users\',this)"><span class="nav-icon">&#x1F465;</span> Manage Users</div>':'')+
+    '<div class="nav-section">System</div>'+
+    '<div class="nav-item" onclick="renderStatsAndFines()"><span class="nav-icon">&#x1F504;</span> Refresh</div>'+
     '<div style="padding:12px 20px;font-size:10px;font-family:var(--mono);color:var(--text3);line-height:1.8;opacity:.6;margin-top:auto">&copy; SEUSHI, ANWAR<br>2025 &middot; Dar es Salaam</div>';
 }
 
-async function renderStatsAndFines() {
-  await loadStats();
-  showStaffTab("fines", document.querySelector("#staff-sidebar .nav-item"));
+async function renderStatsAndFines(){await loadStats();showStaffTab("fines",document.querySelector("#staff-sidebar .nav-item"));}
+
+async function loadStats(){
+  const d=await apiFetch("/dashboard/stats");if(!d)return;
+  const s=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
+  s("s-total",Number(d.total_fines).toLocaleString());s("s-overdue",Number(d.overdue).toLocaleString());
+  s("s-appeal",Number(d.appealed||0).toLocaleString());
+  const col=Number(d.total_collected_tzs);
+  s("s-collected",col>=1e6?(col/1e6).toFixed(1)+"M":(col/1000).toFixed(0)+"K");
+  s("nav-total",d.total_fines);s("nav-overdue",d.overdue);s("nav-appeals",d.appealed||0);
 }
 
-async function loadStats() {
-  const d = await apiFetch("/dashboard/stats");
-  if (!d) return;
-  const s = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-  s("s-total",     Number(d.total_fines).toLocaleString());
-  s("s-overdue",   Number(d.overdue).toLocaleString());
-  s("s-appeal",    Number(d.appealed||0).toLocaleString());
-  const col = Number(d.total_collected_tzs);
-  s("s-collected", col >= 1e6 ? (col/1e6).toFixed(1)+"M" : (col/1000).toFixed(0)+"K");
-  s("nav-total",   d.total_fines);
-  s("nav-overdue", d.overdue);
-  s("nav-appeals", d.appealed||0);
+function showStaffTab(tab,el){
+  document.querySelectorAll("#staff-sidebar .nav-item").forEach(n=>n.classList.remove("active"));
+  if(el)el.classList.add("active");
+  currentPage=1;currentPlate="";currentStatus="";
+  if(tab==="fines")renderFinesView("All Fines","");
+  else if(tab==="overdue")renderFinesView("Overdue Fines","OVERDUE");
+  else if(tab==="appeals")renderFinesView("Fines Under Appeal","APPEALED");
+  else if(tab==="vehicles")renderVehiclesView();
+  else if(tab==="users")renderUsersView();
 }
 
-function showStaffTab(tab, el) {
-  document.querySelectorAll("#staff-sidebar .nav-item").forEach(n => n.classList.remove("active"));
-  if (el) el.classList.add("active");
-  currentPage = 1; currentPlate = ""; currentStatus = "";
-  if      (tab==="fines")    renderFinesView("All Fines","");
-  else if (tab==="overdue")  renderFinesView("Overdue Fines","OVERDUE");
-  else if (tab==="appeals")  renderFinesView("Fines Under Appeal","APPEALED");
-  else if (tab==="vehicles") renderVehiclesView();
-  else if (tab==="users")    renderUsersView();
-}
-
-function renderFinesView(title, status) {
-  currentStatus = status;
-  document.getElementById("staff-main").innerHTML =
-    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>' +
-    '<div class="stats-row">' +
-      '<div class="stat-card blue"><div class="stat-label">Total Fines</div><div class="stat-value" id="s-total">-</div><div class="stat-sub">all time</div></div>' +
-      '<div class="stat-card green"><div class="stat-label">Collected (TZS)</div><div class="stat-value" id="s-collected">-</div><div class="stat-sub">paid</div></div>' +
-      '<div class="stat-card red"><div class="stat-label">Overdue</div><div class="stat-value" id="s-overdue">-</div><div class="stat-sub">past due</div></div>' +
-      '<div class="stat-card amber"><div class="stat-label">Under Appeal</div><div class="stat-value" id="s-appeal">-</div><div class="stat-sub">reviewing</div></div>' +
-    '</div>' +
-    '<div>' +
-      '<div class="section-hdr" style="margin-bottom:12px">' +
-        '<div><div class="section-title" id="table-title">'+title+'</div><div class="section-sub" id="table-sub">Loading...</div></div>' +
-        '<button class="btn btn-primary" onclick="loadStats();loadFines()">Refresh</button>' +
-      '</div>' +
-      '<div class="toolbar" style="margin-bottom:12px">' +
-        '<div class="search-wrap"><span class="search-icon">&#x1F50D;</span><input type="text" id="search-plate" placeholder="Search by plate e.g. T123ABC" onkeydown="if(event.key===\'Enter\')searchPlate()"/></div>' +
-        '<select id="status-filter" onchange="currentPage=1;loadFines()">' +
-          '<option value="">All statuses</option><option value="ISSUED">Issued</option><option value="PAID">Paid</option>' +
-          '<option value="OVERDUE">Overdue</option><option value="APPEALED">Appealed</option>' +
-          '<option value="CANCELLED">Cancelled</option><option value="COURT_REFERRED">Court Referred</option>' +
-        '</select>' +
-        '<button class="btn btn-ghost" onclick="searchPlate()">Search</button>' +
-        '<button class="btn btn-ghost" onclick="clearSearch()">Clear</button>' +
-      '</div>' +
-      '<div class="table-wrap">' +
-        '<table><thead><tr><th>Fine #</th><th>Plate</th><th>Owner</th><th>Violation</th><th>Amount (TZS)</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead>' +
-        '<tbody id="fines-tbody"><tr><td colspan="8"><div class="loading"><div class="spinner"></div><br>Loading fines...</div></td></tr></tbody></table>' +
-        '<div class="pagination" id="pagination" style="display:none">' +
-          '<span class="page-info" id="page-info"></span>' +
-          '<div class="page-btns"><button class="page-btn" id="prev-btn" onclick="changePage(-1)">Prev</button><button class="page-btn" id="next-btn" onclick="changePage(1)">Next</button></div>' +
-        '</div>' +
-      '</div>' +
+function renderFinesView(title,status){
+  currentStatus=status;
+  document.getElementById("staff-main").innerHTML=
+    '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>'+
+    '<div class="stats-row">'+
+      '<div class="stat-card blue"><div class="stat-label">Total Fines</div><div class="stat-value" id="s-total">-</div><div class="stat-sub">all time</div></div>'+
+      '<div class="stat-card green"><div class="stat-label">Collected (TZS)</div><div class="stat-value" id="s-collected">-</div><div class="stat-sub">paid</div></div>'+
+      '<div class="stat-card red"><div class="stat-label">Overdue</div><div class="stat-value" id="s-overdue">-</div><div class="stat-sub">past due</div></div>'+
+      '<div class="stat-card amber"><div class="stat-label">Under Appeal</div><div class="stat-value" id="s-appeal">-</div><div class="stat-sub">reviewing</div></div>'+
+    '</div>'+
+    '<div>'+
+      '<div class="section-hdr" style="margin-bottom:12px">'+
+        '<div><div class="section-title" id="table-title">'+title+'</div><div class="section-sub" id="table-sub">Loading...</div></div>'+
+        '<button class="btn btn-primary" onclick="loadStats();loadFines()">Refresh</button>'+
+      '</div>'+
+      '<div class="toolbar" style="margin-bottom:12px">'+
+        '<div class="search-wrap"><span class="search-icon">&#x1F50D;</span><input type="text" id="search-plate" placeholder="Search by plate e.g. T123ABC" onkeydown="if(event.key===\'Enter\')searchPlate()"/></div>'+
+        '<select id="status-filter" onchange="currentPage=1;loadFines()">'+
+          '<option value="">All statuses</option><option value="ISSUED">Issued</option><option value="PAID">Paid</option>'+
+          '<option value="OVERDUE">Overdue</option><option value="APPEALED">Appealed</option>'+
+          '<option value="CANCELLED">Cancelled</option><option value="COURT_REFERRED">Court Referred</option>'+
+        '</select>'+
+        '<button class="btn btn-ghost" onclick="searchPlate()">Search</button>'+
+        '<button class="btn btn-ghost" onclick="clearSearch()">Clear</button>'+
+      '</div>'+
+      '<div class="table-wrap">'+
+        '<table><thead><tr><th>Fine #</th><th>Plate</th><th>Owner</th><th>Violation</th><th>Amount (TZS)</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead>'+
+        '<tbody id="fines-tbody"><tr><td colspan="8"><div class="loading"><div class="spinner"></div><br>Loading fines...</div></td></tr></tbody></table>'+
+        '<div class="pagination" id="pagination" style="display:none">'+
+          '<span class="page-info" id="page-info"></span>'+
+          '<div class="page-btns"><button class="page-btn" id="prev-btn" onclick="changePage(-1)">Prev</button><button class="page-btn" id="next-btn" onclick="changePage(1)">Next</button></div>'+
+        '</div>'+
+      '</div>'+
     '</div>';
-  loadStats(); loadFines();
-  setInterval(loadStats, 30000);
+  loadStats();loadFines();
+  setInterval(loadStats,30000);
 }
 
-async function loadFines() {
-  const sf = document.getElementById("status-filter");
-  if (sf) currentStatus = sf.value;
-  const tbody = document.getElementById("fines-tbody");
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8"><div class="loading"><div class="spinner"></div><br>Loading...</div></td></tr>';
-  let url = "/fines?page="+currentPage+"&limit=15";
-  if (currentStatus) url += "&status="+currentStatus;
-  if (currentPlate)  url += "&plate="+currentPlate;
-  const d = await apiFetch(url);
-  if (!d) { tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div></td></tr>'; return; }
-  const sub = document.getElementById("table-sub");
-  if (sub) sub.textContent = d.data.length+" records — page "+d.page;
-  if (!d.data.length) {
-    tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-text">No fines found</div></div></td></tr>';
-    const pg=document.getElementById("pagination"); if(pg)pg.style.display="none"; return;
-  }
-  tbody.innerHTML = d.data.map(f =>
+async function loadFines(){
+  const sf=document.getElementById("status-filter");if(sf)currentStatus=sf.value;
+  const tbody=document.getElementById("fines-tbody");if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="8"><div class="loading"><div class="spinner"></div><br>Loading...</div></td></tr>';
+  let url="/fines?page="+currentPage+"&limit=15";
+  if(currentStatus)url+="&status="+currentStatus;if(currentPlate)url+="&plate="+currentPlate;
+  const d=await apiFetch(url);
+  if(!d){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div></td></tr>';return;}
+  const sub=document.getElementById("table-sub");if(sub)sub.textContent=d.data.length+" records — page "+d.page;
+  if(!d.data.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x1F4CB;</div><div class="empty-text">No fines found</div></div></td></tr>';const pg=document.getElementById("pagination");if(pg)pg.style.display="none";return;}
+  tbody.innerHTML=d.data.map(f=>
     '<tr onclick="openFine(\''+f.id+'\')">'+
-    '<td class="mono">'+f.fine_number+'</td>'+
-    '<td class="mono primary">'+f.plate_number+'</td>'+
+    '<td class="mono">'+f.fine_number+'</td><td class="mono primary">'+f.plate_number+'</td>'+
     '<td class="primary">'+f.owner_name+'</td>'+
     '<td><span class="vtype">'+((f.violation_type||"").replace(/_/g," "))+'</span></td>'+
     '<td class="amount">'+Number(f.amount_tzs).toLocaleString()+'</td>'+
     '<td>'+statusBadge(f.status)+'</td>'+
     '<td class="mono">'+(f.due_date?f.due_date.split("T")[0]:"--")+'</td>'+
     '<td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openFine(\''+f.id+'\')">View</button></td>'+
-    '</tr>'
-  ).join("");
-  const pg = document.getElementById("pagination");
-  if (pg) {
-    pg.style.display="flex";
-    document.getElementById("page-info").textContent="Page "+d.page+" | "+d.data.length+" records";
-    document.getElementById("prev-btn").disabled = d.page<=1;
-    document.getElementById("next-btn").disabled = d.data.length<15;
-  }
+    '</tr>').join("");
+  const pg=document.getElementById("pagination");
+  if(pg){pg.style.display="flex";document.getElementById("page-info").textContent="Page "+d.page+" | "+d.data.length+" records";document.getElementById("prev-btn").disabled=d.page<=1;document.getElementById("next-btn").disabled=d.data.length<15;}
 }
 
-async function openFine(id) {
-  const d = await apiFetch("/fines/"+id);
-  if (!d||d.error) { showToast("Could not load fine details","error"); return; }
-  document.getElementById("modal-fine-num").textContent = d.fine_number;
-  const total = Number(d.amount_tzs)+Number(d.penalty_amount||0);
-  document.getElementById("modal-body").innerHTML =
+async function openFine(id){
+  const d=await apiFetch("/fines/"+id);if(!d||d.error){showToast("Could not load fine details","error");return;}
+  document.getElementById("modal-fine-num").textContent=d.fine_number;
+  const total=Number(d.amount_tzs)+Number(d.penalty_amount||0);
+  document.getElementById("modal-body").innerHTML=
     '<div style="text-align:center;padding:8px 0 16px"><div class="amount large">TZS '+total.toLocaleString()+'</div><div style="margin-top:6px">'+statusBadge(d.status)+'</div></div><div>'+
     row("Fine Number",d.fine_number)+row("Plate",d.plate_number)+row("Owner",d.owner_name)+
     row("Phone",d.owner_phone||"--")+row("Email",d.owner_email||"--")+
@@ -659,9 +637,7 @@ async function openFine(id) {
     row("Due Date",d.due_date?d.due_date.split("T")[0]:"--")+
     row("Issued",d.issued_at?new Date(d.issued_at).toLocaleString():"--")+
     (d.evidence_image_url?row("Evidence",'<a href="'+d.evidence_image_url+'" target="_blank" style="color:var(--accent2)">View Image ↗</a>'):"")+'</div>';
-  const role=localStorage.getItem("rtms_role");
-  const s=d.status;
-  let btns="";
+  const role=localStorage.getItem("rtms_role");const s=d.status;let btns="";
   if(["ADMIN","CASHIER"].includes(role)&&["ISSUED","OVERDUE","PENDING"].includes(s))
     btns+='<button class="btn btn-primary" onclick="recordPayment(\''+d.id+'\',\''+d.fine_number+'\')">Record Payment</button>';
   if(["ISSUED","PENDING","OVERDUE"].includes(s))
@@ -673,38 +649,22 @@ async function openFine(id) {
   openModal("fine-modal");
 }
 
-function row(k,v){ return '<div class="detail-row"><span class="detail-key">'+k+'</span><span class="detail-val">'+v+'</span></div>'; }
+function row(k,v){return'<div class="detail-row"><span class="detail-key">'+k+'</span><span class="detail-val">'+v+'</span></div>';}
 
-async function recordPayment(id,fineNum) {
-  const method=prompt("Payment method for "+fineNum+"?\nMOBILE_MONEY / BANK_TRANSFER / CASH / CARD","MOBILE_MONEY");
-  if(!method) return;
-  const amount=prompt("Amount paid (TZS):");
-  if(!amount) return;
+async function recordPayment(id,fineNum){
+  const method=prompt("Payment method for "+fineNum+"?\nMOBILE_MONEY / BANK_TRANSFER / CASH / CARD","MOBILE_MONEY");if(!method)return;
+  const amount=prompt("Amount paid (TZS):");if(!amount)return;
   const r=await apiFetch("/fines/"+id+"/pay",{method:"POST",body:JSON.stringify({amount_tzs:Number(amount),payment_method:method.trim().toUpperCase(),provider:"Counter",transaction_ref:"TXN-"+Date.now()})});
   if(r&&!r.error){showToast("Payment recorded successfully","success");closeModal("fine-modal");loadFines();loadStats();}
   else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
-
-async function appealFine(id) {
-  const reason=prompt("State the reason for this appeal:");
-  if(!reason) return;
-  const r=await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});
-  if(r&&!r.error){showToast("Appeal filed successfully","success");closeModal("fine-modal");loadFines();loadStats();}
-  else showToast("Error: "+(r?.error||"Unknown"),"error");
-}
-
-async function dismissFine(id) {
-  if(!confirm("Cancel this fine? This cannot be undone.")) return;
-  const r=await apiFetch("/fines/"+id+"/cancel",{method:"POST"});
-  if(r&&!r.error){showToast("Fine cancelled","success");closeModal("fine-modal");loadFines();loadStats();}
-  else showToast("Error: "+(r?.error||"Unknown"),"error");
-}
-
+async function appealFine(id){const reason=prompt("State the reason for this appeal:");if(!reason)return;const r=await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});if(r&&!r.error){showToast("Appeal filed successfully","success");closeModal("fine-modal");loadFines();loadStats();}else showToast("Error: "+(r?.error||"Unknown"),"error");}
+async function dismissFine(id){if(!confirm("Cancel this fine? This cannot be undone."))return;const r=await apiFetch("/fines/"+id+"/cancel",{method:"POST"});if(r&&!r.error){showToast("Fine cancelled","success");closeModal("fine-modal");loadFines();loadStats();}else showToast("Error: "+(r?.error||"Unknown"),"error");}
 function searchPlate(){currentPlate=(document.getElementById("search-plate")?.value||"").trim().toUpperCase();currentPage=1;loadFines();}
 function clearSearch(){currentPlate="";currentStatus="";currentPage=1;const sp=document.getElementById("search-plate");if(sp)sp.value="";const sf=document.getElementById("status-filter");if(sf)sf.value="";loadFines();}
 function changePage(d){currentPage=Math.max(1,currentPage+d);loadFines();}
 
-async function renderVehiclesView() {
+async function renderVehiclesView(){
   document.getElementById("staff-main").innerHTML=
     '<div><div class="section-hdr" style="margin-bottom:12px"><div><div class="section-title">Vehicle Registry</div><div class="section-sub" id="v-sub">Loading...</div></div>'+
     '<button class="btn btn-primary" onclick="openModal(\'vehicle-modal\')">+ Add Vehicle</button></div>'+
@@ -716,11 +676,10 @@ async function renderVehiclesView() {
   loadVehicles();
 }
 
-async function loadVehicles() {
+async function loadVehicles(){
   const s=document.getElementById("v-search")?.value.trim()||"";
   const d=await apiFetch(s?"/vehicles?plate="+s:"/vehicles");
-  const tbody=document.getElementById("v-tbody");
-  if(!tbody) return;
+  const tbody=document.getElementById("v-tbody");if(!tbody)return;
   if(!d){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Server error</div></div></td></tr>';return;}
   const sub=document.getElementById("v-sub");if(sub)sub.textContent=d.data.length+" vehicles registered";
   if(!d.data.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles found</div></div></td></tr>';return;}
@@ -730,13 +689,11 @@ async function loadVehicles() {
     '<td class="mono">'+(v.owner_phone||"--")+'</td><td>'+([v.make,v.model].filter(Boolean).join(" ")||"--")+'</td>'+
     '<td>'+(v.color||"--")+'</td><td class="mono">'+(v.year||"--")+'</td>'+
     '<td class="mono">'+(v.registration_expiry?v.registration_expiry.split("T")[0]:"--")+'</td>'+
-    '<td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openVehicleDetail(\''+v.plate_number+'\')">Full Info</button></td></tr>'
-  ).join("");
+    '<td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();openVehicleDetail(\''+v.plate_number+'\')">Full Info</button></td></tr>').join("");
 }
 
-async function openVehicleDetail(plate) {
-  const d=await apiFetch("/vehicles/"+plate);
-  if(!d||d.error){showToast("Vehicle not found","error");return;}
+async function openVehicleDetail(plate){
+  const d=await apiFetch("/vehicles/"+plate);if(!d||d.error){showToast("Vehicle not found","error");return;}
   document.getElementById("vd-title").textContent="Vehicle — "+d.plate_number;
   document.getElementById("vd-body").innerHTML=
     '<div style="background:var(--bg3);border-radius:10px;padding:16px;margin-bottom:8px">'+
@@ -744,12 +701,8 @@ async function openVehicleDetail(plate) {
       '<div style="margin-top:6px;font-size:13px;color:var(--text2)">'+ [d.make,d.model,d.color,d.year].filter(Boolean).join(" | ") +'</div>'+
     '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-      '<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;text-align:center">'+
-        '<div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--red)">'+(d.overdue_fines||0)+'</div>'+
-        '<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">OVERDUE</div></div>'+
-      '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px;text-align:center">'+
-        '<div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--amber)">'+(d.issued_fines||0)+'</div>'+
-        '<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">PENDING</div></div>'+
+      '<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;text-align:center"><div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--red)">'+(d.overdue_fines||0)+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">OVERDUE</div></div>'+
+      '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px;text-align:center"><div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--amber)">'+(d.issued_fines||0)+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">PENDING</div></div>'+
     '</div><div>'+
     '<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Owner Information</div>'+
     row("Full Name",d.owner_name)+row("Phone",d.owner_phone||"--")+row("Email",d.owner_email||"--")+
@@ -765,7 +718,7 @@ async function openVehicleDetail(plate) {
   openModal("vehicle-detail-modal");
 }
 
-async function renderUsersView() {
+async function renderUsersView(){
   document.getElementById("staff-main").innerHTML=
     '<div><div class="section-hdr" style="margin-bottom:12px"><div><div class="section-title">Staff Users</div><div class="section-sub">All system users and their roles</div></div>'+
     '<button class="btn btn-primary" onclick="openModal(\'add-user-modal\')">+ Add User</button></div>'+
@@ -774,10 +727,8 @@ async function renderUsersView() {
   loadUsers();
 }
 
-async function loadUsers() {
-  const d=await apiFetch("/users");
-  const tbody=document.getElementById("u-tbody");
-  if(!tbody) return;
+async function loadUsers(){
+  const d=await apiFetch("/users");const tbody=document.getElementById("u-tbody");if(!tbody)return;
   if(!d){tbody.innerHTML='<tr><td colspan="8"><div class="empty">Error loading users</div></td></tr>';return;}
   tbody.innerHTML=d.data.map(u=>
     '<tr><td class="mono">'+u.username+'</td><td class="primary">'+u.full_name+'</td><td>'+roleBadge(u.role)+'</td>'+
@@ -785,26 +736,23 @@ async function loadUsers() {
     '<td class="mono" style="font-size:11px">'+(u.last_login?new Date(u.last_login).toLocaleDateString():"Never")+'</td>'+
     '<td><span class="badge '+(u.is_active?"paid":"cancelled")+'">'+(u.is_active?"Active":"Inactive")+'</span></td>'+
     '<td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="toggleUser(\''+u.id+'\',\''+u.username+'\',\''+u.is_active+'\')">'+
-    (u.is_active?"Disable":"Enable")+'</button></td></tr>'
-  ).join("");
+    (u.is_active?"Disable":"Enable")+'</button></td></tr>').join("");
 }
 
-async function toggleUser(id,uname,active) {
-  if(!confirm((active==="true"?"Disable":"Enable")+" user "+uname+"?")) return;
+async function toggleUser(id,uname,active){
+  if(!confirm((active==="true"?"Disable":"Enable")+" user "+uname+"?"))return;
   const r=await apiFetch("/users/"+id+"/toggle",{method:"PATCH"});
-  if(r&&!r.error){showToast("User status updated","success");loadUsers();}
-  else showToast("Error: "+(r?.error||"Unknown"),"error");
+  if(r&&!r.error){showToast("User status updated","success");loadUsers();}else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-async function submitUser() {
+async function submitUser(){
   const body={username:document.getElementById("u-username").value.trim(),password:document.getElementById("u-password").value,full_name:document.getElementById("u-fullname").value.trim(),email:document.getElementById("u-email").value.trim(),phone:document.getElementById("u-phone").value.trim(),role:document.getElementById("u-role").value,badge_number:document.getElementById("u-badge").value.trim()};
   if(!body.username||!body.password||!body.full_name){showToast("Username, password and full name required","error");return;}
   const r=await apiFetch("/users",{method:"POST",body:JSON.stringify(body)});
-  if(r&&!r.error){showToast("User created: "+body.username,"success");closeModal("add-user-modal");loadUsers();}
-  else showToast("Error: "+(r?.error||"Unknown"),"error");
+  if(r&&!r.error){showToast("User created: "+body.username,"success");closeModal("add-user-modal");loadUsers();}else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-async function submitVehicle() {
+async function submitVehicle(){
   const body={plate_number:document.getElementById("v-plate").value.trim().toUpperCase(),owner_name:document.getElementById("v-name").value.trim(),owner_phone:document.getElementById("v-phone").value.trim(),owner_email:document.getElementById("v-email").value.trim(),owner_national_id:document.getElementById("v-nid").value.trim(),owner_address:document.getElementById("v-addr").value.trim(),make:document.getElementById("v-make").value.trim(),model:document.getElementById("v-model").value.trim(),color:document.getElementById("v-color").value.trim(),year:parseInt(document.getElementById("v-year").value)||null,chassis_number:document.getElementById("v-chassis").value.trim(),engine_number:document.getElementById("v-engine").value.trim(),registration_expiry:document.getElementById("v-expiry").value};
   if(!body.plate_number||!body.owner_name||!body.owner_phone||!body.registration_expiry){showToast("Fill in all required fields","error");return;}
   const r=await apiFetch("/vehicles",{method:"POST",body:JSON.stringify(body)});
@@ -812,7 +760,7 @@ async function submitVehicle() {
   else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-async function submitViolation() {
+async function submitViolation(){
   const body={plate_number:document.getElementById("vl-plate").value.trim().toUpperCase(),violation_type:document.getElementById("vl-type").value,camera_id:document.getElementById("vl-camera").value.trim()||"MANUAL",confidence_score:parseFloat(document.getElementById("vl-conf").value),evidence_image_url:document.getElementById("vl-img").value.trim()||"https://placeholder.com/evidence.jpg",occurred_at:new Date().toISOString()};
   if(!body.plate_number){showToast("Enter a plate number","error");return;}
   const r=await apiFetch("/violations",{method:"POST",body:JSON.stringify(body)});
@@ -820,15 +768,14 @@ async function submitViolation() {
   else showToast("Error: "+(r?.error||r?.message||"Server error"),"error");
 }
 
-// ── User portal ───────────────────────────────────────────────
-async function userLoadVehicles() {
+// ── USER PORTAL ───────────────────────────────────────────────
+async function userLoadVehicles(){
   const main=document.getElementById("user-main");
   main.innerHTML='<div class="loading"><div class="spinner"></div><br>Loading your vehicles...</div>';
   const [vData,fData]=await Promise.all([apiFetch("/my/vehicles"),apiFetch("/my/fines")]);
   if(!vData||!fData){main.innerHTML='<div class="empty"><div class="empty-icon">&#x26A0;</div><div class="empty-text">Cannot connect to server</div></div>';return;}
   userVehicles=vData.data;userFines=fData.data;
-  const u=fData.user||{};
-  const unpaid=userFines.filter(f=>["ISSUED","OVERDUE"].includes(f.status)).length;
+  const u=fData.user||{};const unpaid=userFines.filter(f=>["ISSUED","OVERDUE"].includes(f.status)).length;
   const nc=document.getElementById("user-nav-unpaid");if(nc)nc.textContent=unpaid||"0";
   const initials=(u.full_name||"U").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   main.innerHTML=
@@ -838,19 +785,15 @@ async function userLoadVehicles() {
       '<div style="margin-left:auto;text-align:right"><div style="font-family:var(--head);font-size:22px;font-weight:700;color:'+(unpaid?"var(--red)":"var(--green)")+'">'+(unpaid)+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">UNPAID FINE'+(unpaid!==1?"S":"")+'</div></div>'+
     '</div>'+
     '<div><div class="section-title" style="margin-bottom:12px">My Vehicles ('+userVehicles.length+')</div>'+
-    (userVehicles.length===0
-      ?'<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.<br>Contact the traffic office to link your vehicle.</div></div>'
-      :userVehicles.map(v=>
-        '<div class="vehicle-card" onclick="userOpenVehicle(\''+v.plate_number+'\')">'+
-          '<div style="display:flex;align-items:flex-start;justify-content:space-between">'+
-            '<div class="vehicle-plate">'+v.plate_number+'</div>'+
-            '<div style="text-align:right">'+(Number(v.total_outstanding)>0
-              ?'<div style="font-family:var(--head);font-size:16px;font-weight:700;color:var(--red)">TZS '+Number(v.total_outstanding).toLocaleString()+'</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">OUTSTANDING</div>'
-              :'<div style="font-size:12px;color:var(--green);font-family:var(--mono)">No outstanding fines</div>')+'</div>'+
-          '</div>'+
-          '<div class="vehicle-info"><span>'+([v.make,v.model].filter(Boolean).join(" ")||"Unknown")+'</span><span>'+(v.color||"--")+'</span><span>'+(v.year||"--")+'</span><span>'+(v.total_fines||0)+' fine'+(v.total_fines!=1?"s":"")+'</span></div>'+
-        '</div>'
-      ).join(""))+'</div>';
+    (userVehicles.length===0?'<div class="empty"><div class="empty-icon">&#x1F697;</div><div class="empty-text">No vehicles registered to your account.<br>Contact the traffic office to link your vehicle.</div></div>':
+    userVehicles.map(v=>
+      '<div class="vehicle-card" onclick="userOpenVehicle(\''+v.plate_number+'\')">'+
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between">'+
+          '<div class="vehicle-plate">'+v.plate_number+'</div>'+
+          '<div style="text-align:right">'+(Number(v.total_outstanding)>0?'<div style="font-family:var(--head);font-size:16px;font-weight:700;color:var(--red)">TZS '+Number(v.total_outstanding).toLocaleString()+'</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono)">OUTSTANDING</div>':'<div style="font-size:12px;color:var(--green);font-family:var(--mono)">No outstanding fines</div>')+'</div>'+
+        '</div>'+
+        '<div class="vehicle-info"><span>'+([v.make,v.model].filter(Boolean).join(" ")||"Unknown")+'</span><span>'+(v.color||"--")+'</span><span>'+(v.year||"--")+'</span><span>'+(v.total_fines||0)+' fine'+(v.total_fines!=1?"s":"")+'</span></div>'+
+      '</div>').join(""))+'</div>';
 }
 
 function userShowTab(tab,el){document.querySelectorAll("#user-portal .nav-item").forEach(n=>n.classList.remove("active"));if(el)el.classList.add("active");if(tab==="vehicles")userLoadVehicles();else if(tab==="fines")userLoadFinesView();}
@@ -858,12 +801,11 @@ function userShowTab(tab,el){document.querySelectorAll("#user-portal .nav-item")
 function userLoadFinesView(){
   document.getElementById("user-main").innerHTML=
     '<div class="section-hdr" style="margin-bottom:12px"><div><div class="section-title">My Fines ('+userFines.length+')</div></div></div>'+
-    (userFines.length===0
-      ?'<div class="empty"><div class="empty-icon">&#x2705;</div><div class="empty-text">No fines on record — drive safe!</div></div>'
-      :'<div class="table-wrap"><table><thead><tr><th>Fine #</th><th>Plate</th><th>Violation</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>'+
-        userFines.map(f=>'<tr><td class="mono">'+f.fine_number+'</td><td class="mono primary">'+f.plate_number+'</td><td><span class="vtype">'+((f.violation_type||"").replace(/_/g," "))+'</span></td><td class="amount">TZS '+Number(f.amount_tzs).toLocaleString()+'</td><td>'+statusBadge(f.status)+'</td><td class="mono">'+(f.due_date?f.due_date.split("T")[0]:"--")+'</td><td>'+
-        (["ISSUED","OVERDUE","PENDING"].includes(f.status)?'<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="userAppeal(\''+f.id+'\',\''+f.fine_number+'\')">Appeal</button>':"--")+'</td></tr>').join("")+
-        '</tbody></table></div>');
+    (userFines.length===0?'<div class="empty"><div class="empty-icon">&#x2705;</div><div class="empty-text">No fines on record — drive safe!</div></div>':
+    '<div class="table-wrap"><table><thead><tr><th>Fine #</th><th>Plate</th><th>Violation</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>'+
+    userFines.map(f=>'<tr><td class="mono">'+f.fine_number+'</td><td class="mono primary">'+f.plate_number+'</td><td><span class="vtype">'+((f.violation_type||"").replace(/_/g," "))+'</span></td><td class="amount">TZS '+Number(f.amount_tzs).toLocaleString()+'</td><td>'+statusBadge(f.status)+'</td><td class="mono">'+(f.due_date?f.due_date.split("T")[0]:"--")+'</td><td>'+
+    (["ISSUED","OVERDUE","PENDING"].includes(f.status)?'<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="userAppeal(\''+f.id+'\',\''+f.fine_number+'\')">Appeal</button>':"--")+'</td></tr>').join("")+
+    '</tbody></table></div>');
 }
 
 async function userOpenVehicle(plate){
@@ -877,20 +819,18 @@ async function userOpenVehicle(plate){
     row("Reg. Expiry",v.registration_expiry?v.registration_expiry.split("T")[0]:"--")+
     row("Total Fines",v.total_fines||0)+row("Outstanding","TZS "+Number(v.total_outstanding||0).toLocaleString())+'</div>'+
     (vFines.length?'<div><div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Fines on this vehicle</div>'+
-      vFines.map(f=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div class="mono" style="font-size:12px">'+f.fine_number+'</div><div style="font-size:11px;color:var(--text3)">'+((f.violation_type||"").replace(/_/g," "))+'</div></div><div style="text-align:right"><div class="amount">TZS '+Number(f.amount_tzs).toLocaleString()+'</div>'+statusBadge(f.status)+'</div></div>').join("")+'</div>':"");
+    vFines.map(f=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div class="mono" style="font-size:12px">'+f.fine_number+'</div><div style="font-size:11px;color:var(--text3)">'+((f.violation_type||"").replace(/_/g," "))+'</div></div><div style="text-align:right"><div class="amount">TZS '+Number(f.amount_tzs).toLocaleString()+'</div>'+statusBadge(f.status)+'</div></div>').join("")+'</div>':"");
   document.getElementById("vd-actions").innerHTML='<button class="btn btn-ghost" onclick="closeModal(\'vehicle-detail-modal\')">Close</button>';
   openModal("vehicle-detail-modal");
 }
 
 async function userAppeal(id,fineNum){
-  const reason=prompt("Appeal fine "+fineNum+"?\nState your reason:");
-  if(!reason) return;
+  const reason=prompt("Appeal fine "+fineNum+"?\nState your reason:");if(!reason)return;
   const r=await apiFetch("/fines/"+id+"/appeal",{method:"POST",body:JSON.stringify({reason,supporting_docs:[]})});
-  if(r&&!r.error){showToast("Appeal submitted successfully","success");userLoadVehicles();}
-  else showToast("Error: "+(r?.error||"Unknown"),"error");
+  if(r&&!r.error){showToast("Appeal submitted successfully","success");userLoadVehicles();}else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
-// ── Helpers ───────────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────
 function statusBadge(s){const m={ISSUED:"issued",PAID:"paid",OVERDUE:"overdue",APPEALED:"appealed",PENDING:"pending",CANCELLED:"cancelled",COURT_REFERRED:"court"};return'<span class="badge '+(m[s]||"pending")+'">'+ ((s||"--").replace(/_/g," ")) +'</span>';}
 function roleBadge(r){return'<span class="badge '+r.toLowerCase()+'">'+r+'</span>';}
 function openModal(id){document.getElementById(id).classList.add("open");}
@@ -899,222 +839,119 @@ document.querySelectorAll(".modal-overlay").forEach(o=>{o.addEventListener("clic
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById("toast");t.textContent=msg;t.className="toast "+(type||"")+" show";clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3500);}
 
-// ── INIT — restore session ────────────────────────────────────
-window.addEventListener("load", () => {
-  const token = localStorage.getItem("rtms_token");
-  const role  = localStorage.getItem("rtms_role");
-  if (token && role && isSessionValid()) {
-    CURRENT_USER = {
-      role,
-      username:     localStorage.getItem("rtms_username"),
-      full_name:    localStorage.getItem("rtms_fullname"),
-      badge_number: localStorage.getItem("rtms_badge")
-    };
-    bootPortal();
-  }
-  // If session was valid before but stored with old system, extend it
-  if (token && role && !localStorage.getItem("rtms_expires_at")) {
-    localStorage.setItem("rtms_expires_at", String(Date.now() + 30*24*60*60*1000));
-  }
-});
-
-// ── Check session every 6 hours (not every 30 minutes) ───────
-setInterval(() => {
-  const token = localStorage.getItem("rtms_token");
-  if (!token) return;
-  if (!isSessionValid()) {
-    showToast("Session expired — please log in again", "error");
-    setTimeout(logout, 3000);
-  }
-}, 6 * 60 * 60 * 1000); // every 6 hours
-
-// ── OFFICER ALERT SYSTEM ──────────────────────────────────────
-let alertSSE        = null;
-let alertQueue      = [];
-let currentAlertId  = null;
-let alertShowing    = false;
-
+// ── OFFICER ALERT STREAM ──────────────────────────────────────
+// FIX: Uses polling instead of SSE so token works via Authorization header
 function startAlertStream() {
-  const token = localStorage.getItem('rtms_token');
-  const role  = localStorage.getItem('rtms_role');
-  if (!token || role === 'USER' || role === 'CASHIER') return;
-
-  // Close existing connection
-  if (alertSSE) alertSSE.close();
-
-  const url = API + '/alerts/stream';
-  alertSSE = new EventSource(url + '?token=' + encodeURIComponent(token));
-
-  alertSSE.onopen = () => {
-    const el = document.getElementById('alert-stream-status');
-    if (el) { el.style.display='block'; el.className='alert-stream-status connected'; el.textContent='● Alert stream connected'; }
-    console.log('[ALERTS] Stream connected');
-  };
-
-  alertSSE.onmessage = (e) => {
-    try {
-      const data = JSON.parse(e.data);
-      if (data.type === 'INTEGRATION_ALERT') {
-        alertQueue.push(data);
-        updateQueueBadge();
-        if (!alertShowing) showNextAlert();
-      }
-    } catch(err) { console.error('[ALERTS] Parse error', err); }
-  };
-
-  alertSSE.onerror = () => {
-    const el = document.getElementById('alert-stream-status');
-    if (el) { el.style.display='block'; el.className='alert-stream-status'; el.textContent='○ Alert stream reconnecting...'; }
-    // Auto-reconnect after 5 seconds
-    setTimeout(startAlertStream, 5000);
-  };
+  const role = localStorage.getItem("rtms_role");
+  if (!["ADMIN","OFFICER"].includes(role)) return;
+  stopAlertStream();
+  setAlertDot(true);
+  // Poll for recent alerts every 5 seconds
+  alertPollTimer = setInterval(pollAlerts, 5000);
+  pollAlerts(); // immediate first check
 }
 
 function stopAlertStream() {
+  if (alertPollTimer) { clearInterval(alertPollTimer); alertPollTimer = null; }
   if (alertSSE) { alertSSE.close(); alertSSE = null; }
-  const el = document.getElementById('alert-stream-status');
-  if (el) el.style.display = 'none';
+  setAlertDot(false);
+}
+
+let lastAlertTime = new Date().toISOString();
+
+async function pollAlerts() {
+  const d = await apiFetch("/alerts/recent?limit=5");
+  if (!d || !d.data) return;
+  setAlertDot(true);
+  const newAlerts = d.data.filter(a => !a.acknowledged && a.created_at > lastAlertTime);
+  if (newAlerts.length > 0) {
+    lastAlertTime = newAlerts[0].created_at;
+    newAlerts.reverse().forEach(a => {
+      alertQueue.push({
+        type:        'INTEGRATION_ALERT',
+        alertId:     a.id,
+        plateNumber: a.plate_number,
+        cameraId:    a.camera_id,
+        violations:  a.violations || [],
+        ownerName:   '',
+        vehicleDesc: '',
+        location:    { direction: a.direction || 'UNKNOWN' },
+        time:        a.created_at,
+      });
+    });
+    updateQueueBadge();
+    if (!alertShowing) showNextAlert();
+  }
+}
+
+function setAlertDot(on) {
+  const dot   = document.getElementById("alert-dot");
+  const label = document.getElementById("alert-dot-label");
+  if (!dot || !label) return;
+  if (on) { dot.className="alert-stream-dot on"; label.textContent="Alerts live"; label.style.color="var(--green)"; }
+  else    { dot.className="alert-stream-dot";    label.textContent="Alerts off";  label.style.color="var(--text3)"; }
 }
 
 function showNextAlert() {
-  if (alertQueue.length === 0) { alertShowing = false; return; }
-  alertShowing = true;
-  const alert  = alertQueue.shift();
-  currentAlertId = alert.alertId;
+  if (alertQueue.length===0) { alertShowing=false; return; }
+  alertShowing=true;
+  const alert=alertQueue.shift();
   updateQueueBadge();
   renderAlertPopup(alert);
 }
 
 function renderAlertPopup(alert) {
-  const popup = document.getElementById('alert-popup');
-  if (!popup) return;
-
-  const violationIcons = { LATRA:'🚛', TIRA:'🛡️', TRA:'📋' };
-  const violationNames = {
-    NO_LATRA_PERMIT:    'No LATRA Transit Permit',
-    EXPIRED_LATRA:      'Expired LATRA Permit',
-    NO_INSURANCE:       'No Insurance Policy',
-    EXPIRED_INSURANCE:  'Expired Insurance',
-    UNREGISTERED_VEHICLE: 'Not Registered with TRA',
-    CUSTOMS_UNPAID:     'Customs Duties Unpaid',
-  };
-
-  const violationsHtml = (alert.violations || []).map(v => `
-    <div class="alert-violation">
-      <div class="alert-violation-icon">${violationIcons[v.source] || '⚠️'}</div>
-      <div>
-        <div class="alert-violation-text"><strong>${v.source}</strong> — ${violationNames[v.type] || v.type}</div>
-        <div class="alert-violation-amount">Fine: TZS ${Number(v.fineAmount||0).toLocaleString()}</div>
-      </div>
-    </div>`).join('');
-
-  document.getElementById('alert-popup-body').innerHTML = `
-    <div class="alert-plate">${alert.plateNumber}</div>
-    <div class="alert-violations">${violationsHtml}</div>
-    <div class="alert-meta">📡 ${alert.cameraId || 'Camera'} &bull; ${alert.location?.direction !== 'UNKNOWN' ? '➡ Heading '+alert.location?.direction : 'Direction unknown'} &bull; ${new Date(alert.time).toLocaleTimeString()}</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.7);font-family:var(--mono);margin-bottom:12px;text-align:center">${alert.ownerName || ''} ${alert.vehicleDesc ? '&bull; '+alert.vehicleDesc : ''}</div>
-    <div class="alert-actions">
-      <button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button>
-      <button class="alert-btn-dismiss" onclick="dismissAlert()">Dismiss</button>
-    </div>`;
-
-  popup.classList.add('show');
-
-  // Play alert sound
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [440,550,440].forEach((freq,i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + i*0.15);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i*0.15 + 0.1);
-      osc.start(ctx.currentTime + i*0.15);
-      osc.stop(ctx.currentTime + i*0.15 + 0.1);
-    });
-  } catch(e) {}
-
-  // Auto-dismiss after 30 seconds
-  setTimeout(() => { if (alertShowing) dismissAlert(); }, 30000);
+  const popup=document.getElementById("alert-popup");if(!popup)return;
+  const icons={LATRA:"🚛",TIRA:"🛡️",TRA:"📋"};
+  const names={NO_LATRA_PERMIT:"No LATRA Transit Permit",EXPIRED_LATRA:"Expired LATRA Permit",NO_INSURANCE:"No Insurance Policy",EXPIRED_INSURANCE:"Expired Insurance",UNREGISTERED_VEHICLE:"Not Registered with TRA",CUSTOMS_UNPAID:"Customs Duties Unpaid"};
+  const violations = Array.isArray(alert.violations) ? alert.violations : [];
+  const vHtml = violations.map(v=>`<div class="alert-violation"><div class="alert-violation-icon">${icons[v.source]||"⚠️"}</div><div><div class="alert-violation-text"><strong>${v.source||v.type}</strong> — ${names[v.type]||v.type||"Violation"}</div><div class="alert-violation-amount">Fine: TZS ${Number(v.fineAmount||v.fine_amount||0).toLocaleString()}</div></div></div>`).join("");
+  document.getElementById("alert-popup-body").innerHTML=
+    `<div class="alert-plate">${alert.plateNumber||"UNKNOWN"}</div>`+
+    (vHtml?`<div class="alert-violations">${vHtml}</div>`:'<div class="alert-violations"><div class="alert-violation"><div class="alert-violation-icon">⚠️</div><div><div class="alert-violation-text">Integration violation detected</div></div></div></div>')+
+    `<div class="alert-meta">📡 ${alert.cameraId||"Camera"} &bull; ${alert.location?.direction&&alert.location.direction!=="UNKNOWN"?"➡ Heading "+alert.location.direction:"Direction unknown"} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
+    `<div class="alert-actions"><button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button><button class="alert-btn-dismiss" onclick="dismissAlert()">Dismiss</button></div>`;
+  popup.classList.add("show");
+  // Alert sound
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[440,550,440].forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(0.3,ctx.currentTime+i*.15);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+i*.15+.1);o.start(ctx.currentTime+i*.15);o.stop(ctx.currentTime+i*.15+.1);});}catch(e){}
+  setTimeout(()=>{if(alertShowing)dismissAlert();},30000);
 }
 
 async function acknowledgeAlert(alertId) {
-  if (alertId && alertId !== 'undefined') {
-    await apiFetch('/alerts/' + alertId + '/acknowledge', { method: 'PATCH' }).catch(() => {});
-  }
+  if (alertId&&alertId!=="undefined") await apiFetch("/alerts/"+alertId+"/acknowledge",{method:"PATCH"}).catch(()=>{});
   dismissAlert();
-  showToast('Alert acknowledged', 'success');
+  showToast("Alert acknowledged","success");
 }
 
 function dismissAlert() {
-  const popup = document.getElementById('alert-popup');
-  if (popup) popup.classList.remove('show');
-  alertShowing = false;
-  setTimeout(showNextAlert, 500);
+  const popup=document.getElementById("alert-popup");if(popup)popup.classList.remove("show");
+  alertShowing=false;setTimeout(showNextAlert,500);
 }
 
 function updateQueueBadge() {
-  const badge = document.getElementById('alert-queue-badge');
-  if (!badge) return;
-  if (alertQueue.length > 0) {
-    badge.style.display = 'block';
-    badge.textContent   = alertQueue.length + ' pending alert' + (alertQueue.length>1?'s':'');
-  } else {
-    badge.style.display = 'none';
+  const badge=document.getElementById("alert-queue-badge");if(!badge)return;
+  if(alertQueue.length>0){badge.style.display="block";badge.textContent=alertQueue.length+" pending alert"+(alertQueue.length>1?"s":"");}
+  else badge.style.display="none";
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener("load", () => {
+  const token = localStorage.getItem("rtms_token");
+  const role  = localStorage.getItem("rtms_role");
+  if (token && role && isSessionValid()) {
+    CURRENT_USER = { role, username: localStorage.getItem("rtms_username"), full_name: localStorage.getItem("rtms_fullname"), badge_number: localStorage.getItem("rtms_badge") };
+    bootPortal();
   }
-}
-
-// Start alert stream when staff logs in
-const _origBootPortal = bootPortal;
-// Override bootPortal to also start alert stream
-window._bootPortalCalled = false;
-</script>
-
-<!-- Alert popup -->
-<div class="alert-popup" id="alert-popup">
-  <div class="alert-popup-hdr">
-    <span class="alert-popup-icon">🚨</span>
-    <span class="alert-popup-title">VEHICLE ALERT</span>
-    <button class="alert-popup-close" onclick="dismissAlert()">&#x2715;</button>
-  </div>
-  <div class="alert-popup-body" id="alert-popup-body"></div>
-</div>
-
-<!-- Queue badge -->
-<div class="alert-queue-badge" id="alert-queue-badge" onclick="showNextAlert()"></div>
-
-<!-- Stream status -->
-<div class="alert-stream-status" id="alert-stream-status"></div>
-
-<script>
-// Hook into bootPortal to start alert stream after login
-const _origBoot = bootPortal;
-function bootPortal() {
-  _origBoot();
-  // Start alert stream for ADMIN and OFFICER only
-  const role = localStorage.getItem('rtms_role') || (CURRENT_USER && CURRENT_USER.role);
-  if (['ADMIN','OFFICER'].includes(role)) {
-    setTimeout(startAlertStream, 1000);
-  }
-}
-
-// Also hook into logout to stop stream
-const _origLogout = logout;
-function logout() {
-  stopAlertStream();
-  _origLogout();
-}
-
-// Restore session also needs to start stream
-const _origLoad = window.onload;
-window.addEventListener('load', () => {
-  const token = localStorage.getItem('rtms_token');
-  const role  = localStorage.getItem('rtms_role');
-  if (token && role && isSessionValid() && ['ADMIN','OFFICER'].includes(role)) {
-    setTimeout(startAlertStream, 2000);
+  if (token && role && !localStorage.getItem("rtms_expires_at")) {
+    localStorage.setItem("rtms_expires_at", String(Date.now()+30*24*60*60*1000));
   }
 });
+
+// Session check every 6 hours
+setInterval(()=>{
+  const token=localStorage.getItem("rtms_token");if(!token)return;
+  if(!isSessionValid()){showToast("Session expired — please log in again","error");setTimeout(logout,3000);}
+},6*60*60*1000);
 </script>
 </body>
 </html>
