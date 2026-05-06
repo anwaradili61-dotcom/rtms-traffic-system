@@ -480,6 +480,7 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
+    // Match by email, phone, OR national_id so vehicles registered by the owner show up
     const { rows } = await db(
       `SELECT f.id, f.fine_number, f.amount_tzs, f.penalty_amount, f.status,
               f.due_date, f.issued_at, f.paid_at,
@@ -488,9 +489,11 @@ app.get('/my/fines', authenticateToken, requireRole('USER'), async (req, res) =>
        FROM fines f
        JOIN violations v  ON v.id  = f.violation_id
        JOIN vehicles   vh ON vh.id = v.vehicle_id
-       WHERE vh.owner_email = $1 OR vh.owner_phone = $2
+       WHERE (vh.owner_email = $1 AND $1 != '')
+          OR (vh.owner_phone = $2 AND $2 != '')
+          OR (vh.owner_national_id = $3 AND $3 IS NOT NULL)
        ORDER BY f.issued_at DESC NULLS LAST`,
-      [u.email || '', u.phone || '']
+      [u.email || '', u.phone || '', u.national_id || null]
     );
     res.json({ data: rows, user: { full_name: u.full_name, email: u.email, phone: u.phone } });
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -500,6 +503,7 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
   try {
     const { rows: uRows } = await db('SELECT * FROM users WHERE id = $1', [req.user.id]);
     const u = uRows[0];
+    // Match by email, phone, OR national_id so self-registered vehicles show up
     const { rows } = await db(
       `SELECT v.*,
               COUNT(f.id) AS total_fines,
@@ -509,9 +513,11 @@ app.get('/my/vehicles', authenticateToken, requireRole('USER'), async (req, res)
        FROM vehicles v
        LEFT JOIN violations vi ON vi.vehicle_id = v.id
        LEFT JOIN fines      f  ON f.violation_id = vi.id
-       WHERE v.owner_email = $1 OR v.owner_phone = $2
+       WHERE (v.owner_email = $1 AND $1 != '')
+          OR (v.owner_phone = $2 AND $2 != '')
+          OR (v.owner_national_id = $3 AND $3 IS NOT NULL)
        GROUP BY v.id ORDER BY v.created_at DESC`,
-      [u.email || '', u.phone || '']
+      [u.email || '', u.phone || '', u.national_id || null]
     );
     res.json({ data: rows });
   } catch (err) { res.status(500).json({ error: err.message }); }

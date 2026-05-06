@@ -263,8 +263,16 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
         <div><label class="field-label">Email</label><input class="field-input" id="v-email" type="email" placeholder="owner@email.com" style="font-family:var(--body)"/></div>
         <div><label class="field-label">National ID</label><input class="field-input" id="v-nid" placeholder="19900101-XXXXX-X"/></div>
         <div style="grid-column:1/-1"><label class="field-label">Address</label><input class="field-input" id="v-addr" placeholder="Msasani, Dar es Salaam" style="font-family:var(--body)"/></div>
-        <div><label class="field-label">Make</label><input class="field-input" id="v-make" placeholder="Toyota" style="font-family:var(--body)"/></div>
-        <div><label class="field-label">Model</label><input class="field-input" id="v-model" placeholder="Corolla" style="font-family:var(--body)"/></div>
+        <div>
+          <label class="field-label">Make</label>
+          <input class="field-input" id="v-make" placeholder="Search make e.g. Toyota" style="font-family:var(--body)" autocomplete="off" oninput="filterMakes(this.value)" onblur="setTimeout(()=>document.getElementById('make-list').style.display='none',200)"/>
+          <div id="make-list" style="display:none;position:absolute;z-index:200;background:var(--bg3);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;width:200px;margin-top:2px"></div>
+        </div>
+        <div>
+          <label class="field-label">Model</label>
+          <input class="field-input" id="v-model" placeholder="Search model e.g. Corolla" style="font-family:var(--body)" autocomplete="off" oninput="filterModels(this.value)" onblur="setTimeout(()=>document.getElementById('model-list').style.display='none',200)"/>
+          <div id="model-list" style="display:none;position:absolute;z-index:200;background:var(--bg3);border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;width:200px;margin-top:2px"></div>
+        </div>
         <div><label class="field-label">Color</label><input class="field-input" id="v-color" placeholder="White" style="font-family:var(--body)"/></div>
         <div><label class="field-label">Year</label><input class="field-input" id="v-year" type="number" placeholder="2020"/></div>
         <div><label class="field-label">Chassis No.</label><input class="field-input" id="v-chassis" placeholder="JTDBR32E..."/></div>
@@ -453,10 +461,19 @@ function saveSession(data) {
 }
 
 function isSessionValid() {
-  const token     = localStorage.getItem("rtms_token");
-  const expiresAt = Number(localStorage.getItem("rtms_expires_at")||0);
+  const token = localStorage.getItem("rtms_token");
   if (!token) return false;
-  if (!expiresAt) { localStorage.setItem("rtms_expires_at",String(Date.now()+30*24*60*60*1000)); return true; }
+  // Check JWT exp directly
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp * 1000 < Date.now()) return false; // JWT itself expired
+  } catch(e) { return false; }
+  // Also check our local expiry — always set to 30 days from last login
+  let expiresAt = Number(localStorage.getItem("rtms_expires_at")||0);
+  if (!expiresAt) {
+    expiresAt = Date.now() + 30*24*60*60*1000;
+    localStorage.setItem("rtms_expires_at", String(expiresAt));
+  }
   return Date.now() < expiresAt;
 }
 
@@ -953,6 +970,91 @@ function openUserVehicleModal() {
   const el = document.getElementById("v-name");
   if (el) el.value = fullname;
   openModal("vehicle-modal");
+}
+
+// ── VEHICLE MAKE/MODEL DATABASE ──────────────────────────────
+const VEHICLE_MAKES = {
+  "Toyota":["Corolla","Camry","Land Cruiser","Land Cruiser Prado","Hilux","Fortuner","RAV4","Vitz","Yaris","Axio","Allion","Premio","Harrier","Rush","Avanza","Innova","Hiace","Probox","Succeed","Noah","Voxy","Alphard","Crown","Mark X","Fielder","Wish","IST","Duet","Platz","Fun Cargo","Porte","Sienta","Aqua","CHR"],
+  "Nissan":["Note","Tiida","Latio","Wingroad","AD","Bluebird","Sylphy","X-Trail","Juke","Murano","Pathfinder","Navara","Patrol","Caravan","Serena","Elgrand","March","Micra","Almera","Primera","Sentra"],
+  "Mitsubishi":["Colt","Lancer","Galant","Pajero","Pajero Mini","Pajero IO","Outlander","Eclipse Cross","ASX","L200","Delica","Grandis","Sigma","Space Star","Attrage"],
+  "Subaru":["Impreza","Legacy","Forester","Outback","XV","Crosstrek","BRZ","WRX","Tribeca","Exiga"],
+  "Honda":["Fit","Jazz","City","Civic","Accord","CR-V","HR-V","Pilot","Odyssey","Freed","Stream","Edix","Airwave","Stepwgn","Mobilio","Brio","BR-V"],
+  "Mazda":["Demio","Axela","Atenza","CX-3","CX-5","CX-9","MPV","Premacy","Tribute","BT-50","Familia","Roadster"],
+  "Suzuki":["Swift","Alto","Celerio","Cultus","Ignis","Baleno","Dzire","Ertiga","Vitara","Grand Vitara","Jimmy","Jimny","APV","Every","Carry","SX4"],
+  "Isuzu":["D-Max","KB","MU-X","MU-7","Rodeo","Trooper","Bighorn","Wizard","Forward","ELF","NHR","NKR","FRR"],
+  "Mercedes-Benz":["A Class","B Class","C Class","E Class","S Class","GLA","GLB","GLC","GLE","GLS","CLA","CLS","ML","GL","G Class","Sprinter","Vito"],
+  "BMW":["1 Series","2 Series","3 Series","4 Series","5 Series","6 Series","7 Series","X1","X2","X3","X4","X5","X6","X7","Z4","M3","M5"],
+  "Volkswagen":["Golf","Polo","Jetta","Passat","Tiguan","Touareg","T-Cross","Amarok","Caddy","Transporter","Crafter"],
+  "Ford":["Ranger","Everest","Explorer","Focus","Fiesta","EcoSport","Edge","Escape","Expedition","F-150","Transit"],
+  "Hyundai":["i10","i20","Accent","Elantra","Sonata","Tucson","Santa Fe","Creta","Venue","Ioniq","Kona","ix35"],
+  "Kia":["Picanto","Rio","Cerato","Optima","Sorento","Sportage","Seltos","Stonic","Carnival","Telluride"],
+  "Peugeot":["206","207","208","301","307","308","405","406","407","408","2008","3008","5008","Partner","Expert","Boxer"],
+  "Renault":["Logan","Sandero","Duster","Kwid","Clio","Megane","Fluence","Koleos","Kadjar","Trafic","Master"],
+  "Land Rover":["Defender","Discovery","Discovery Sport","Freelander","Range Rover","Range Rover Sport","Range Rover Evoque","Range Rover Velar"],
+  "Jeep":["Wrangler","Cherokee","Grand Cherokee","Compass","Renegade","Patriot","Commander"],
+  "Volvo":["S40","S60","S80","V40","V60","V70","XC40","XC60","XC70","XC90"],
+  "Audi":["A1","A3","A4","A5","A6","A7","A8","Q2","Q3","Q5","Q7","Q8","TT"],
+  "Fiat":["Punto","Palio","Siena","Bravo","Brava","Doblo","Linea","Tipo","500","Panda","Stilo"],
+  "Daihatsu":["Terios","Charade","Move","Mira","Boon","Sirion","Rocky","Gran Max","Xenia"],
+  "Chery":["Tiggo","QQ","Arrizo","A3","A5","M11","Fulwin"],
+  "Great Wall":["Wingle","Hover","H5","H6","C30","M4","Poer"],
+  "TATA":["Safari","Harrier","Nexon","Hexa","Sumo","Indica","Indigo","Manza","Nano","Ace","407"],
+  "Hino":["300","500","700","Dutro","Ranger","Profia"],
+  "MAN":["TGS","TGX","TGL","TGM","Lion's City"],
+  "Scania":["R Series","P Series","G Series","S Series","L Series"],
+  "DAF":["XF","CF","LF"],
+  "Volvo Trucks":["FH","FM","FMX","FL","FE"],
+  "UD Trucks":["Quon","Condor","Kazet","Croner"],
+  "Mercedes Trucks":["Actros","Arocs","Axor","Atego","Unimog"],
+  "Foton":["Aumark","Auman","Tunland","View","Toano"],
+  "Sinotruk":["HOWO","Golden Prince","Steyr","Hohan"],
+  "Dongfeng":["Rich","Captain","Kenon","CM7","580"],
+  "Other":["Other"]
+};
+
+const ALL_MAKES = Object.keys(VEHICLE_MAKES).sort();
+
+function filterMakes(query) {
+  const list = document.getElementById("make-list");
+  if (!list) return;
+  const q = query.trim().toLowerCase();
+  const matches = q ? ALL_MAKES.filter(m => m.toLowerCase().includes(q)) : ALL_MAKES;
+  if (!matches.length) { list.style.display="none"; return; }
+  list.style.display = "block";
+  list.innerHTML = matches.slice(0,20).map(m =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border)" onmousedown="selectMake('${m}')" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">${m}</div>`
+  ).join("");
+}
+
+function selectMake(make) {
+  const input = document.getElementById("v-make");
+  if (input) input.value = make;
+  const list = document.getElementById("make-list");
+  if (list) list.style.display = "none";
+  // Clear and populate model dropdown
+  const modelInput = document.getElementById("v-model");
+  if (modelInput) { modelInput.value = ""; modelInput.focus(); }
+}
+
+function filterModels(query) {
+  const list = document.getElementById("model-list");
+  if (!list) return;
+  const make = document.getElementById("v-make")?.value.trim();
+  const models = VEHICLE_MAKES[make] || Object.values(VEHICLE_MAKES).flat();
+  const q = query.trim().toLowerCase();
+  const matches = q ? models.filter(m => m.toLowerCase().includes(q)) : models;
+  if (!matches.length) { list.style.display="none"; return; }
+  list.style.display = "block";
+  list.innerHTML = matches.slice(0,20).map(m =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border)" onmousedown="selectModel('${m}')" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">${m}</div>`
+  ).join("");
+}
+
+function selectModel(model) {
+  const input = document.getElementById("v-model");
+  if (input) input.value = model;
+  const list = document.getElementById("model-list");
+  if (list) list.style.display = "none";
 }
 
 // ── INIT ──────────────────────────────────────────────────────
