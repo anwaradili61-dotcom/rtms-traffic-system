@@ -931,7 +931,17 @@ async function pollAlerts() {
         alertId:     a.id,
         plateNumber: a.plate_number,
         cameraId:    a.camera_id,
-        violations:  typeof a.violations === 'string' ? JSON.parse(a.violations||'[]') : (a.violations||[]),
+        violations:  (()=>{
+          let raw = a.violations;
+          if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) { raw = []; } }
+          if (!Array.isArray(raw)) raw = [];
+          return raw.map(v=>({
+            source:     v.source     || v.Source     || 'UNKNOWN',
+            type:       v.type       || v.violation  || v.violation_type || 'UNKNOWN',
+            fineAmount: v.fineAmount || v.fine_amount|| 0,
+            details:    v.details    || {},
+          }));
+        })(),
         ownerName:   '',
         vehicleDesc: '',
         location:    { direction: a.direction || 'UNKNOWN' },
@@ -991,7 +1001,14 @@ function renderAlertPopup(alert) {
   const popup=document.getElementById("alert-popup");if(!popup)return;
   const icons={LATRA:"🚛",TIRA:"🛡️",TRA:"📋"};
   const names={NO_LATRA_PERMIT:"No LATRA Transit Permit",EXPIRED_LATRA:"Expired LATRA Permit",NO_INSURANCE:"No Insurance Policy",EXPIRED_INSURANCE:"Expired Insurance",UNREGISTERED_VEHICLE:"Not Registered with TRA",CUSTOMS_UNPAID:"Customs Duties Unpaid"};
-  const violations = Array.isArray(alert.violations) ? alert.violations : [];
+  // Normalise violations — handle all possible field name variations from DB
+  const rawViolations = Array.isArray(alert.violations) ? alert.violations : [];
+  const violations = rawViolations.map(v => ({
+    source:     v.source     || v.Source     || "UNKNOWN",
+    type:       v.type       || v.violation  || v.violation_type || v.Type || "UNKNOWN",
+    fineAmount: v.fineAmount || v.fine_amount|| v.FineAmount     || 0,
+    details:    v.details    || {},
+  }));
 
   // Get camera location and direction
   const cam = getCameraInfo(alert.cameraId);
@@ -1053,7 +1070,14 @@ async function openAlertDetail(alert) {
 
   const icons={LATRA:"🚛",TIRA:"🛡️",TRA:"📋"};
   const names={NO_LATRA_PERMIT:"No LATRA Transit Permit",EXPIRED_LATRA:"Expired LATRA Permit",NO_INSURANCE:"No Insurance Policy",EXPIRED_INSURANCE:"Expired Insurance",UNREGISTERED_VEHICLE:"Not Registered with TRA",CUSTOMS_UNPAID:"Customs Duties Unpaid"};
-  const violations = Array.isArray(alert.violations) ? alert.violations : [];
+  // Normalise violations in detail modal
+  const rawViolations2 = Array.isArray(alert.violations) ? alert.violations : [];
+  const violations = rawViolations2.map(v => ({
+    source:     v.source     || v.Source     || "UNKNOWN",
+    type:       v.type       || v.violation  || v.violation_type || v.Type || "UNKNOWN",
+    fineAmount: v.fineAmount || v.fine_amount|| v.FineAmount     || 0,
+    details:    v.details    || {},
+  }));
   const cam = alert._cam || getCameraInfo(alert.cameraId);
   const direction = alert._direction || getEstimatedDirection(alert.cameraId);
   const mapsUrl = `https://www.google.com/maps?q=${cam.lat},${cam.lng}&z=16`;
