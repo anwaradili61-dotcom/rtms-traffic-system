@@ -937,31 +937,12 @@ function setIntFilter(f) { intFilter = f; renderIntegrationView(currentIntSource
 async function renderIntegrationView(source) {
   currentIntSource = source;
   const main = document.getElementById("staff-main");
-  main.innerHTML = '<div class="loading"><div class="spinner"></div><br>Loading '+source+' violations...</div>';
 
-  const [checksRes, alertsRes] = await Promise.all([
-    apiFetch("/integrations/stats"),
-    apiFetch("/alerts/recent?limit=100")
-  ]);
-
-  const stats  = checksRes?.checks?.find(c => c.source === source) || {};
-  const allAlerts = (alertsRes?.data || []).filter(a => {
-    let v = a.violations;
-    if (typeof v === "string") { try { v = JSON.parse(v); } catch(e) { v = []; } }
-    if (!Array.isArray(v)) v = [];
-    return v.some(vv => (vv.source || vv.Source || "") === source);
-  });
-
-  const total      = Number(stats.total_checks || 0);
-  const violations = Number(stats.violations   || 0);
-  const compliant  = Number(stats.compliant    || 0);
+  // Render shell immediately — no waiting
   const sourceIcon = source === "LATRA" ? "🚛" : "🛡️";
   const sourceDesc = source === "LATRA"
     ? "Transit Permit Violations — Vehicles without valid LATRA permits"
     : "Insurance Violations — Vehicles without valid TIRA insurance";
-
-  const unresolved = allAlerts.filter(a => !a.acknowledged).length;
-  const resolved   = allAlerts.filter(a =>  a.acknowledged).length;
 
   main.innerHTML =
     '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>' +
@@ -971,17 +952,45 @@ async function renderIntegrationView(source) {
       '<div class="section-sub">' + sourceDesc + '</div></div>' +
       '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderIntegrationView(currentIntSource)">&#x1F504; Refresh</button>' +
     '</div>' +
-    '<div class="int-stats-row">' +
-      '<div class="int-stat"><div class="int-stat-val amber">' + violations + '</div><div class="int-stat-lbl">Violations</div></div>' +
-      '<div class="int-stat"><div class="int-stat-val green">' + compliant + '</div><div class="int-stat-lbl">Compliant</div></div>' +
-      '<div class="int-stat"><div class="int-stat-val" style="color:var(--accent2)">' + total + '</div><div class="int-stat-lbl">Total Checks</div></div>' +
+    '<div class="int-stats-row" id="int-stats-row">' +
+      '<div class="int-stat"><div class="int-stat-val amber" id="int-stat-v">-</div><div class="int-stat-lbl">Violations</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val green" id="int-stat-c">-</div><div class="int-stat-lbl">Compliant</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val" style="color:var(--accent2)" id="int-stat-t">-</div><div class="int-stat-lbl">Total Checks</div></div>' +
     '</div>' +
-    '<div class="filter-tabs">' +
-      '<div class="filter-tab ' + (intFilter==="ALL"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ALL") + ')">All (' + allAlerts.length + ')</div>' +
-      '<div class="filter-tab ' + (intFilter==="UNACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("UNACK") + ')">Unresolved (' + unresolved + ')</div>' +
-      '<div class="filter-tab ' + (intFilter==="ACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ACK") + ')">Resolved (' + resolved + ')</div>' +
-    '</div>' +
-    '<div id="integration-cards">' + buildIntegrationCards(allAlerts, source) + '</div>';
+    '<div class="filter-tabs" id="int-filter-tabs"><div class="loading" style="padding:12px"><div class="spinner"></div></div></div>' +
+    '<div id="integration-cards"><div class="loading"><div class="spinner"></div><br>Loading ' + source + ' violations...</div></div>';
+
+  // Fetch ONLY alerts — skip integrations/stats (too slow)
+  const alertsRes = await apiFetch("/alerts/recent?limit=200");
+  const allAlerts = (alertsRes?.data || []).filter(a => {
+    let v = a.violations;
+    if (typeof v === "string") { try { v = JSON.parse(v); } catch(e) { v = []; } }
+    if (!Array.isArray(v)) v = [];
+    return v.some(vv => (vv.source || vv.Source || "") === source);
+  });
+
+  // Calculate stats from alerts data directly
+  const total      = allAlerts.length;
+  const violations = allAlerts.filter(a => !a.acknowledged).length;
+  const compliant  = allAlerts.filter(a =>  a.acknowledged).length;
+
+  // Update stats
+  const sv = document.getElementById("int-stat-v"); if(sv) sv.textContent = violations;
+  const sc = document.getElementById("int-stat-c"); if(sc) sc.textContent = compliant;
+  const st = document.getElementById("int-stat-t"); if(st) st.textContent = total;
+  const unresolved = violations;
+  const resolved   = compliant;
+
+  // Update filter tabs
+  const ft = document.getElementById("int-filter-tabs");
+  if (ft) ft.innerHTML =
+    '<div class="filter-tab ' + (intFilter==="ALL"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ALL") + ')">All (' + allAlerts.length + ')</div>' +
+    '<div class="filter-tab ' + (intFilter==="UNACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("UNACK") + ')">Unresolved (' + unresolved + ')</div>' +
+    '<div class="filter-tab ' + (intFilter==="ACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ACK") + ')">Resolved (' + resolved + ')</div>';
+
+  // Update cards
+  const cards = document.getElementById("integration-cards");
+  if (cards) cards.innerHTML = buildIntegrationCards(allAlerts, source);
 }
 
 
