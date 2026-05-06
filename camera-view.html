@@ -480,6 +480,40 @@ class Car {
     ctx.roundRect(-W*0.25, -H*0.45, W*0.5, H*0.35, 4*scale);
     ctx.fill();
 
+    // ── FACE ANONYMIZATION (GDPR / Data Protection) ──────────
+    // Automatically blur/pixelate the driver's face area
+    // conforming to Tanzania Personal Data Protection Act 2022
+    // and international ALPR privacy standards
+    if (faceAnonEnabled && scale > 0.35) { // face anonymization — only when close enough
+      const fx = -W*0.08, fy = -H*0.38, fr = H*0.13;
+      // Pixelation effect — draw mosaic over face region
+      const pixSize = Math.max(2, Math.floor(fr * 0.35));
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr, 0, Math.PI*2);
+      ctx.clip();
+      // Draw pixelated blocks
+      for (let px = fx-fr; px < fx+fr; px+=pixSize) {
+        for (let py = fy-fr; py < fy+fr; py+=pixSize) {
+          const shade = 100 + Math.floor(Math.random()*60);
+          ctx.fillStyle = `rgb(${shade},${shade-10},${shade-20})`;
+          ctx.fillRect(px, py, pixSize, pixSize);
+        }
+      }
+      ctx.restore();
+      // Small privacy badge on car
+      if (scale > 0.55) {
+        ctx.fillStyle = 'rgba(0,180,100,.85)';
+        ctx.beginPath();
+        ctx.roundRect(W*0.28, -H*0.48, W*0.22, H*0.16, 2*scale);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${5.5*scale}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('ANON', W*0.39, -H*0.38);
+      }
+    }
+
     // Headlights
     if(this.progress > 0.5) {
       const glow = ctx.createRadialGradient(-W*0.45, -H*0.1, 0, -W*0.45, -H*0.1, W*0.3);
@@ -506,6 +540,17 @@ class Car {
   update() {
     this.progress += this.speed;
     return this.progress < 1.2;
+  }
+}
+
+// ── FACE ANONYMIZATION TOGGLE ────────────────────────────────
+let faceAnonEnabled = true;
+function toggleAnon() {
+  faceAnonEnabled = !faceAnonEnabled;
+  const btn = document.getElementById('btn-anon');
+  if (btn) {
+    btn.textContent = faceAnonEnabled ? '🔒 ANON ON' : '👁 ANON OFF';
+    btn.className = faceAnonEnabled ? 'ctrl-btn active' : 'ctrl-btn';
   }
 }
 

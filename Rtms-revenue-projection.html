@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RTMS — Revenue Projection | © SEUSHI, ANWAR 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --border:#30363d;--accent:#f78166;--accent2:#ffa657;
+  --green:#3fb950;--blue:#58a6ff;--purple:#bc8cff;
+  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --mono:'IBM Plex Mono',monospace;
+  --head:'Bebas Neue',sans-serif;
+  --body:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;padding-bottom:60px}
+
+.hero{background:linear-gradient(135deg,#0d1117 0%,#1a1f2e 50%,#0d1117 100%);border-bottom:1px solid var(--border);padding:48px 40px 36px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(247,129,102,.08) 0%,transparent 70%);pointer-events:none}
+.hero-tag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px;border:1px solid rgba(247,129,102,.3);display:inline-block;padding:3px 10px;border-radius:3px}
+.hero-title{font-family:var(--head);font-size:clamp(40px,6vw,72px);color:var(--text);line-height:.95;letter-spacing:.02em;margin-bottom:8px}
+.hero-title span{color:var(--accent)}
+.hero-sub{font-size:14px;color:var(--text2);font-family:var(--mono);max-width:500px;line-height:1.7}
+.hero-meta{margin-top:20px;display:flex;gap:24px;flex-wrap:wrap}
+.hero-meta-item{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.hero-meta-item strong{color:var(--text2)}
+
+.container{max-width:1100px;margin:0 auto;padding:32px 20px}
+
+/* INPUTS */
+.input-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:32px}
+.input-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.input-label{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.input-label .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.input-value{font-family:var(--head);font-size:36px;color:var(--text);line-height:1;margin-bottom:6px}
+.input-unit{font-family:var(--mono);font-size:11px;color:var(--text3)}
+input[type=range]{width:100%;margin-top:8px;accent-color:var(--accent);cursor:pointer}
+select.inp{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:12px;cursor:pointer;outline:none;margin-top:4px}
+
+/* RESULTS */
+.results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.result-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)}
+.result-card.green::before{background:var(--green)}
+.result-card.blue::before{background:var(--blue)}
+.result-card.purple::before{background:var(--purple)}
+.result-label{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.result-value{font-family:var(--head);font-size:clamp(22px,3vw,34px);line-height:1;margin-bottom:4px}
+.result-value.red{color:var(--accent)}.result-value.green{color:var(--green)}.result-value.blue{color:var(--blue)}.result-value.purple{color:var(--purple)}
+.result-sub{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* TABLE */
+.table-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.table-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-family:var(--mono);font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.08em}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 16px;text-align:left;font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.06em;background:var(--bg3);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+td{padding:11px 16px;font-size:12px;font-family:var(--mono);color:var(--text2)}
+td.hl{color:var(--text);font-weight:600}
+td.green{color:var(--green)}td.red{color:var(--accent)}td.blue{color:var(--blue)}td.amber{color:var(--accent2)}
+
+/* CHART */
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px}
+.chart-title{font-family:var(--mono);font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 100px;align-items:center;gap:12px}
+.bar-label{font-size:11px;font-family:var(--mono);color:var(--text3);text-align:right}
+.bar-track{height:20px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.bar-fill.green{background:linear-gradient(90deg,#238636,var(--green))}
+.bar-fill.blue{background:linear-gradient(90deg,#1f6feb,var(--blue))}
+.bar-value{font-size:11px;font-family:var(--mono);color:var(--text);text-align:right}
+
+/* ASSUMPTIONS */
+.assumption-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.assumption{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.assumption-key{font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.assumption-val{font-size:13px;font-family:var(--mono);color:var(--text)}
+.assumption-src{font-size:10px;color:var(--text3);margin-top:2px;font-style:italic}
+
+/* FOOTER */
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:20px 40px;text-align:center;margin-top:40px;font-size:11px;font-family:var(--mono);color:var(--text3)}
+.footer strong{color:var(--text2)}
+
+@media(max-width:700px){
+  .results-grid{grid-template-columns:1fr 1fr}
+  .assumption-grid{grid-template-columns:1fr}
+  .hero{padding:32px 20px}
+  .bar-row{grid-template-columns:80px 1fr 80px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">CONFIDENTIAL — INVESTOR DOCUMENT</div>
+  <h1 class="hero-title">RTMS<br><span>Revenue</span><br>Projection</h1>
+  <p class="hero-sub">Road Traffic Management System — Tanzania<br>Interactive financial model. Adjust parameters to explore scenarios.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">Prepared by <strong>SEUSHI, ANWAR</strong></div>
+    <div class="hero-meta-item">Version <strong>2.0</strong></div>
+    <div class="hero-meta-item">Market <strong>United Republic of Tanzania</strong></div>
+    <div class="hero-meta-item">Currency <strong>TZS / USD</strong></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- INPUTS -->
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px">▸ Adjust parameters</div>
+  <div class="input-grid">
+    <div class="input-card">
+      <div class="input-label"><span class="dot"></span>Cameras Deployed</div>
+      <div class="input-value" id="val-cameras">10</div>
+      <div class="input-unit">fixed ALPR cameras</div>
+      <input type="range" id="inp-cameras" min="5" max="200" value="10" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--green)"></span>Vehicles / Camera / Day</div>
+      <div class="input-value" id="val-vehicles">800</div>
+      <div class="input-unit">detections per day</div>
+      <input type="range" id="inp-vehicles" min="200" max="3000" step="100" value="800" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--blue)"></span>Violation Rate</div>
+      <div class="input-value" id="val-rate">4</div>
+      <div class="input-unit">% of vehicles have violations</div>
+      <input type="range" id="inp-rate" min="1" max="20" value="4" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--purple)"></span>Payment Rate</div>
+      <div class="input-value" id="val-payment">45</div>
+      <div class="input-unit">% of fines actually paid</div>
+      <input type="range" id="inp-payment" min="10" max="90" value="45" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot"></span>Avg Fine Amount</div>
+      <div class="input-value" id="val-fine">50K</div>
+      <div class="input-unit">TZS per violation</div>
+      <input type="range" id="inp-fine" min="20000" max="300000" step="5000" value="50000" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--green)"></span>Revenue Share</div>
+      <div class="input-value" id="val-share">10</div>
+      <div class="input-unit">% RTMS earns per fine collected</div>
+      <input type="range" id="inp-share" min="3" max="25" value="10" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--blue)"></span>Camera OPEX / Month</div>
+      <div class="input-value" id="val-opex">150K</div>
+      <div class="input-unit">TZS per camera (maintenance+data)</div>
+      <input type="range" id="inp-opex" min="50000" max="500000" step="25000" value="150000" oninput="update()"/>
+    </div>
+    <div class="input-card">
+      <div class="input-label"><span class="dot" style="background:var(--accent2)"></span>Scenario</div>
+      <select class="inp" id="inp-scenario" onchange="applyScenario()">
+        <option value="custom">Custom</option>
+        <option value="conservative">Conservative (5 cameras, low traffic)</option>
+        <option value="base" selected>Base Case (10 cameras, Dar es Salaam)</option>
+        <option value="optimistic">Optimistic (50 cameras, city-wide)</option>
+        <option value="scale">Scale (200 cameras, national)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KEY METRICS -->
+  <div class="results-grid">
+    <div class="result-card">
+      <div class="result-label">Fines Issued / Month</div>
+      <div class="result-value red" id="res-fines-issued">—</div>
+      <div class="result-sub" id="res-fines-day">—</div>
+    </div>
+    <div class="result-card green">
+      <div class="result-label">Gross Revenue / Month</div>
+      <div class="result-value green" id="res-gross">—</div>
+      <div class="result-sub" id="res-gross-usd">—</div>
+    </div>
+    <div class="result-card blue">
+      <div class="result-label">Net Revenue / Month</div>
+      <div class="result-value blue" id="res-net">—</div>
+      <div class="result-sub" id="res-net-usd">—</div>
+    </div>
+    <div class="result-card purple">
+      <div class="result-label">Annual Net Revenue</div>
+      <div class="result-value purple" id="res-annual">—</div>
+      <div class="result-sub" id="res-annual-usd">—</div>
+    </div>
+  </div>
+
+  <!-- PER CAMERA METRICS -->
+  <div class="results-grid" style="margin-bottom:24px">
+    <div class="result-card">
+      <div class="result-label">Revenue / Camera / Month</div>
+      <div class="result-value red" id="res-per-cam">—</div>
+      <div class="result-sub" id="res-per-cam-usd">—</div>
+    </div>
+    <div class="result-card green">
+      <div class="result-label">Fines / Camera / Day</div>
+      <div class="result-value green" id="res-fines-cam-day">—</div>
+      <div class="result-sub">violations detected & fined</div>
+    </div>
+    <div class="result-card blue">
+      <div class="result-label">Total OPEX / Month</div>
+      <div class="result-value blue" id="res-opex">—</div>
+      <div class="result-sub">all camera maintenance</div>
+    </div>
+    <div class="result-card purple">
+      <div class="result-label">Break-even (months)</div>
+      <div class="result-value purple" id="res-breakeven">—</div>
+      <div class="result-sub" id="res-breakeven-sub">at TZS 5M per camera CAPEX</div>
+    </div>
+  </div>
+
+  <!-- 12-MONTH PROJECTION TABLE -->
+  <div class="table-section">
+    <div class="table-hdr">
+      <span class="table-title">12-Month Revenue Projection</span>
+      <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">Assumes 15% annual violation rate growth</span>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Month</th><th>Cameras</th><th>Fines Issued</th><th>Fines Paid</th>
+        <th>Gross Revenue (TZS)</th><th>OPEX (TZS)</th><th>Net Revenue (TZS)</th><th>Cumulative (TZS)</th>
+      </tr></thead>
+      <tbody id="projection-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- BAR CHART -->
+  <div class="chart-wrap">
+    <div class="chart-title">Revenue by Violation Type — Monthly Breakdown</div>
+    <div class="bar-chart" id="violation-chart"></div>
+  </div>
+
+  <!-- SCENARIO COMPARISON -->
+  <div class="table-section">
+    <div class="table-hdr"><span class="table-title">Scenario Comparison</span></div>
+    <table>
+      <thead><tr>
+        <th>Scenario</th><th>Cameras</th><th>Monthly Net (TZS)</th><th>Annual Net (TZS)</th>
+        <th>Annual Net (USD)</th><th>Break-even</th>
+      </tr></thead>
+      <tbody id="scenario-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ASSUMPTIONS -->
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">▸ Key assumptions</div>
+  <div class="assumption-grid">
+    <div class="assumption">
+      <div class="assumption-key">Vehicle Volume</div>
+      <div class="assumption-val">Dar es Salaam: 500–3,000 vehicles/camera/day depending on location</div>
+      <div class="assumption-src">Source: TANROADS traffic count data, Ubungo interchange 2023</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">Violation Rate</div>
+      <div class="assumption-val">3–8% industry average for African urban traffic corridors</div>
+      <div class="assumption-src">Source: Nairobi NTSA report 2023, Rwanda RNP traffic data</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">Payment Rate</div>
+      <div class="assumption-val">40–55% with M-Pesa integration (vs 10–15% cash-only systems)</div>
+      <div class="assumption-src">Source: Kenya e-fine collection data, comparable mobile money markets</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">Average Fine</div>
+      <div class="assumption-val">TZS 20,000–300,000 depending on violation type</div>
+      <div class="assumption-src">Source: Tanzania Road Traffic Act Cap 168, RTMS fine schedule</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">Revenue Share Model</div>
+      <div class="assumption-val">8–15% of collected fines, standard for PPP traffic enforcement globally</div>
+      <div class="assumption-src">Source: South Africa AARTO model, Kenya NTSA-Safaricom agreement</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">CAPEX per Camera</div>
+      <div class="assumption-val">TZS 4–8 million ($1,500–$3,000 USD) installed incl. enclosure & connectivity</div>
+      <div class="assumption-src">Source: Hikvision DS-2CD4685G1, Pelco Spectra quotes East Africa 2024</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">USD Exchange Rate</div>
+      <div class="assumption-val">1 USD = 2,650 TZS (Bank of Tanzania rate, May 2026)</div>
+      <div class="assumption-src">Source: Bank of Tanzania daily forex</div>
+    </div>
+    <div class="assumption">
+      <div class="assumption-key">Growth Rate</div>
+      <div class="assumption-val">15% annual increase as compliance enforcement improves awareness</div>
+      <div class="assumption-src">Source: Rwanda traffic enforcement improvement data 2020–2023</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong>RTMS — Road Traffic Management System</strong> &bull;
+  Developed by <strong>SEUSHI, ANWAR</strong> &bull; Dar es Salaam, Tanzania &bull; 2025 &bull;
+  CONFIDENTIAL — For investor presentation only. All projections are estimates based on market research.
+</div>
+
+<script>
+const USD = 2650; // TZS per USD
+
+const VIOLATION_TYPES = [
+  { name:'Speeding',        pct:0.28, fine:200000 },
+  { name:'Red Light',       pct:0.22, fine:150000 },
+  { name:'No Insurance',    pct:0.18, fine:200000 },
+  { name:'No LATRA Permit', pct:0.12, fine:500000 },
+  { name:'Phone Use',       pct:0.10, fine:50000  },
+  { name:'No Seatbelt',     pct:0.06, fine:30000  },
+  { name:'Illegal Parking', pct:0.04, fine:50000  },
+];
+
+const SCENARIOS = {
+  conservative: { cameras:5,  vehicles:400,  rate:3,  payment:35, fine:40000,  share:8,  opex:120000 },
+  base:         { cameras:10, vehicles:800,  rate:4,  payment:45, fine:50000,  share:10, opex:150000 },
+  optimistic:   { cameras:50, vehicles:1200, rate:6,  payment:55, fine:70000,  share:12, opex:150000 },
+  scale:        { cameras:200,vehicles:1500, rate:8,  payment:60, fine:80000,  share:12, opex:120000 },
+};
+
+function fmt(n)  { return n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(0)+'K' : n.toFixed(0); }
+function fmtFull(n) { return Math.round(n).toLocaleString(); }
+function toUSD(tzs) { return '$' + fmt(tzs/USD); }
+
+function get(id) { return Number(document.getElementById(id).value); }
+function set(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+
+function applyScenario() {
+  const s = document.getElementById('inp-scenario').value;
+  if (s === 'custom') return;
+  const sc = SCENARIOS[s];
+  document.getElementById('inp-cameras').value  = sc.cameras;
+  document.getElementById('inp-vehicles').value = sc.vehicles;
+  document.getElementById('inp-rate').value     = sc.rate;
+  document.getElementById('inp-payment').value  = sc.payment;
+  document.getElementById('inp-fine').value     = sc.fine;
+  document.getElementById('inp-share').value    = sc.share;
+  document.getElementById('inp-opex').value     = sc.opex;
+  update();
+}
+
+function update() {
+  const cameras  = get('inp-cameras');
+  const vehicles = get('inp-vehicles');
+  const rate     = get('inp-rate') / 100;
+  const payment  = get('inp-payment') / 100;
+  const fine     = get('inp-fine');
+  const share    = get('inp-share') / 100;
+  const opex     = get('inp-opex');
+  const capex    = 5000000; // TZS per camera
+
+  // Update display values
+  set('val-cameras',  cameras);
+  set('val-vehicles', vehicles.toLocaleString());
+  set('val-rate',     get('inp-rate')+'%');
+  set('val-payment',  get('inp-payment')+'%');
+  set('val-fine',     fmt(fine));
+  set('val-share',    get('inp-share')+'%');
+  set('val-opex',     fmt(opex));
+
+  // Monthly calcs
+  const finesPerCamDay  = vehicles * rate;
+  const finesPerCamMonth= finesPerCamDay * 30;
+  const totalFinesMonth = finesPerCamMonth * cameras;
+  const paidFinesMonth  = totalFinesMonth * payment;
+  const grossRevMonth   = paidFinesMonth * fine * share;
+  const totalOpex       = opex * cameras;
+  const netRevMonth     = grossRevMonth - totalOpex;
+  const annualNet       = netRevMonth * 12;
+  const perCamMonth     = netRevMonth / cameras;
+  const totalCapex      = capex * cameras;
+  const breakeven       = totalCapex / Math.max(1, netRevMonth);
+
+  // Key metrics
+  set('res-fines-issued',  fmt(totalFinesMonth));
+  set('res-fines-day',     fmt(totalFinesMonth/30) + ' per day');
+  set('res-gross',         'TZS ' + fmt(grossRevMonth));
+  set('res-gross-usd',     toUSD(grossRevMonth) + ' / month');
+  set('res-net',           'TZS ' + fmt(netRevMonth));
+  set('res-net-usd',       toUSD(netRevMonth) + ' / month');
+  set('res-annual',        'TZS ' + fmt(annualNet));
+  set('res-annual-usd',    toUSD(annualNet) + ' / year');
+  set('res-per-cam',       'TZS ' + fmt(perCamMonth));
+  set('res-per-cam-usd',   toUSD(perCamMonth) + ' net/month');
+  set('res-fines-cam-day', finesPerCamDay.toFixed(1));
+  set('res-opex',          'TZS ' + fmt(totalOpex));
+  set('res-breakeven',     breakeven > 0 ? breakeven.toFixed(1) : '—');
+  set('res-breakeven-sub', 'at TZS ' + fmt(capex) + '/camera CAPEX');
+
+  // 12-month table
+  const tbody = document.getElementById('projection-tbody');
+  let cumulative = 0;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  tbody.innerHTML = months.map((m, i) => {
+    const growth  = 1 + (0.15/12)*i;
+    const mFines  = totalFinesMonth * growth;
+    const mPaid   = mFines * payment;
+    const mGross  = mPaid * fine * share;
+    const mNet    = mGross - totalOpex;
+    cumulative   += mNet;
+    const color   = mNet >= 0 ? 'green' : 'red';
+    return `<tr>
+      <td class="hl">${m} 2026</td>
+      <td>${cameras}</td>
+      <td>${fmtFull(Math.round(mFines))}</td>
+      <td class="blue">${fmtFull(Math.round(mPaid))}</td>
+      <td>${fmtFull(Math.round(mGross))}</td>
+      <td class="red">${fmtFull(Math.round(totalOpex))}</td>
+      <td class="${color}">${fmtFull(Math.round(mNet))}</td>
+      <td class="${color}">${fmtFull(Math.round(cumulative))}</td>
+    </tr>`;
+  }).join('');
+
+  // Violation breakdown chart
+  const maxRevenue = Math.max(...VIOLATION_TYPES.map(v => v.pct * totalFinesMonth * payment * v.fine * share));
+  document.getElementById('violation-chart').innerHTML = VIOLATION_TYPES.map(v => {
+    const rev = v.pct * totalFinesMonth * payment * v.fine * share;
+    const pct = maxRevenue > 0 ? (rev/maxRevenue*100).toFixed(0) : 0;
+    return `<div class="bar-row">
+      <div class="bar-label">${v.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-value">TZS ${fmt(rev)}</div>
+    </div>`;
+  }).join('');
+
+  // Scenario comparison table
+  const stbody = document.getElementById('scenario-tbody');
+  stbody.innerHTML = Object.entries(SCENARIOS).map(([key, sc]) => {
+    const sf  = sc.vehicles * (sc.rate/100) * 30 * sc.cameras;
+    const sp  = sf * (sc.payment/100) * sc.fine * (sc.share/100);
+    const sn  = sp - sc.opex * sc.cameras;
+    const san = sn * 12;
+    const sbe = (5000000 * sc.cameras) / Math.max(1, sn);
+    const isCurrent = (cameras === sc.cameras);
+    return `<tr style="${isCurrent?'background:var(--bg3)':''}">
+      <td class="hl" style="text-transform:capitalize">${key}${isCurrent?' ◀':''}</td>
+      <td>${sc.cameras}</td>
+      <td class="${sn>=0?'green':'red'}">${fmtFull(Math.round(sn))}</td>
+      <td class="${san>=0?'green':'red'}">${fmtFull(Math.round(san))}</td>
+      <td class="blue">${toUSD(san)}</td>
+      <td class="amber">${sbe.toFixed(1)} months</td>
+    </tr>`;
+  }).join('');
+}
+
+// Init
+applyScenario();
+update();
+</script>
+</body>
+</html>

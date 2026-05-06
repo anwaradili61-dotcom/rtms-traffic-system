@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RTMS — Data Privacy Policy | © SEUSHI, ANWAR 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#fafaf7;--bg2:#ffffff;--border:#e5e2d9;
+  --ink:#1a1a17;--ink2:#4a4a42;--ink3:#9a9a8e;
+  --accent:#c84b1a;--accent2:#e06030;
+  --blue:#1a4580;--green:#1a6a40;
+  --head:'EB Garamond',serif;
+  --mono:'JetBrains Mono',monospace;
+  --body:'Outfit',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.8}
+
+.cover{background:var(--ink);color:#fff;padding:72px 80px 60px;position:relative;overflow:hidden;page-break-after:always}
+.cover::before{content:'';position:absolute;bottom:-40px;right:-40px;width:300px;height:300px;border:1px solid rgba(255,255,255,.06);border-radius:50%}
+.cover::after{content:'';position:absolute;bottom:-80px;right:-80px;width:500px;height:500px;border:1px solid rgba(255,255,255,.04);border-radius:50%}
+.cover-eyebrow{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.15em;text-transform:uppercase;margin-bottom:24px}
+.cover-title{font-family:var(--head);font-size:clamp(36px,5vw,64px);font-weight:600;line-height:1.1;margin-bottom:16px}
+.cover-title em{color:var(--accent2);font-style:italic}
+.cover-sub{font-size:15px;color:rgba(255,255,255,.55);max-width:520px;line-height:1.7;margin-bottom:40px}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:480px}
+.cover-meta-item{border-top:1px solid rgba(255,255,255,.1);padding-top:12px}
+.cover-meta-key{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.cover-meta-val{font-size:13px;color:rgba(255,255,255,.7)}
+
+.doc{max-width:840px;margin:0 auto;padding:60px 40px}
+.toc{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px 32px;margin-bottom:48px}
+.toc-title{font-family:var(--head);font-size:18px;font-weight:600;margin-bottom:16px;color:var(--ink)}
+.toc-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.toc-list a{text-decoration:none;color:var(--blue);font-size:13px;font-family:var(--mono);display:flex;align-items:baseline;gap:8px}
+.toc-list a:hover{color:var(--accent)}
+.toc-num{color:var(--ink3);font-size:11px;min-width:24px}
+.toc-dots{flex:1;border-bottom:1px dotted var(--border);margin-bottom:2px}
+
+.section{margin-bottom:48px;padding-bottom:48px;border-bottom:1px solid var(--border)}
+.section:last-child{border-bottom:none}
+.section-num{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:block}
+.section-title{font-family:var(--head);font-size:28px;font-weight:600;color:var(--ink);line-height:1.2;margin-bottom:20px}
+.section-body{color:var(--ink2);line-height:1.85}
+.section-body p{margin-bottom:14px}
+.section-body p:last-child{margin-bottom:0}
+.section-body strong{color:var(--ink);font-weight:600}
+
+.subsection{margin-bottom:20px}
+.subsection-title{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:8px;font-family:var(--body)}
+
+.highlight-box{background:var(--bg2);border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 6px 6px 0;margin:20px 0;font-size:14px;color:var(--ink2);line-height:1.7}
+.highlight-box.blue{border-left-color:var(--blue)}
+.highlight-box.green{border-left-color:var(--green)}
+
+.data-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13px}
+.data-table thead th{background:var(--ink);color:#fff;padding:10px 14px;text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.06em;font-weight:500}
+.data-table tbody tr{border-bottom:1px solid var(--border)}
+.data-table tbody tr:hover{background:rgba(0,0,0,.02)}
+.data-table td{padding:10px 14px;color:var(--ink2);vertical-align:top;line-height:1.6}
+.data-table td:first-child{font-weight:500;color:var(--ink);white-space:nowrap}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:3px;letter-spacing:.05em;font-weight:500}
+.tag.red{background:rgba(200,75,26,.1);color:var(--accent)}
+.tag.green{background:rgba(26,106,64,.1);color:var(--green)}
+.tag.blue{background:rgba(26,69,128,.1);color:var(--blue)}
+
+ul.policy-list{padding-left:20px;margin:12px 0;display:flex;flex-direction:column;gap:6px}
+ul.policy-list li{color:var(--ink2);font-size:14px;line-height:1.7}
+ul.policy-list li::marker{color:var(--accent)}
+
+.rights-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.right-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px}
+.right-icon{font-size:20px;margin-bottom:8px}
+.right-title{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}
+.right-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+
+.contact-box{background:var(--ink);color:#fff;border-radius:10px;padding:24px 28px;margin:24px 0}
+.contact-title{font-family:var(--head);font-size:20px;margin-bottom:12px}
+.contact-item{font-size:13px;font-family:var(--mono);color:rgba(255,255,255,.6);margin-bottom:6px}
+.contact-item strong{color:rgba(255,255,255,.9)}
+
+.footer-bar{background:var(--ink);color:rgba(255,255,255,.4);padding:16px 40px;font-size:11px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:60px}
+
+@media print{
+  .cover{page-break-after:always}
+  .section{page-break-inside:avoid}
+}
+@media(max-width:600px){
+  .cover{padding:40px 24px}
+  .doc{padding:32px 20px}
+  .rights-grid{grid-template-columns:1fr}
+  .cover-meta{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-eyebrow">Official Policy Document — Version 2.0 — May 2026</div>
+  <h1 class="cover-title">Data Privacy<br>&amp; Protection<br><em>Policy</em></h1>
+  <p class="cover-sub">Road Traffic Management System (RTMS) — United Republic of Tanzania. This policy governs the collection, processing, storage and protection of all personal and vehicle data captured by the RTMS platform.</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><div class="cover-meta-key">System Owner</div><div class="cover-meta-val">SEUSHI, ANWAR — Dar es Salaam</div></div>
+    <div class="cover-meta-item"><div class="cover-meta-key">Version</div><div class="cover-meta-val">2.0 — May 2026</div></div>
+    <div class="cover-meta-item"><div class="cover-meta-key">Legal Framework</div><div class="cover-meta-val">Tanzania PDPA 2022 + GDPR-aligned</div></div>
+    <div class="cover-meta-item"><div class="cover-meta-key">Review Date</div><div class="cover-meta-val">May 2027</div></div>
+  </div>
+</div>
+
+<div class="doc">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list">
+      <li><a href="#s1"><span class="toc-num">01</span>Overview &amp; Scope<span class="toc-dots"></span></a></li>
+      <li><a href="#s2"><span class="toc-num">02</span>Data We Collect<span class="toc-dots"></span></a></li>
+      <li><a href="#s3"><span class="toc-num">03</span>Legal Basis for Processing<span class="toc-dots"></span></a></li>
+      <li><a href="#s4"><span class="toc-num">04</span>Face &amp; Biometric Anonymization<span class="toc-dots"></span></a></li>
+      <li><a href="#s5"><span class="toc-num">05</span>Data Retention &amp; Deletion<span class="toc-dots"></span></a></li>
+      <li><a href="#s6"><span class="toc-num">06</span>Data Sharing &amp; Third Parties<span class="toc-dots"></span></a></li>
+      <li><a href="#s7"><span class="toc-num">07</span>Security Measures<span class="toc-dots"></span></a></li>
+      <li><a href="#s8"><span class="toc-num">08</span>Your Rights as a Data Subject<span class="toc-dots"></span></a></li>
+      <li><a href="#s9"><span class="toc-num">09</span>Cookies &amp; Online Portal<span class="toc-dots"></span></a></li>
+      <li><a href="#s10"><span class="toc-num">10</span>Compliance &amp; Legal Framework<span class="toc-dots"></span></a></li>
+      <li><a href="#s11"><span class="toc-num">11</span>Contact &amp; Complaints<span class="toc-dots"></span></a></li>
+    </ul>
+  </div>
+
+  <!-- S1 -->
+  <div class="section" id="s1">
+    <span class="section-num">Section 01</span>
+    <h2 class="section-title">Overview &amp; Scope</h2>
+    <div class="section-body">
+      <p>The Road Traffic Management System (RTMS) is an automated traffic enforcement and management platform operated in the United Republic of Tanzania. RTMS uses fixed Automatic License Plate Recognition (ALPR) cameras, a central processing database, a web-based officer dashboard, and a public-facing citizen portal to detect traffic violations, issue fines, and facilitate payment.</p>
+      <p>This Privacy Policy applies to <strong>all data subjects</strong> whose information is collected, processed or stored by RTMS, including vehicle owners, traffic offenders, registered portal users, law enforcement officers, and any person whose vehicle is captured by an RTMS camera.</p>
+      <div class="highlight-box blue">
+        <strong>Geographic scope:</strong> This policy applies to all RTMS operations within the United Republic of Tanzania. Data processing occurs on servers hosted in the United States (Render Infrastructure, Ohio) under a Data Processing Agreement that requires compliance with Tanzanian law and international privacy standards.
+      </div>
+      <p>RTMS is committed to handling all personal data in accordance with the <strong>Tanzania Personal Data Protection Act, Cap. 447 (PDPA 2022)</strong>, the <strong>Electronic and Postal Communications Act (EPOCA)</strong>, and internationally recognised standards including the GDPR framework and the OECD Privacy Guidelines.</p>
+    </div>
+  </div>
+
+  <!-- S2 -->
+  <div class="section" id="s2">
+    <span class="section-num">Section 02</span>
+    <h2 class="section-title">Data We Collect</h2>
+    <div class="section-body">
+      <p>RTMS collects two categories of data: <strong>automatically captured data</strong> (from cameras and sensors) and <strong>voluntarily provided data</strong> (from user registration and payments).</p>
+
+      <table class="data-table">
+        <thead><tr><th>Data Type</th><th>What is Collected</th><th>Source</th><th>Classification</th></tr></thead>
+        <tbody>
+          <tr><td>Vehicle Plate Number</td><td>Alphanumeric plate string, OCR-extracted</td><td>ALPR Camera</td><td><span class="tag blue">VEHICLE DATA</span></td></tr>
+          <tr><td>Detection Image</td><td>Still frame of vehicle at detection point</td><td>ALPR Camera</td><td><span class="tag red">PERSONAL DATA</span></td></tr>
+          <tr><td>Time &amp; Location</td><td>Timestamp, GPS coordinates, camera ID</td><td>ALPR Camera</td><td><span class="tag blue">VEHICLE DATA</span></td></tr>
+          <tr><td>Violation Data</td><td>Type of violation, confidence score, speed (if applicable)</td><td>System</td><td><span class="tag blue">VEHICLE DATA</span></td></tr>
+          <tr><td>Owner Identity</td><td>Full name, phone, email, national ID, address</td><td>TRA / User Registration</td><td><span class="tag red">PERSONAL DATA</span></td></tr>
+          <tr><td>Payment Data</td><td>Mobile money transaction reference, amount paid</td><td>Azampay / User</td><td><span class="tag red">SENSITIVE DATA</span></td></tr>
+          <tr><td>Account Credentials</td><td>Username (hashed password — plaintext never stored)</td><td>User Registration</td><td><span class="tag red">PERSONAL DATA</span></td></tr>
+          <tr><td>LATRA/TIRA Status</td><td>Permit validity, insurance status from integration checks</td><td>LATRA / TIRA APIs</td><td><span class="tag blue">VEHICLE DATA</span></td></tr>
+          <tr><td>Officer Activity</td><td>Login times, actions taken, alerts acknowledged</td><td>System</td><td><span class="tag green">OPERATIONAL</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <strong>What we do NOT collect:</strong> RTMS does not collect facial biometric data, DNA data, religious or political affiliations, medical information, or any data from passengers inside vehicles. All facial features captured incidentally in vehicle images are automatically anonymized before storage (see Section 4).
+      </div>
+    </div>
+  </div>
+
+  <!-- S3 -->
+  <div class="section" id="s3">
+    <span class="section-num">Section 03</span>
+    <h2 class="section-title">Legal Basis for Processing</h2>
+    <div class="section-body">
+      <p>RTMS processes personal data under the following legal bases as defined in the Tanzania Personal Data Protection Act 2022:</p>
+
+      <div class="subsection">
+        <div class="subsection-title">3.1 Public Interest &amp; Legal Obligation</div>
+        <p>Traffic enforcement is a statutory function of the Tanzania Police Force and the Ministry of Works under the <strong>Road Traffic Act, Cap 168</strong>. RTMS processing of vehicle detection data, violation records, and fine issuance is conducted in furtherance of this legal mandate. No individual consent is required for automated detection of traffic violations on public roads.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">3.2 Consent (Citizen Portal)</div>
+        <p>When a vehicle owner voluntarily creates an account on the RTMS citizen portal, they provide explicit consent to the processing of their personal data for the purpose of viewing their fines, making payments and filing appeals. This consent is freely given, specific, informed and unambiguous as required by PDPA 2022.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">3.3 Contractual Necessity</div>
+        <p>Processing of payment data is necessary for the performance of the payment transaction contract between the vehicle owner and the Tanzania Revenue Authority.</p>
+      </div>
+
+      <div class="highlight-box green">
+        <strong>PDPA 2022 Compliance:</strong> RTMS is registered as a data controller with the Tanzania Data Protection Commission (or will be registered prior to full deployment). A Data Protection Impact Assessment (DPIA) has been conducted for all automated decision-making processes.
+      </div>
+    </div>
+  </div>
+
+  <!-- S4 -->
+  <div class="section" id="s4">
+    <span class="section-num">Section 04</span>
+    <h2 class="section-title">Face &amp; Biometric Anonymization</h2>
+    <div class="section-body">
+      <p>This section describes RTMS's technical implementation of face anonymization, which is a core privacy safeguard and a requirement for compliance with biometric data protection regulations.</p>
+
+      <div class="subsection">
+        <div class="subsection-title">4.1 Automatic Face Pixelation</div>
+        <p>Every vehicle image captured by an RTMS camera undergoes automatic face anonymization <strong>before the image is stored, transmitted or displayed</strong>. The windshield area of every detected vehicle is processed using a pixelation algorithm that replaces any human facial features with a mosaic pattern, making individual identification impossible. A green "ANON" badge is rendered on the processed image confirming anonymization was applied.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">4.2 Pedestrian Masking</div>
+        <p>Any pedestrians or bystanders captured in the frame of a violation image are automatically masked using object detection. Bystander data is never stored, processed or used for any purpose.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">4.3 What is Retained After Anonymization</div>
+        <p>After anonymization, only the following are retained in the evidence image: the vehicle body, the license plate (for enforcement purposes), and the road/environment context. No facial, biometric or personally identifiable visual data of any individual is stored.</p>
+      </div>
+
+      <div class="highlight-box">
+        <strong>Technical standard:</strong> RTMS anonymization conforms to ISO/IEC 29101 Privacy Architecture Framework and is aligned with the approach required by the US DHS ALPR Market Survey Report (2025) and the EU AI Act requirements for automated surveillance systems.
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">4.4 Override Policy</div>
+        <p>Face anonymization may only be disabled by a senior system administrator in the context of a specific criminal investigation under a valid court order. Any such override is logged with the officer's identity, timestamp and the authorizing court order reference number.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5 -->
+  <div class="section" id="s5">
+    <span class="section-num">Section 05</span>
+    <h2 class="section-title">Data Retention &amp; Deletion</h2>
+    <div class="section-body">
+      <table class="data-table">
+        <thead><tr><th>Data Category</th><th>Retention Period</th><th>Reason</th><th>Deletion Method</th></tr></thead>
+        <tbody>
+          <tr><td>Detection images (compliant vehicles)</td><td><strong>21 days</strong></td><td>Traffic analysis; aligns with US/EU ALPR standards</td><td>Automatic purge</td></tr>
+          <tr><td>Detection images (violation vehicles)</td><td><strong>Until fine resolved</strong></td><td>Evidence for enforcement &amp; appeals</td><td>Auto-delete 90 days after resolution</td></tr>
+          <tr><td>Fine &amp; payment records</td><td><strong>7 years</strong></td><td>Tanzania tax/audit requirement (TRA)</td><td>Admin-initiated deletion after period</td></tr>
+          <tr><td>Appeal records</td><td><strong>7 years</strong></td><td>Legal challenge period under Civil Procedure Code</td><td>Admin-initiated deletion</td></tr>
+          <tr><td>User account data</td><td><strong>Until account deleted + 30 days</strong></td><td>Fraud prevention buffer</td><td>User-initiated or admin deletion</td></tr>
+          <tr><td>LATRA/TIRA check logs</td><td><strong>1 year</strong></td><td>Integration audit trail</td><td>Automatic purge</td></tr>
+          <tr><td>Officer activity logs</td><td><strong>2 years</strong></td><td>Internal audit &amp; accountability</td><td>Admin-initiated deletion</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- S6 -->
+  <div class="section" id="s6">
+    <span class="section-num">Section 06</span>
+    <h2 class="section-title">Data Sharing &amp; Third Parties</h2>
+    <div class="section-body">
+      <p>RTMS shares data with third parties only as strictly necessary for system operation, legal compliance or enforcement purposes.</p>
+
+      <table class="data-table">
+        <thead><tr><th>Third Party</th><th>Data Shared</th><th>Purpose</th><th>Legal Basis</th></tr></thead>
+        <tbody>
+          <tr><td>Tanzania Police Force</td><td>Violation records, vehicle data</td><td>Enforcement action</td><td>Legal obligation</td></tr>
+          <tr><td>LATRA</td><td>Plate number queries</td><td>Transit permit verification</td><td>MOU / Public interest</td></tr>
+          <tr><td>TIRA</td><td>Plate number queries</td><td>Insurance verification</td><td>MOU / Public interest</td></tr>
+          <tr><td>TRA</td><td>Vehicle registration data</td><td>Customs &amp; registry sync</td><td>MOU / Legal obligation</td></tr>
+          <tr><td>Azampay</td><td>Transaction amount, phone number</td><td>Mobile money payment processing</td><td>Contract</td></tr>
+          <tr><td>Notify Africa (SMS)</td><td>Phone number, fine reference</td><td>Fine notification delivery</td><td>Consent / Contract</td></tr>
+          <tr><td>Render Inc. (US)</td><td>All system data (infrastructure)</td><td>Cloud hosting under DPA</td><td>Contract / DPA</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <strong>We will never sell your data.</strong> RTMS does not sell, rent or trade personal data to any commercial third party for marketing, advertising, insurance pricing, credit scoring or any other commercial purpose.
+      </div>
+    </div>
+  </div>
+
+  <!-- S7 -->
+  <div class="section" id="s7">
+    <span class="section-num">Section 07</span>
+    <h2 class="section-title">Security Measures</h2>
+    <div class="section-body">
+      <ul class="policy-list">
+        <li><strong>Encryption in transit:</strong> All data transmitted between cameras, the API server and user browsers uses TLS 1.3 encryption (HTTPS). No plaintext transmission of personal data is permitted.</li>
+        <li><strong>Encryption at rest:</strong> The PostgreSQL database is hosted on Render's encrypted infrastructure (AES-256). Backups are encrypted.</li>
+        <li><strong>Password security:</strong> All user passwords are hashed using bcrypt with a cost factor of 10. Plaintext passwords are never stored or logged.</li>
+        <li><strong>JWT authentication:</strong> All API access requires a signed JSON Web Token with a 30-day expiry. Tokens are invalidated on logout.</li>
+        <li><strong>Role-based access control:</strong> Staff access is restricted by role (ADMIN / OFFICER / CASHIER). No single user can access all system functions.</li>
+        <li><strong>Audit logging:</strong> All administrative actions, data access events and system changes are logged with user identity, timestamp and IP address.</li>
+        <li><strong>Face anonymization:</strong> Applied automatically at the point of capture — see Section 4.</li>
+        <li><strong>No data on personal devices:</strong> Officers access the system via a web browser. No enforcement data is stored on personal devices.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S8 -->
+  <div class="section" id="s8">
+    <span class="section-num">Section 08</span>
+    <h2 class="section-title">Your Rights as a Data Subject</h2>
+    <div class="section-body">
+      <p>Under the Tanzania Personal Data Protection Act 2022, you have the following rights regarding your personal data held by RTMS.</p>
+      <div class="rights-grid">
+        <div class="right-card"><div class="right-icon">📋</div><div class="right-title">Right to Access</div><div class="right-desc">Request a copy of all personal data RTMS holds about you, including violation history and payment records.</div></div>
+        <div class="right-card"><div class="right-icon">✏️</div><div class="right-title">Right to Rectification</div><div class="right-desc">Request correction of inaccurate data, such as incorrectly recorded vehicle ownership details.</div></div>
+        <div class="right-card"><div class="right-icon">🗑️</div><div class="right-title">Right to Erasure</div><div class="right-desc">Request deletion of your personal data, subject to legal retention requirements (e.g. paid fine records).</div></div>
+        <div class="right-card"><div class="right-icon">🚫</div><div class="right-title">Right to Object</div><div class="right-desc">Object to processing of your data for purposes beyond legal enforcement, including any analytics use.</div></div>
+        <div class="right-card"><div class="right-icon">📦</div><div class="right-title">Right to Portability</div><div class="right-desc">Receive your personal data in a structured, machine-readable format (JSON/CSV) for transfer to another service.</div></div>
+        <div class="right-card"><div class="right-icon">⚖️</div><div class="right-title">Right to Appeal</div><div class="right-desc">Challenge any traffic fine you believe was issued incorrectly through the RTMS appeal system or Traffic Court.</div></div>
+      </div>
+      <p>To exercise any of these rights, contact the Data Protection Officer at the address in Section 11. We will respond within <strong>30 days</strong> as required by PDPA 2022.</p>
+    </div>
+  </div>
+
+  <!-- S9 -->
+  <div class="section" id="s9">
+    <span class="section-num">Section 09</span>
+    <h2 class="section-title">Cookies &amp; Online Portal</h2>
+    <div class="section-body">
+      <p>The RTMS Citizen Portal uses browser <strong>localStorage</strong> (not cookies) to maintain your login session for 30 days. No tracking cookies, advertising pixels, analytics beacons or third-party scripts are loaded by the RTMS portal. The portal does not use Google Analytics, Facebook Pixel or any equivalent tracking technology.</p>
+      <p>Session data stored in localStorage includes: authentication token, user role, display name and session expiry timestamp. This data is cleared automatically when you click "Sign Out" or after 30 days of inactivity.</p>
+    </div>
+  </div>
+
+  <!-- S10 -->
+  <div class="section" id="s10">
+    <span class="section-num">Section 10</span>
+    <h2 class="section-title">Compliance &amp; Legal Framework</h2>
+    <div class="section-body">
+      <p>RTMS is designed to comply with the following legal and regulatory frameworks:</p>
+      <ul class="policy-list">
+        <li><strong>Tanzania Personal Data Protection Act, Cap. 447 (2022)</strong> — Primary national data protection law</li>
+        <li><strong>Electronic and Postal Communications Act (EPOCA)</strong> — Electronic communications compliance</li>
+        <li><strong>Road Traffic Act, Cap. 168</strong> — Legal authority for traffic enforcement</li>
+        <li><strong>Tanzania Revenue Authority Act</strong> — Financial record retention requirements</li>
+        <li><strong>GDPR (EU) — aligned</strong> — International best practice reference for systems with potential cross-border data flows</li>
+        <li><strong>ISO/IEC 29101</strong> — Privacy architecture framework for ICT systems</li>
+        <li><strong>US DHS ALPR Best Practice Guidelines (2025)</strong> — International ALPR standards reference</li>
+        <li><strong>MCCA ALPR Working Group Guidelines (2022)</strong> — Accountability, responsibility and transparency framework</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S11 -->
+  <div class="section" id="s11">
+    <span class="section-num">Section 11</span>
+    <h2 class="section-title">Contact &amp; Complaints</h2>
+    <div class="section-body">
+      <p>For all data protection enquiries, subject access requests or complaints regarding RTMS data processing, contact:</p>
+      <div class="contact-box">
+        <div class="contact-title">RTMS Data Protection Officer</div>
+        <div class="contact-item"><strong>Organisation:</strong> SEUSHI, ANWAR — Road Traffic Management System</div>
+        <div class="contact-item"><strong>Address:</strong> Dar es Salaam, United Republic of Tanzania</div>
+        <div class="contact-item"><strong>Email:</strong> privacy@rtms.go.tz</div>
+        <div class="contact-item"><strong>Phone:</strong> +255 800 000 000</div>
+        <div class="contact-item"><strong>Portal:</strong> https://rtms-traffic-system.onrender.com</div>
+        <div class="contact-item" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)"><strong>Response time:</strong> 30 days for all subject access requests</div>
+      </div>
+      <p>If you are not satisfied with our response, you have the right to lodge a complaint with the <strong>Tanzania Data Protection Commission</strong> or to seek judicial remedy in the courts of the United Republic of Tanzania.</p>
+      <div class="highlight-box">
+        <strong>Policy updates:</strong> This policy was last updated in <strong>May 2026</strong> and will be reviewed annually or whenever significant changes are made to the RTMS system. The current version is always available at the RTMS portal.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-bar">
+  <span>RTMS Data Privacy Policy v2.0 — May 2026</span>
+  <span>© SEUSHI, ANWAR — Dar es Salaam, Tanzania</span>
+  <span>Tanzania Personal Data Protection Act 2022 Compliant</span>
+</div>
+
+</body>
+</html>
