@@ -672,6 +672,35 @@ app.post('/tra/webhook', async (req, res) => {
   } catch(err) { console.error('[TRA WEBHOOK ERROR]', err.message); res.status(400).json({ success: false, error: err.message }); }
 });
 
+// Get all integration violations by source (LATRA / TIRA / TRA)
+app.get('/integrations/violations/:source', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  const source = req.params.source.toUpperCase();
+  const { page = 1, limit = 50, compliant } = req.query;
+  try {
+    const conditions = ['ec.source = $1'];
+    const params = [source];
+    if (compliant === 'false') { conditions.push('ec.compliant = FALSE'); }
+    if (compliant === 'true')  { conditions.push('ec.compliant = TRUE');  }
+    params.push(Number(limit), (Number(page)-1)*Number(limit));
+    const { rows } = await db(
+      `SELECT ec.*, v.owner_name, v.owner_phone, v.make, v.model, v.color, v.year
+       FROM external_checks ec
+       LEFT JOIN vehicles v ON v.id = ec.vehicle_id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY ec.checked_at DESC
+       LIMIT $${params.length-1} OFFSET $${params.length}`,
+      params
+    );
+    const { rows: counts } = await db(
+      `SELECT COUNT(*) AS total,
+              COUNT(*) FILTER (WHERE compliant=FALSE) AS violations,
+              COUNT(*) FILTER (WHERE compliant=TRUE)  AS compliant
+       FROM external_checks WHERE source=$1`, [source]
+    );
+    res.json({ data: rows, counts: counts[0], page: Number(page) });
+  } catch(err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/owners/:nationalId/vehicles', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   try {
     const rows = await integrations.getOwnerVehicles(req.params.nationalId);

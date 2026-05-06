@@ -934,16 +934,29 @@ let intFilter = "ALL";
 let currentIntSource = "LATRA";
 function setIntFilter(f) { intFilter = f; renderIntegrationView(currentIntSource); }
 
+function buildFilterTabs(current, total, violations, compliant) {
+  const ft = document.getElementById("int-filter-tabs");
+  if (!ft) return;
+  const tabs = [["ALL","All",total],["UNACK","Violations",violations],["ACK","Compliant",compliant]];
+  ft.innerHTML = '<div class="filter-tabs">' +
+    tabs.map(([k,label,count]) =>
+      '<div class="filter-tab '+(current===k?"active":"")+'" onclick="setIntFilter(\'' + k + '\')">' + label + ' (' + count + ')</div>'
+    ).join("") + "</div>";
+}
+
 async function renderIntegrationView(source) {
   currentIntSource = source;
+  intFilter = intFilter || "ALL";
   const main = document.getElementById("staff-main");
-
-  // Render shell immediately — no waiting
   const sourceIcon = source === "LATRA" ? "🚛" : "🛡️";
   const sourceDesc = source === "LATRA"
     ? "Transit Permit Violations — Vehicles without valid LATRA permits"
     : "Insurance Violations — Vehicles without valid TIRA insurance";
+  const violName = source === "LATRA"
+    ? { NO_LATRA_PERMIT:"No LATRA Transit Permit", EXPIRED_LATRA:"Expired LATRA Permit" }
+    : { NO_INSURANCE:"No Insurance Policy", EXPIRED_INSURANCE:"Expired Insurance" };
 
+  // Render shell instantly
   main.innerHTML =
     '<div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>' +
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">' +
@@ -952,45 +965,107 @@ async function renderIntegrationView(source) {
       '<div class="section-sub">' + sourceDesc + '</div></div>' +
       '<button class="btn btn-ghost" style="margin-left:auto" onclick="renderIntegrationView(currentIntSource)">&#x1F504; Refresh</button>' +
     '</div>' +
-    '<div class="int-stats-row" id="int-stats-row">' +
-      '<div class="int-stat"><div class="int-stat-val amber" id="int-stat-v">-</div><div class="int-stat-lbl">Violations</div></div>' +
-      '<div class="int-stat"><div class="int-stat-val green" id="int-stat-c">-</div><div class="int-stat-lbl">Compliant</div></div>' +
-      '<div class="int-stat"><div class="int-stat-val" style="color:var(--accent2)" id="int-stat-t">-</div><div class="int-stat-lbl">Total Checks</div></div>' +
+    '<div class="int-stats-row">' +
+      '<div class="int-stat"><div class="int-stat-val amber" id="int-v">-</div><div class="int-stat-lbl">Violations</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val green" id="int-c">-</div><div class="int-stat-lbl">Compliant</div></div>' +
+      '<div class="int-stat"><div class="int-stat-val" style="color:var(--accent2)" id="int-t">-</div><div class="int-stat-lbl">Total Checks</div></div>' +
     '</div>' +
-    '<div class="filter-tabs" id="int-filter-tabs"><div class="loading" style="padding:12px"><div class="spinner"></div></div></div>' +
-    '<div id="integration-cards"><div class="loading"><div class="spinner"></div><br>Loading ' + source + ' violations...</div></div>';
+    '<div id="int-filter-tabs" style="margin-bottom:14px"></div>' +
+    '<div id="integration-cards"><div class="loading"><div class="spinner"></div><br>Fetching ' + source + ' data...</div></div>';
 
-  // Fetch ONLY alerts — skip integrations/stats (too slow)
-  const alertsRes = await apiFetch("/alerts/recent?limit=200");
-  const allAlerts = (alertsRes?.data || []).filter(a => {
-    let v = a.violations;
-    if (typeof v === "string") { try { v = JSON.parse(v); } catch(e) { v = []; } }
-    if (!Array.isArray(v)) v = [];
-    return v.some(vv => (vv.source || vv.Source || "") === source);
-  });
+  // Fetch from external_checks table — this has ALL check results
+  const r = await apiFetch("/integrations/violations/" + source + "?limit=100");
+  if (!r || !r.data) {
+    document.getElementById("integration-cards").innerHTML =
+      '<div class="empty"><div class="empty-icon">' + sourceIcon + '</div>' +
+      '<div class="empty-text">No ' + source + ' check data yet.<br>' +
+      'Run the camera simulator to generate detections — plates ending in odd numbers trigger LATRA, plates with Z trigger TIRA.</div></div>';
+    return;
+  }
 
-  // Calculate stats from alerts data directly
-  const total      = allAlerts.length;
-  const violations = allAlerts.filter(a => !a.acknowledged).length;
-  const compliant  = allAlerts.filter(a =>  a.acknowledged).length;
+  const all        = r.data;
+  const counts     = r.counts || {};
+  const total      = Number(counts.total      || all.length);
+  const violations = Number(counts.violations || all.filter(x=>!x.compliant).length);
+  const compliant  = Number(counts.compliant  || all.filter(x=> x.compliant).length);
 
-  // Update stats
-  const sv = document.getElementById("int-stat-v"); if(sv) sv.textContent = violations;
-  const sc = document.getElementById("int-stat-c"); if(sc) sc.textContent = compliant;
-  const st = document.getElementById("int-stat-t"); if(st) st.textContent = total;
-  const unresolved = violations;
-  const resolved   = compliant;
+  // Update stat numbers
+  const sv=document.getElementById("int-v"); if(sv) sv.textContent=violations;
+  const sc=document.getElementById("int-c"); if(sc) sc.textContent=compliant;
+  const st=document.getElementById("int-t"); if(st) st.textContent=total;
 
-  // Update filter tabs
+  // Filter
+  const filtered = intFilter==="ALL"   ? all
+                 : intFilter==="UNACK" ? all.filter(x=>!x.compliant)
+                 : all.filter(x=>x.compliant);
+
+  // Filter tabs
   const ft = document.getElementById("int-filter-tabs");
   if (ft) ft.innerHTML =
-    '<div class="filter-tab ' + (intFilter==="ALL"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ALL") + ')">All (' + allAlerts.length + ')</div>' +
-    '<div class="filter-tab ' + (intFilter==="UNACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("UNACK") + ')">Unresolved (' + unresolved + ')</div>' +
-    '<div class="filter-tab ' + (intFilter==="ACK"?"active":"") + '" onclick="setIntFilter(' + JSON.stringify("ACK") + ')">Resolved (' + resolved + ')</div>';
+    buildFilterTabs(intFilter, total, violations, compliant);
 
-  // Update cards
+  // Cards
   const cards = document.getElementById("integration-cards");
-  if (cards) cards.innerHTML = buildIntegrationCards(allAlerts, source);
+  if (!filtered.length) {
+    cards.innerHTML = '<div class="empty"><div class="empty-icon">' + sourceIcon + '</div>' +
+      '<div class="empty-text">No ' + (intFilter==="UNACK"?"violations":intFilter==="ACK"?"compliant":"") + ' ' + source + ' records found.</div></div>';
+    return;
+  }
+
+  const cam_map = {
+    "CAM-001":"Ubungo Interchange","CAM-002":"Kariakoo Junction",
+    "CAM-003":"Kimara Roundabout","CAM-004":"Chang'ombe Rd","CAM-005":"Mlimani City","MANUAL":"Manual Check"
+  };
+
+  cards.innerHTML = filtered.map(row => {
+    const cam     = getCameraInfo(row.camera_id || "MANUAL");
+    const vtype   = row.violation_type || "";
+    const vname   = violName[vtype] || vtype.replace(/_/g," ") || "Violation";
+    const fine    = Number(row.fine_amount || 0);
+    const checked = new Date(row.checked_at).toLocaleString("en-TZ",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+    const owner   = row.owner_name || "Unknown Owner";
+    const vehicle = [row.make,row.model,row.color].filter(Boolean).join(" ") || "—";
+    const isOk    = row.compliant;
+
+    return '<div class="integration-card">' +
+      '<div class="integration-card-hdr">' +
+        '<div>' +
+          '<div class="integration-card-plate">' + row.plate_number + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">' +
+            owner + (vehicle!=="—"?" &bull; "+vehicle:"") +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right">' +
+          '<div class="integration-card-time">' + checked + '</div>' +
+          (isOk
+            ? '<span class="integration-status paid">✓ Compliant</span>'
+            : '<span class="integration-status violation">⚠ Violation</span>') +
+        '</div>' +
+      '</div>' +
+      '<div class="integration-card-body">' +
+        '<div class="integration-row">' +
+          '<div class="integration-source">' +
+            '<span class="integration-icon">' + sourceIcon + '</span>' +
+            '<div>' +
+              '<div class="integration-label">' + (isOk ? source+" — Compliant" : vname) + '</div>' +
+              '<div class="integration-desc">📡 ' + cam.name + ' &bull; ' + cam.area +
+                (fine>0?' &bull; Fine: TZS '+fine.toLocaleString():'') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<span class="integration-status '+(isOk?"paid":"violation")+'">' +
+            (isOk?"VALID":"OUTSTANDING")+'</span>' +
+        '</div>' +
+        (row.simulated ? '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:6px">⚠ Simulation mode — connect real '+source+' API for live data</div>' : '') +
+      '</div>' +
+      '<div class="integration-card-footer">' +
+        (!isOk
+          ? '<a href="'+getCameraInfo(row.camera_id||"MANUAL").lat+'" style="display:none"></a>' +
+            '<a href="https://www.google.com/maps?q='+cam.lat+','+cam.lng+'" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none">🗺️ Location</a>' +
+            '<a href="https://www.google.com/maps/dir/?api=1&destination='+cam.lat+','+cam.lng+'&travelmode=driving" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:7px 14px;text-decoration:none;color:var(--green);border-color:var(--green)">🧭 Directions</a>'
+          : '<span style="font-size:12px;color:var(--green);font-family:var(--mono)">✓ Vehicle is compliant</span>') +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 
