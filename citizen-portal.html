@@ -7,26 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#f5f3ee;--bg2:#ffffff;--bg3:#edeae3;
-  --ink:#1a1a18;--ink2:#4a4a45;--ink3:#9a9a92;
-  --accent:#c8451a;--accent2:#e05a2b;
-  --green:#1a7a4a;--green-bg:#e8f5ee;
-  --red:#c8451a;--red-bg:#fdf0ec;
-  --amber:#b07a10;--amber-bg:#fdf5e0;
-  --blue:#1a4a8a;--blue-bg:#eaf0fc;
-  --border:#dedad2;
-  --shadow:0 2px 20px rgba(26,26,24,.08);
-  --shadow2:0 8px 40px rgba(26,26,24,.14);
-  --head:'Playfair Display',serif;
-  --body:'Outfit',sans-serif;
-}
-/* ── DARK THEME (night hours) ───────────────────────── */
-body.dark-theme{
   --bg:#0e0e0c;--bg2:#161614;--bg3:#1e1e1a;
   --ink:#e8e4df;--ink2:#a8a49e;--ink3:#5a5a52;
+  --accent:#e05a2b;--accent2:#f07040;
+  --green:#1a9a5a;--green-bg:rgba(26,154,90,.12);
+  --red:#e05a2b;--red-bg:rgba(224,90,43,.1);
+  --amber:#c09020;--amber-bg:rgba(192,144,32,.1);
+  --blue:#2a6acb;--blue-bg:rgba(42,106,203,.1);
   --border:#2e2e28;
   --shadow:0 2px 20px rgba(0,0,0,.4);
   --shadow2:0 8px 40px rgba(0,0,0,.6);
+  --head:'Playfair Display',serif;
+  --body:'Outfit',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -235,8 +227,6 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
 .state-loading .spinner{display:none}
 .state-loading::after{content:'';display:block;height:80px;margin:20px 0;border-radius:12px;background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
 
-/* ── THEME TOGGLE BUTTON ───────────────────────────────── */
-#portal-theme-btn:hover{background:rgba(255,255,255,.2)!important;transform:scale(1.04)}
 </style>
 </head>
 <body>
@@ -252,12 +242,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
     <div class="nav-badges">
       <span class="owner-badge">&copy; SEUSHI, ANWAR 2025</span>
       <span class="gov-badge">United Republic of Tanzania</span>
-      <button id="portal-theme-btn" onclick="togglePortalTheme()"
-        style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;color:#fff;font-size:12px;cursor:pointer;font-family:var(--body);display:flex;align-items:center;gap:6px;transition:all .2s"
-        title="Toggle dark / light theme">
-        <span id="portal-theme-icon">🌙</span>
-        <span id="portal-theme-label">Dark</span>
-      </button>
+
     </div>
   </nav>
   <div class="hero-content">
@@ -947,63 +932,18 @@ document.getElementById('plate-input').addEventListener('input', e => {
 });
 </script>
 <script>
-// ── AUTO-SEARCH FROM URL PARAM ────────────────────────────
-// Supports citizen-portal.html?plate=T123ABC (from dashboard View Fines button)
+// Auto-search if ?plate= param in URL
 (function() {
   const params = new URLSearchParams(window.location.search);
   const plate  = params.get('plate');
-  if(plate) {
-    document.addEventListener('DOMContentLoaded', () => {
-      const inp = document.getElementById('plate-input');
-      if(inp) { inp.value = plate.toUpperCase(); doSearch(); }
-    });
-    // fallback if already loaded
-    if(document.readyState !== 'loading') {
-      const inp = document.getElementById('plate-input');
-      if(inp) { inp.value = plate.toUpperCase(); doSearch(); }
-    }
+  if (!plate) return;
+  function tryFill() {
+    const inp = document.getElementById('plate-input');
+    if (inp) { inp.value = plate.toUpperCase(); doSearch(); }
   }
-})();
-
-// ── DARK / LIGHT THEME SYSTEM ─────────────────────────────
-function updateThemeBtn(isDark) {
-  const btn  = document.getElementById('portal-theme-btn');
-  const icon = document.getElementById('portal-theme-icon');
-  const lbl  = document.getElementById('portal-theme-label');
-  if(!btn) return;
-  if(isDark) {
-    icon.textContent = '☀️';
-    lbl.textContent  = 'Light';
-    btn.title = 'Switch to Light Theme';
-  } else {
-    icon.textContent = '🌙';
-    lbl.textContent  = 'Dark';
-    btn.title = 'Switch to Dark Theme';
-  }
-}
-
-function togglePortalTheme() {
-  const isDark = document.body.classList.toggle('dark-theme');
-  localStorage.setItem('rtms_portal_theme', isDark ? 'dark' : 'light');
-  updateThemeBtn(isDark);
-}
-
-// On load: apply saved preference OR auto-detect from EAT timezone
-(function() {
-  const saved = localStorage.getItem('rtms_portal_theme');
-  let isDark = false;
-  if(saved === 'dark')  { document.body.classList.add('dark-theme'); isDark = true; }
-  else if(saved === 'light') { isDark = false; }
-  else {
-    // Auto: 06:00–18:00 EAT = light, 18:00–06:00 EAT = dark
-    const hour = new Date(new Date().toLocaleString('en-US',{timeZone:'Africa/Dar_es_Salaam'})).getHours();
-    isDark = hour < 6 || hour >= 18;
-    if(isDark) document.body.classList.add('dark-theme');
-  }
-  // Set button state after DOM is ready
-  document.addEventListener('DOMContentLoaded', () => updateThemeBtn(isDark));
-  // fallback for already-loaded
-  if(document.readyState !== 'loading') updateThemeBtn(isDark);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryFill);
+  } else { tryFill(); }
 })();
 </script>
 </body>

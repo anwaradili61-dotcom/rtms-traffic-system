@@ -41,7 +41,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .ctrl-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
 .back-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;text-decoration:none;transition:all .15s;font-family:var(--mono)}
 .back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.main{display:grid;grid-template-columns:1fr 300px;overflow:hidden;height:100%;min-height:0}
+.main{display:grid;grid-template-columns:1fr 300px;grid-template-rows:1fr;overflow:hidden;height:100%;min-height:0}
 .feed-wrap{position:relative;background:#000;overflow:hidden;height:100%;min-height:0}
 .cam-canvas{width:100%;height:100%;display:block}
 .cam-overlay{position:absolute;inset:0;pointer-events:none}
@@ -1969,40 +1969,41 @@ function initCars() {
   }
 }
 
-// ── BULLETPROOF STARTUP ──────────────────────────────────────
-let _renderStarted = false;
+// ── STARTUP ──────────────────────────────────────────────────
+let _started = false;
 
 function doStart() {
-  if (_renderStarted) return;
+  if (_started) return;
   const wrap = canvas.parentElement;
-  const W = wrap.clientWidth;
-  const H = wrap.clientHeight;
-  // Only start if we have real dimensions
-  if (!W || !H) return;
-  _renderStarted = true;
+  // Force a reflow so clientHeight is accurate
+  void wrap.offsetHeight;
+  const W = wrap.clientWidth  || wrap.getBoundingClientRect().width  || 900;
+  const H = wrap.clientHeight || wrap.getBoundingClientRect().height || 520;
+  if (H < 50) return; // genuinely not laid out yet
+  _started = true;
   canvas.width  = W;
   canvas.height = H;
   initCars();
   render();
-  // Also start polling API for real detections from camera monitor
   startViolationPoll();
 }
 
-// Handle window resize
 window.addEventListener('resize', () => {
   const wrap = canvas.parentElement;
-  if (wrap.clientWidth && wrap.clientHeight) {
-    canvas.width  = wrap.clientWidth;
-    canvas.height = wrap.clientHeight;
-  }
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  if (W && H) { canvas.width = W; canvas.height = H; }
 });
 
-// Try multiple ways to start — whichever fires first with real dimensions wins
-requestAnimationFrame(() => requestAnimationFrame(doStart));           // after 2 paints
-setTimeout(doStart, 100);   // 100ms fallback
-setTimeout(doStart, 300);   // 300ms fallback
-setTimeout(doStart, 800);   // 800ms last resort
-document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(doStart));
+// Multiple attempts — stop as soon as one succeeds
+requestAnimationFrame(() => requestAnimationFrame(doStart));
+setTimeout(doStart, 50);
+setTimeout(doStart, 150);
+setTimeout(doStart, 400);
+setTimeout(doStart, 900);
+document.addEventListener('DOMContentLoaded', () => {
+  requestAnimationFrame(() => requestAnimationFrame(doStart));
+});
 </script>
 </body>
 </html>

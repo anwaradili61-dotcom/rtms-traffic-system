@@ -723,37 +723,54 @@ function generatePayload(camera){
   };
 }
 
-// ── OWNER CACHE — resolves owner across all cameras ─────────
-const _ownerCache = new Map();
+// ── OWNER CACHE ──────────────────────────────────────────────
+// Simple string cache — only stores real non-empty names
+// This means duplicate detections on later cameras always get
+// the owner name that was discovered on the first camera
+const _ownerCache   = new Map(); // plate.toUpperCase() → name string
+const _ownerPending = new Set(); // plates currently being looked up
+
+function cacheOwner(plate, name) {
+  if (name && name.trim()) _ownerCache.set(plate.toUpperCase(), name.trim());
+}
 
 async function getOwner(plate) {
-  if (_ownerCache.has(plate)) return _ownerCache.get(plate);
-  // Mark in-flight
-  const promise = _doOwnerLookup(plate);
-  _ownerCache.set(plate, promise);
-  return promise;
+  const key = plate.toUpperCase();
+  if (_ownerCache.has(key)) return _ownerCache.get(key); // instant cache hit
+  if (_ownerPending.has(key)) {
+    // Wait for in-flight lookup
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (_ownerCache.has(key)) return _ownerCache.get(key);
+    }
+    return '';
+  }
+  _ownerPending.add(key);
+  const name = await _doOwnerLookup(plate);
+  _ownerPending.delete(key);
+  if (name) cacheOwner(plate, name);
+  return name;
 }
 
 async function _doOwnerLookup(plate) {
-  // First try without auth (portal endpoint)
   try {
     const r = await fetch(`${API}/portal/fines?plate=${encodeURIComponent(plate)}`);
     if (r.ok) {
       const d = await r.json();
-      const rows = d?.data || [];
+      const rows = Array.isArray(d?.data) ? d.data : [];
       const row = rows.find(r => r.owner_name);
       if (row?.owner_name) return row.owner_name;
     }
   } catch(e) {}
-  // Fallback: vehicles endpoint with token
   try {
-    const r2 = await fetch(`${API}/vehicles?plate=${encodeURIComponent(plate)}`,
-      { headers: { Authorization: `Bearer ${token}` } });
+    const r2 = await fetch(`${API}/vehicles?plate=${encodeURIComponent(plate)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
     if (r2.ok) {
       const d2 = await r2.json();
-      const rows2 = d2?.data || (Array.isArray(d2) ? d2 : []);
-      const match = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
-      if (match?.owner_name) return match.owner_name;
+      const rows2 = Array.isArray(d2?.data) ? d2.data : (Array.isArray(d2) ? d2 : []);
+      const m = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
+      if (m?.owner_name) return m.owner_name;
     }
   } catch(e) {}
   return '';
@@ -786,17 +803,15 @@ async function simTick(){
         updateCamera(camera.id,false);
       } else {
         counters.fines++;document.getElementById('s-fines').textContent=counters.fines;
-        const owner=data.vehicle?.owner_name||data.vehicle?.name||'';
-        // Cache owner; if empty kick off async lookup so next camera (duplicate) shows name
-        if(owner) {
-          _ownerCache.set(payload.plate_number, Promise.resolve(owner));
-        } else {
-          // Async lookup — warms cache for duplicate on next camera
+        const owner = data.vehicle?.owner_name || data.vehicle?.name || '';
+        if (owner) cacheOwner(payload.plate_number, owner);
+        addDetection({type:'fine',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score,amount:data.fine?.amount_tzs||AMOUNTS[payload.violation_type],fine_num:data.fine?.fine_number});
+        // If owner empty from server, fetch and enrich DOM card
+        if (!owner) {
           getOwner(payload.plate_number).then(name => {
-            if(name) updateDetectionOwner(payload.plate_number, name);
+            if (name) { cacheOwner(payload.plate_number, name); updateDetectionOwner(payload.plate_number, name); }
           });
         }
-        addDetection({type:'fine',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score,amount:data.fine?.amount_tzs||AMOUNTS[payload.violation_type],fine_num:data.fine?.fine_number});
         addLog(`Fine: ${data.fine?.fine_number} → ${payload.plate_number} ${owner?'('+owner+')':''}  TZS ${fmt(data.fine?.amount_tzs||0)}`,'ok');
         updateCamera(camera.id,true);
       }
