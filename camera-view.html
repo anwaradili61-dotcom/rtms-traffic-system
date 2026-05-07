@@ -1459,7 +1459,7 @@ function tryDetect(){
   // (real ALPR systems detect every vehicle, not random ones)
   const car=visible[~~(Math.random()*visible.length)];
   car.detected=true;
-  detectionCooldown=80; // ~1.3s between detections at 60fps
+  detectionCooldown=20; // ~0.3s between detections at 60fps
 
   const vType=pickViolation();
   const conf=0.87+Math.random()*0.12;
