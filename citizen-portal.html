@@ -20,6 +20,14 @@
   --head:'Playfair Display',serif;
   --body:'Outfit',sans-serif;
 }
+/* ── DARK THEME (night hours) ───────────────────────── */
+body.dark-theme{
+  --bg:#0e0e0c;--bg2:#161614;--bg3:#1e1e1a;
+  --ink:#e8e4df;--ink2:#a8a49e;--ink3:#5a5a52;
+  --border:#2e2e28;
+  --shadow:0 2px 20px rgba(0,0,0,.4);
+  --shadow2:0 8px 40px rgba(0,0,0,.6);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:100vh;padding-bottom:50px}
@@ -202,30 +210,31 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
   .copyright-bar{flex-direction:column;gap:4px;text-align:center;padding:6px 12px}
 }
 
-/* ── SYSTEM NAVIGATION BAR ──────────────────────────────── */
-.sys-nav{background:#1a1a18;border-bottom:1px solid #333;padding:8px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:200}
-.sys-nav-brand{font-family:var(--head);font-size:15px;font-weight:900;color:#fff;letter-spacing:.05em;margin-right:8px}
-.sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.sys-nav-link{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-decoration:none;padding:5px 12px;border-radius:6px;transition:all .15s;cursor:default;font-family:var(--body);letter-spacing:.02em}
-a.sys-nav-link{cursor:pointer;color:rgba(255,255,255,.5)}
-a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
-.sys-nav-link.active{background:var(--accent);color:#fff;cursor:default}
-@media(max-width:600px){.sys-nav{padding:8px 16px}.sys-nav-link{padding:4px 8px;font-size:10px}}
+/* ── LATRA/TIRA VIOLATION CARDS ────────────────────────── */
+.integration-section{margin-top:16px}
+.integration-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.integration-title::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent);border-radius:2px}
+.int-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.int-card.latra{border-left:3px solid #c84b1a}
+.int-card.tira{border-left:3px solid #1a4a8a}
+.int-card.tra{border-left:3px solid #1a6a40}
+.int-card.resolved{opacity:.55;border-left-color:#9a9a92}
+.int-icon{font-size:22px;flex-shrink:0;margin-top:2px}
+.int-body{flex:1;min-width:0}
+.int-source{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:3px}
+.int-type{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.int-fine{font-size:12px;color:var(--accent);font-family:var(--mono)}
+.int-status{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;display:inline-block;margin-top:4px}
+.int-status.open{background:var(--red-bg);color:var(--red)}
+.int-status.resolved{background:var(--green-bg);color:var(--green)}
+.no-violations{font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;padding:10px 0}
 </style>
 </head>
 <body>
 
 <div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
 
-<div class="sys-nav">
-  <div class="sys-nav-brand">🚦 RTMS</div>
-  <div class="sys-nav-links">
-    <span class="sys-nav-link active">🏠 Citizen Portal</span>
-    <a class="sys-nav-link" href="dashboard.html">👮 Staff Dashboard</a>
-    <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
-    <a class="sys-nav-link" href="camera-view.html">📷 Camera View</a>
-  </div>
-</div>
+
 <div class="hero">
   <div class="hero-pattern"></div>
   <div class="hero-accent"></div>
@@ -375,12 +384,15 @@ async function doSearch() {
     showState('state-error');
     return;
   }
-  renderResults(plate, res.data.data);
+  // Also fetch LATRA/TIRA integration violations for this plate
+  const intRes = await apiFetch('/integrations/violations/all?plate=' + encodeURIComponent(plate));
+  const intViolations = (intRes.data?.data || intRes.data || []);
+  renderResults(plate, res.data.data, intViolations);
   showState('state-results');
 }
 
 // ── Render results ────────────────────────────────────────────
-function renderResults(plate, fines) {
+function renderResults(plate, fines, integrationViolations=[]) {
   const s       = fines[0];
   const vehicle = [s.make, s.model, s.color].filter(Boolean).join(' ');
 
@@ -409,6 +421,16 @@ function renderResults(plate, fines) {
     const o = {OVERDUE:0,ISSUED:1,PENDING:2,APPEALED:3,PAID:4,CANCELLED:5};
     return (o[a.status]||9) - (o[b.status]||9);
   });
+
+  // LATRA/TIRA integration badge in summary
+  const latViolations = integrationViolations.filter(v=>v && (v.source==='LATRA'||v.violation_source==='LATRA'));
+  const tirViolations = integrationViolations.filter(v=>v && (v.source==='TIRA'||v.violation_source==='TIRA'));
+  let intBadges = '';
+  if(latViolations.length) intBadges += '<div class="int-status open" style="margin-right:6px">⚠️ LATRA Violation</div>';
+  if(tirViolations.length) intBadges += '<div class="int-status open">⚠️ TIRA Violation</div>';
+  if(intBadges) {
+    document.getElementById('owner-card').innerHTML += '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">' + intBadges + '</div>';
+  }
 
   document.getElementById('fines-list').innerHTML = sorted.map(f => {
     const tot      = Number(f.amount_tzs||0) + Number(f.penalty_amount||0);
@@ -444,7 +466,53 @@ function renderResults(plate, fines) {
         '</div>' +
       '</div>' +
     '</div>';
+  }).join('') + buildIntegrationSection(integrationViolations);
+}
+
+function buildIntegrationSection(violations) {
+  if(!violations || !violations.length) return '';
+  const sourceMap = {
+    LATRA: { label:'LATRA — Land Transport Regulatory Authority', icon:'🚛', cls:'latra',
+      desc:'Transit permit required for commercial vehicles on this route.' },
+    TIRA:  { label:'TIRA — Tanzania Insurance Regulatory Authority', icon:'🛡️', cls:'tira',
+      desc:'Vehicle must hold a valid insurance policy to operate.' },
+    TRA:   { label:'TRA — Tanzania Revenue Authority', icon:'📋', cls:'tra',
+      desc:'Vehicle registration and customs compliance required.' },
+  };
+  const vNames = {
+    NO_LATRA_PERMIT:'No Valid LATRA Transit Permit',
+    EXPIRED_LATRA:'Expired LATRA Permit',
+    NO_INSURANCE:'No Valid Insurance Policy',
+    EXPIRED_INSURANCE:'Expired Insurance Policy',
+    UNREGISTERED_VEHICLE:'Vehicle Not Registered (TRA)',
+    CUSTOMS_UNPAID:'Customs Duties Unpaid',
+  };
+  const cards = violations.map(v => {
+    const src = v.source || v.violation_source || 'LATRA';
+    const type = v.violation_type || v.type || v.violation || 'UNKNOWN';
+    const fine = Number(v.fine_amount || v.fineAmount || 0);
+    const status = v.status || v.acknowledged ? 'resolved' : 'open';
+    const s = sourceMap[src] || sourceMap['LATRA'];
+    return `<div class="int-card ${s.cls} ${status==='resolved'?'resolved':''}">
+      <div class="int-icon">${s.icon}</div>
+      <div class="int-body">
+        <div class="int-source">${s.label}</div>
+        <div class="int-type">${vNames[type]||type.replace(/_/g,' ')}</div>
+        ${fine?`<div class="int-fine">Penalty: TZS ${fine.toLocaleString()}</div>`:''}
+        <div style="font-size:11px;color:var(--ink3);margin-top:3px">${s.desc}</div>
+        <span class="int-status ${status}">${status==='resolved'?'✓ Resolved':'● Active Violation'}</span>
+      </div>
+    </div>`;
   }).join('');
+
+  return `<div class="integration-section">
+    <div class="integration-title">Regulatory Violations (LATRA / TIRA / TRA)</div>
+    ${cards}
+    <div style="font-size:11px;color:var(--ink3);margin-top:8px;line-height:1.6">
+      ⓘ These violations are detected via integration with LATRA, TIRA and TRA government systems.
+      Contact the respective authority to resolve compliance issues.
+    </div>
+  </div>`;
 }
 
 function statusBadge(s) {
@@ -843,6 +911,17 @@ function showToast(msg, type='') {
 document.getElementById('plate-input').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase();
 });
+</script>
+<script>
+// Auto dark/light theme based on EAT timezone (UTC+3)
+(function() {
+  const saved = localStorage.getItem('rtms_portal_theme');
+  if(saved === 'dark') { document.body.classList.add('dark-theme'); return; }
+  if(saved === 'light') { return; }
+  // Auto: day 06-18 = light, night = dark
+  const hour = new Date(new Date().toLocaleString('en-US',{timeZone:'Africa/Dar_es_Salaam'})).getHours();
+  if(hour < 6 || hour >= 18) document.body.classList.add('dark-theme');
+})();
 </script>
 </body>
 </html>

@@ -164,11 +164,11 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
       <!-- Lane rules overlay -->
       <div class="lane-rules" id="lane-rules-panel">
         <div class="lane-rules-title">🚦 Lane Rules — TZ</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#3a7a3a"></div>Left lane: normal driving</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#3a5a8a"></div>Right lane: overtaking only</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#8a7a1a"></div>Return left after overtaking</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#ff2244"></div>Keep left rule enforced</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#ffb800"></div>No overtaking on solid line</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a7a3a"></div>Left carriageway: vehicles away</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a5a8a"></div>Right carriageway: toward camera</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ff2244"></div>Keep LEFT rule enforced</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#8a7a1a"></div>Right lane: overtaking only</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ffb800"></div>No overtaking on solid centre line</div>
       </div>
     </div>
   </div>
@@ -592,10 +592,10 @@ function drawLaneArrows(W, H, vy, laneW, d0, divW) {
   // Lanes 0,1: downward arrows (toward camera)
   // Lanes 2,3: upward arrows (away from camera)
   const laneInfo = [
-    { lane:0, dir:'down',   lx: d0 + laneW*0.5  },
-    { lane:1, dir:'down',   lx: d0 + laneW*1.5  },
-    { lane:2, dir:'up',     lx: d0 + laneW*2.5 + divW },
-    { lane:3, dir:'up',     lx: d0 + laneW*3.5 + divW },
+    { lane:0, dir:'up',     lx: d0 + laneW*0.5  },   // left carriageway: away
+    { lane:1, dir:'up',     lx: d0 + laneW*1.5  },   // left carriageway: away
+    { lane:2, dir:'down',   lx: d0 + laneW*2.5 + divW }, // right carriageway: toward
+    { lane:3, dir:'down',   lx: d0 + laneW*3.5 + divW }, // right carriageway: toward
   ];
 
   laneInfo.forEach(({dir,lx}) => {
@@ -781,18 +781,20 @@ class Car {
     this.detected = false;
     this.type     = this.randomCarType();
 
-    // Lane: 0,1 go toward camera (progress 0→1), 2,3 go away (progress 1→0)
+    // Tanzania keep-left rule — dual carriageway camera view:
+    // Left carriageway (lanes 0,1): vehicles travel AWAY from camera (up the road)
+    // Right carriageway (lanes 2,3): vehicles travel TOWARD camera (down the road)
     this.lane = Math.floor(Math.random() * 4);
-    this.dir  = (this.lane < 2) ? 1 : -1; // 1=toward camera, -1=away
+    this.dir  = (this.lane < 2) ? -1 : 1; // left=away(-1), right=toward(+1)
 
     // Overtaking behavior: lane 1 or 3 (right lane of each carriageway)
     // Cars in right lane move faster (overtaking), must return to left lane
     this.isOvertaking = (this.lane === 1 || this.lane === 3);
 
     if(this.dir === 1) {
-      this.progress = 0.01 + Math.random()*0.1; // start near horizon
+      this.progress = 0.01 + Math.random()*0.1; // start near horizon, move toward camera
     } else {
-      this.progress = 0.95 - Math.random()*0.1; // start near foreground
+      this.progress = 0.95 - Math.random()*0.1; // start near foreground, move away
     }
 
     // Speed: overtaking lane cars are faster
@@ -1334,7 +1336,7 @@ function updateStats(){
 // ─────────────────────────────────────────────────────────────
 function tryDetect(){
   if(detectionCooldown>0){detectionCooldown--;return;}
-  // Only detect cars in lanes coming toward camera (lanes 0,1)
+  // Only detect cars in lanes coming toward camera (lanes 2,3 = right carriageway)
   const visible=cars.filter(c=>c.dir===1&&c.progress>0.35&&c.progress<0.75&&!c.detected);
   if(!visible.length||Math.random()>0.018) return;
 
@@ -1599,7 +1601,7 @@ function spawnCars(){
 
     const car = new Car();
     car.lane = lane;
-    car.dir  = lane<2 ? 1 : -1;
+    car.dir  = lane<2 ? -1 : 1; // left lanes away, right lanes toward
     car.isOvertaking = (lane===1||lane===3);
     if(car.dir===1) car.progress=0.01+Math.random()*0.05;
     else            car.progress=0.92+Math.random()*0.05;
@@ -1631,9 +1633,10 @@ function render(){
 for(let lane=0;lane<4;lane++){
   const car=new Car();
   car.lane=lane;
-  car.dir=lane<2?1:-1;
+  car.dir=lane<2?-1:1; // left lanes away, right lanes toward
   car.isOvertaking=(lane===1||lane===3);
-  car.progress=lane<2?(0.2+lane*0.15):(0.6+lane*0.1);
+  // Spread initial positions: left lanes mid-distance, right lanes approaching
+  car.progress=lane<2?(0.55+lane*0.15):(0.15+lane*0.1);
   cars.push(car);
 }
 

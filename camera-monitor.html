@@ -327,7 +327,7 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)
       <div class="sim-panel">
         <div class="sim-title">&#9654; Camera Simulator</div>
         <div class="sim-row">
-          <button class="btn-start" id="btn-start" onclick="startSim()">&#9654; Start</button>
+          <button class="btn-start" id="btn-start" onclick="startSim()" style="display:none">&#9654; Start</button>
           <button class="btn-stop"  id="btn-stop"  onclick="stopSim()">&#9632; Stop</button>
         </div>
         <div class="sim-stats">
@@ -449,6 +449,8 @@ async function doLogin() {
     addLog(`Connected as ${data.user.username}`,'ok');
     renderCameras();
     await loadRealPlates();
+    // Auto-start simulation immediately — 24/7 monitoring
+    setTimeout(() => { if(realPlates.length > 0) startSim(); }, 800);
   } catch(e) {
     showErr(`Cannot reach server at ${API}\nError: ${e.message}`);
     btn.disabled=false;btn.textContent='Connect to Server';
@@ -701,9 +703,18 @@ async function simTick(){
 
 function startSim(){
   if(simInt)return;
-  if(realPlates.length===0){addLog('Load real plates first — click Load','warn');return;}
+  // Auto-generate plates if none loaded from DB (offline/demo mode)
+  if(realPlates.length===0){
+    const letters='ABCDEFGHJKLMNPRSTUVWXYZ';
+    for(let i=0;i<30;i++){
+      const n=String(Math.floor(Math.random()*900)+100);
+      const s=letters[~~(Math.random()*letters.length)]+letters[~~(Math.random()*letters.length)]+letters[~~(Math.random()*letters.length)];
+      realPlates.push('T'+n+s);
+    }
+    addLog('Auto-generated 30 Tanzanian plates for simulation','warn');
+  }
   simStart=Date.now();
-  simInt=setInterval(simTick,2000);
+  simInt=setInterval(simTick,1200);
   CAMERAS.forEach(c=>{const d=document.getElementById(`dot-${c.id}`);if(d)d.className='cam-dot dot-active';});
   document.getElementById('btn-start').style.display='none';
   document.getElementById('btn-stop').style.display='block';
