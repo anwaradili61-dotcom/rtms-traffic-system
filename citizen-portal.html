@@ -228,6 +228,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
 .int-status.open{background:var(--red-bg);color:var(--red)}
 .int-status.resolved{background:var(--green-bg);color:var(--green)}
 .no-violations{font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px;padding:10px 0}
+
+/* ── SKELETON LOADER ───────────────────────────────────── */
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.state-loading .spinner{display:none}
+.state-loading::after{content:'';display:block;height:80px;margin:20px 0;border-radius:12px;background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite}
 </style>
 </head>
 <body>
@@ -342,6 +348,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
 <script>
 // ── Config ────────────────────────────────────────────────────
 const API = 'https://rtms-traffic-system.onrender.com';
+const _cache = new Map(); // simple in-session cache
 
 let currentFineId    = null;
 let currentFineNum   = null;
@@ -351,13 +358,21 @@ let pollInterval     = null;
 
 // ── API helper — NO token needed (public endpoints) ───────────
 async function apiFetch(path, opts = {}) {
+  // Cache GET requests for 30 seconds to avoid re-fetching same plate
+  const isGet = !opts.method || opts.method === 'GET';
+  if (isGet && _cache.has(path)) {
+    const { ts, data } = _cache.get(path);
+    if (Date.now() - ts < 30000) return data;
+  }
   try {
     const r = await fetch(API + path, {
       headers: { 'Content-Type': 'application/json' },
       ...opts
     });
     document.getElementById('conn-warn').style.display = 'none';
-    return { ok: r.ok, status: r.status, data: await r.json() };
+    const result = { ok: r.ok, status: r.status, data: await r.json() };
+    if (isGet && r.ok) _cache.set(path, { ts: Date.now(), data: result });
+    return result;
   } catch(e) {
     document.getElementById('conn-warn').style.display = 'block';
     return { ok: false, data: null };
@@ -375,7 +390,15 @@ async function doSearch() {
   const plate = document.getElementById('plate-input').value.trim().toUpperCase();
   if (!plate) { showToast('Please enter a plate number', 'error'); return; }
   showState('state-loading');
-  const res = await apiFetch('/portal/fines?plate=' + encodeURIComponent(plate));
+
+  // ── Run both requests IN PARALLEL — halves wait time ──────
+  const [res, intRes] = await Promise.all([
+    apiFetch('/portal/fines?plate=' + encodeURIComponent(plate)),
+    apiFetch('/portal/violations?plate=' + encodeURIComponent(plate))
+      .catch(() => apiFetch('/integrations/violations/LATRA?plate=' + encodeURIComponent(plate))
+        .catch(() => ({ data: [] })))
+  ]);
+
   if (!res.data) { showState('state-idle'); return; }
   if (!res.data.data || res.data.data.length === 0) {
     document.getElementById('error-title').textContent = 'No fines found';
@@ -384,9 +407,11 @@ async function doSearch() {
     showState('state-error');
     return;
   }
-  // Also fetch LATRA/TIRA integration violations for this plate
-  const intRes = await apiFetch('/integrations/violations/all?plate=' + encodeURIComponent(plate));
-  const intViolations = (intRes.data?.data || intRes.data || []);
+
+  // Normalise integration violations from any endpoint shape
+  const rawInt = intRes?.data?.data || intRes?.data || [];
+  const intViolations = Array.isArray(rawInt) ? rawInt : [];
+
   renderResults(plate, res.data.data, intViolations);
   showState('state-results');
 }

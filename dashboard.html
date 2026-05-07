@@ -1328,19 +1328,52 @@ function renderAlertPopup(alert) {
 
   window._lastAlert = alert;
   popup.classList.add("show");
-  // Alert sound — resumes AudioContext after user interaction
+  // ── CHIME ALERT SOUND ──────────────────────────────────────
+  // Musical chimes using sine waves — pleasant but urgent
+  // Pentatonic ascending: C5-E5-G5-C6 (alarm chime pattern)
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    if(ctx.state==="suspended")ctx.resume();
-    [440,550,660,550].forEach((freq,i)=>{
-      const o=ctx.createOscillator(),g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);o.type="square";
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==="suspended") ac.resume();
+    const chimes=[
+      {freq:523.25,t:0.00,dur:0.35},   // C5
+      {freq:659.25,t:0.18,dur:0.35},   // E5
+      {freq:783.99,t:0.36,dur:0.35},   // G5
+      {freq:1046.50,t:0.54,dur:0.50},  // C6
+      {freq:783.99,t:0.80,dur:0.25},   // G5 descend
+      {freq:659.25,t:1.00,dur:0.25},   // E5 descend
+    ];
+    chimes.forEach(({freq,t,dur})=>{
+      const o=ac.createOscillator();
+      const g=ac.createGain();
+      const pan=ac.createStereoPanner();
+      pan.pan.value=0;
+      o.type='sine';
       o.frequency.value=freq;
-      g.gain.setValueAtTime(0,ctx.currentTime+i*.12);
-      g.gain.linearRampToValueAtTime(0.15,ctx.currentTime+i*.12+.03);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*.12+.12);
-      o.start(ctx.currentTime+i*.12);o.stop(ctx.currentTime+i*.12+.12);
+      // Bell-like envelope: fast attack, long decay
+      g.gain.setValueAtTime(0,       ac.currentTime+t);
+      g.gain.linearRampToValueAtTime(0.22, ac.currentTime+t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.08, ac.currentTime+t+0.12);
+      g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+t+dur);
+      o.connect(g); g.connect(pan); pan.connect(ac.destination);
+      o.start(ac.currentTime+t);
+      o.stop(ac.currentTime+t+dur+0.05);
     });
+    // Second repeat at lower volume after 1.3s for urgency
+    setTimeout(()=>{
+      try{
+        const ac2=new(window.AudioContext||window.webkitAudioContext)();
+        [{freq:523.25,t:0},{freq:659.25,t:.15},{freq:783.99,t:.30},{freq:1046.50,t:.45}]
+        .forEach(({freq,t})=>{
+          const o=ac2.createOscillator(),g=ac2.createGain();
+          o.type='sine'; o.frequency.value=freq;
+          g.gain.setValueAtTime(0,ac2.currentTime+t);
+          g.gain.linearRampToValueAtTime(0.12,ac2.currentTime+t+.01);
+          g.gain.exponentialRampToValueAtTime(0.001,ac2.currentTime+t+.3);
+          o.connect(g); g.connect(ac2.destination);
+          o.start(ac2.currentTime+t); o.stop(ac2.currentTime+t+.35);
+        });
+      }catch(e){}
+    },1400);
   }catch(e){}
   setTimeout(()=>{if(alertShowing)dismissAlert();},30000);
 }

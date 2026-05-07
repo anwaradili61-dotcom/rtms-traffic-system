@@ -574,6 +574,7 @@ function drawLaneMarkings(W, H, vy) {
   // Lane labels (painted road text) — perspective text not easily done in canvas,
   // so we mark lane arrows on the road surface at mid-depth
   drawLaneArrows(W, H, vy, laneW, d0, divW);
+  drawBRTLane(W, H, vy, d0, laneW);
 
   // Cats eyes / road studs along lane lines
   innerLines.forEach(lx => {
@@ -585,6 +586,40 @@ function drawLaneMarkings(W, H, vy) {
       ctx.fill();
     }
   });
+}
+
+function drawBRTLane(W, H, vy, d0, laneW) {
+  // DART BRT corridor — lane 0 (leftmost) has orange-tinted surface
+  const laneL = d0;
+  const laneR = d0 + laneW;
+  const vL0 = perspective(laneL, 0.001);
+  const vR0 = perspective(laneR, 0.001);
+  // Subtle orange tint on BRT lane
+  const brtGrad = ctx.createLinearGradient(0, vy, 0, H);
+  brtGrad.addColorStop(0, 'rgba(200,80,20,.06)');
+  brtGrad.addColorStop(1, 'rgba(200,80,20,.03)');
+  ctx.fillStyle = brtGrad;
+  ctx.beginPath();
+  ctx.moveTo(vL0.x, vy+2); ctx.lineTo(vR0.x, vy+2);
+  ctx.lineTo(laneR, H); ctx.lineTo(laneL, H);
+  ctx.closePath(); ctx.fill();
+
+  // BRT diamond markers on lane
+  [0.3, 0.6, 0.85].forEach(depth => {
+    const mp = perspective((laneL+laneR)/2, depth);
+    const sz = 8*depth;
+    ctx.fillStyle = 'rgba(220,100,30,.35)';
+    ctx.save(); ctx.translate(mp.x, mp.y); ctx.rotate(Math.PI/4);
+    ctx.fillRect(-sz/2,-sz/2,sz,sz);
+    ctx.restore();
+  });
+
+  // "BRT" label on lane
+  const lp = perspective((laneL+laneR)/2, 0.5);
+  ctx.fillStyle = 'rgba(220,100,30,.4)';
+  ctx.font = `bold ${9}px JetBrains Mono`;
+  ctx.textAlign = 'center';
+  ctx.fillText('BRT', lp.x, lp.y);
 }
 
 function drawLaneArrows(W, H, vy, laneW, d0, divW) {
@@ -820,7 +855,10 @@ class Car {
   }
 
   randomCarType() {
-    const types = ['sedan','sedan','sedan','suv','suv','pickup','bus','minibus','truck'];
+    // DART BRT buses are assigned exclusively to lane 0 (left carriageway outer)
+    // to simulate the DART dedicated BRT corridor in Dar es Salaam
+    if (this.lane === 0 && Math.random() < 0.35) return 'dart';
+    const types = ['sedan','sedan','sedan','suv','suv','pickup','minibus','truck'];
     return types[Math.floor(Math.random()*types.length)];
   }
 
@@ -869,6 +907,7 @@ class Car {
     // Draw appropriate car type
     switch(this.type){
       case 'bus':     this.drawBus(ctx, scale);     break;
+      case 'dart':    this.drawDART(ctx, scale);    break;
       case 'minibus': this.drawMinibus(ctx, scale);  break;
       case 'truck':   this.drawTruck(ctx, scale);    break;
       case 'pickup':  this.drawPickup(ctx, scale);   break;
@@ -1088,6 +1127,83 @@ class Car {
     this.drawPlate(ctx,W,H,s);
     if(this.signalOn) this.drawSignal(ctx,W,H,s);
     if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawDART(ctx, s) {
+    // DART BRT Bus — Dar es Salaam Rapid Transit
+    // Distinctive: long, articulated, orange/white livery with DART branding
+    const W=105*s, H=36*s;
+    const pal={ body:'#e8501a', roof:'#c44015', glass:'rgba(160,210,240,.5)' };
+    this.drawShadow(ctx, W*1.1, H, s);
+
+    // Articulation joint (BRT buses are articulated)
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    ctx.fillRect(-W*0.04,-H*0.5,W*0.08,H*1.05);
+
+    // Front section body
+    const fg=ctx.createLinearGradient(-W/2,-H*0.6,W/2,H*0.7);
+    fg.addColorStop(0,'#f06030'); fg.addColorStop(0.4,'#e8501a'); fg.addColorStop(1,'#c44015');
+    ctx.fillStyle=fg;
+    ctx.beginPath(); ctx.roundRect(-W/2,-H*0.58,W*0.55,H*1.15,[H*0.06,H*0.06,H*0.04,H*0.04]); ctx.fill();
+
+    // Rear section body
+    ctx.fillStyle=fg;
+    ctx.beginPath(); ctx.roundRect(W*0.0,-H*0.58,W*0.5,H*1.15,[H*0.04,H*0.06,H*0.06,H*0.04]); ctx.fill();
+
+    // White stripe (DART livery)
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    ctx.fillRect(-W/2+2,H*0.0,W-4,H*0.22);
+    ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.fillRect(-W/2+2,-H*0.58,W-4,H*0.16);
+
+    // Destination board
+    ctx.fillStyle='rgba(0,0,0,.85)';
+    ctx.beginPath(); ctx.roundRect(-W*0.44,-H*0.52,W*0.42,H*0.2,[2*s]); ctx.fill();
+    ctx.fillStyle='#ffcc00';
+    ctx.font=`bold ${7*s}px JetBrains Mono`;
+    ctx.textAlign='center';
+    ctx.fillText('DART — KIVUKONI', -W*0.23, -H*0.38);
+
+    // DART logo badge
+    ctx.fillStyle='#fff';
+    ctx.font=`bold ${9*s}px JetBrains Mono`;
+    ctx.fillText('DART', W*0.22, -H*0.3);
+    ctx.font=`${6*s}px JetBrains Mono`;
+    ctx.fillStyle='rgba(255,255,255,.6)';
+    ctx.fillText('DSM RAPID TRANSIT', W*0.22, -H*0.18);
+
+    // Windows — large passenger windows
+    for(let i=0;i<5;i++){
+      const wx=-W*0.42+i*W*0.18;
+      if(Math.abs(wx)<W*0.04) continue; // skip joint
+      ctx.fillStyle=pal.glass;
+      ctx.beginPath(); ctx.roundRect(wx,-H*0.5,W*0.15,H*0.38,H*0.05); ctx.fill();
+    }
+    // Windshield
+    ctx.fillStyle='rgba(160,220,255,.45)';
+    ctx.beginPath(); ctx.roundRect(-W*0.45,-H*0.5,W*0.2,H*0.3,H*0.06); ctx.fill();
+
+    // BRT lane stripe on road (we'll show a visual cue)
+    // Doors (distinctive DART double doors)
+    ctx.fillStyle='rgba(0,0,0,.5)';
+    ctx.fillRect(-W*0.18,-H*0.58,W*0.07,H*1.15);
+    ctx.fillRect(W*0.18,-H*0.58,W*0.07,H*1.15);
+
+    // Dual axle wheels (BRT buses have more wheels)
+    const wheelY=H*0.52;
+    const wr=3.8*s;
+    [[-W*0.38],[-W*0.22],[W*0.10],[W*0.30]].forEach(([wx])=>{
+      ctx.fillStyle='#080808';
+      ctx.beginPath(); ctx.ellipse(wx,wheelY,wr,wr*0.56,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(80,80,90,.8)'; ctx.lineWidth=0.8*s; ctx.stroke();
+      ctx.fillStyle='#1e2028';
+      ctx.beginPath(); ctx.ellipse(wx,wheelY,wr*0.55,wr*0.32,0,0,Math.PI*2); ctx.fill();
+    });
+
+    // DART route number
+    this.drawPlate(ctx, W, H, s);
+    if(this.signalOn) this.drawSignal(ctx, W, H, s);
+    if(this.braking) this.drawBrakeLights(ctx, W, H, s);
   }
 
   drawTruck(ctx, s) {
@@ -1336,8 +1452,9 @@ function updateStats(){
 // ─────────────────────────────────────────────────────────────
 function tryDetect(){
   if(detectionCooldown>0){detectionCooldown--;return;}
-  // Only detect cars in lanes coming toward camera (lanes 2,3 = right carriageway)
-  const visible=cars.filter(c=>c.dir===1&&c.progress>0.35&&c.progress<0.75&&!c.detected);
+  // Detect cars in ALL lanes — ALPR scans both front plates (toward camera)
+  // and rear plates (away from camera) simultaneously
+  const visible=cars.filter(c=>c.progress>0.30&&c.progress<0.78&&!c.detected);
   if(!visible.length||Math.random()>0.018) return;
 
   const car=visible[~~(Math.random()*visible.length)];
@@ -1380,6 +1497,29 @@ async function sendToAPI(car, vType, conf, isAlert) {
 
 const API='https://rtms-traffic-system.onrender.com';
 
+// ── OWNER LOOKUP CACHE ────────────────────────────────────
+// Cache vehicle owner info keyed by plate number
+const ownerCache = new Map();
+
+async function lookupOwner(plate) {
+  if (ownerCache.has(plate)) return ownerCache.get(plate);
+  try {
+    const r = await fetch(API + '/portal/fines?plate=' + encodeURIComponent(plate));
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    const fines = d?.data || [];
+    const info = fines.length ? {
+      name:   fines[0].owner_name  || 'Unknown',
+      phone:  fines[0].owner_phone || '—',
+      make:   fines[0].make        || '',
+      model:  fines[0].model       || '',
+      color:  fines[0].color       || '',
+    } : null;
+    if (info) ownerCache.set(plate, info);
+    return info;
+  } catch(e) { return null; }
+}
+
 function showDetectionBox(car, conf, isAlert){
   const box=document.getElementById('detection-box');
   const {x,y,scale}=car.pos;
@@ -1395,18 +1535,56 @@ function showDetectionBox(car, conf, isAlert){
   box.style.height=`${ch}px`;
   box.style.borderColor=isAlert?'var(--red)':'var(--green)';
   box.style.boxShadow=isAlert?'0 0 14px rgba(255,34,68,.6)':'0 0 14px rgba(0,255,136,.5)';
-  document.getElementById('plate-label').textContent=car.plate;
+  const scanSide = car.dir===1?'FRONT':'REAR';
+  document.getElementById('plate-label').textContent=car.plate+' ['+scanSide+']';
   document.getElementById('conf-label').textContent=`CONF: ${(conf*100).toFixed(1)}%`;
   box.classList.add('show');
   setTimeout(()=>box.classList.remove('show'),2500);
+  // Soft detection chime (lower volume, shorter)
+  playDetectionChime(isAlert);
+}
+
+function playDetectionChime(isAlert) {
+  try {
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended') ac.resume();
+    const notes = isAlert
+      ? [{f:440,t:0,.d:.2},{f:370,t:.15,d:.2},{f:310,t:.30,d:.3}]   // descending = alert
+      : [{f:880,t:0,d:.15},{f:1046,t:.12,d:.2}];                      // two-tone ping = detection
+    notes.forEach(({f,t,d})=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0,ac.currentTime+t);
+      g.gain.linearRampToValueAtTime(isAlert?0.08:0.05,ac.currentTime+t+.01);
+      g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+t+d);
+      o.connect(g); g.connect(ac.destination);
+      o.start(ac.currentTime+t); o.stop(ac.currentTime+t+d+.02);
+    });
+  }catch(e){}
 }
 
 function addEvidenceCard(car, vType, conf, isReview, isAlert){
   const now=new Date();
-  evidenceItems.unshift({
+  const item = {
     plate:car.plate, vType, conf, isReview, isAlert, type:car.type,
     time:now.toLocaleTimeString('en-GB'), cam:CAMERAS[currentCam].id,
     amount:AMOUNTS[vType]||50000, palette:car.palette,
+    owner:'Loading...', ownerPhone:'—', make:'', model:'', color:'',
+    scanSide: car.dir===1 ? 'FRONT' : 'REAR', // cars toward camera = front plate; away = rear plate
+  };
+  evidenceItems.unshift(item);
+  // Async enrich with owner info
+  lookupOwner(car.plate).then(info => {
+    if (info) {
+      item.owner = info.name;
+      item.ownerPhone = info.phone;
+      item.make  = info.make;
+      item.model = info.model;
+      item.color = info.color;
+      renderEvidenceList(); // refresh panel
+    } else {
+      item.owner = 'Not registered';
+    }
   });
   if(evidenceItems.length>20) evidenceItems.pop();
   renderEvidenceList();
@@ -1424,7 +1602,8 @@ function renderEvidenceList(){
     return `<div class="evidence-card ${item.isAlert?'alert':''}" onclick="openEvidence(${i})">
       <div class="evidence-img-placeholder">${renderMiniEvidence(item)}</div>
       <div class="evidence-info">
-        <div class="evidence-plate">${item.plate}</div>
+        <div class="evidence-plate">${item.plate} <span style="font-size:9px;opacity:.6;font-weight:400">[${item.scanSide||'—'}]</span></div>
+        <div style="font-size:10px;color:var(--text2);margin-bottom:3px">${item.owner||'—'} ${item.make?'· '+item.make+(item.model?' '+item.model:''):''}</div>
         <div class="evidence-meta">
           <span class="evidence-type">${item.vType.replace(/_/g,' ')}</span>
           <span class="evidence-badge ${bc}">${bt}</span>
@@ -1462,7 +1641,7 @@ function renderMiniEvidence(item){
     <text x="140" y="44" fill="#000" font-size="6" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">PLATE DETECTED</text>
     <!-- HUD -->
     <text x="4" y="11" fill="#00d4ff" font-size="6.5" font-family="JetBrains Mono" opacity=".8">${item.cam}</text>
-    <text x="4" y="20" fill="#00ff88" font-size="6" font-family="JetBrains Mono" opacity=".8">${item.time}</text>
+    <text x="4" y="20" fill="#00ff88" font-size="6" font-family="JetBrains Mono" opacity=".8">${item.time} · ${(item.owner||'—').substring(0,16)}</text>
     <text x="276" y="11" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="6.5" font-family="JetBrains Mono" text-anchor="end" opacity=".9">CONF ${(item.conf*100).toFixed(0)}%</text>
     <!-- Corners -->
     <path d="M1,1 L1,8 M1,1 L8,1" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity=".5"/>
@@ -1539,8 +1718,8 @@ function openEvidence(i){
       <rect x="292" y="56" width="16" height="10" rx="2" fill="#1a2530" stroke="rgba(0,212,255,.4)" stroke-width="1"/>
       <rect x="336" y="56" width="16" height="10" rx="2" fill="#1a2530" stroke="rgba(0,212,255,.4)" stroke-width="1"/>
       <!-- HUD overlays -->
-      <text x="8" y="16" fill="#00d4ff" font-size="9" font-family="JetBrains Mono" opacity=".9">${cam.id} | ${cam.name}</text>
-      <text x="8" y="28" fill="#00ff88" font-size="9" font-family="JetBrains Mono" opacity=".9">${item.time} | ${new Date().toLocaleDateString('en-GB')}</text>
+      <text x="8" y="16" fill="#00d4ff" font-size="9" font-family="JetBrains Mono" opacity=".9">${cam.id} | ${cam.name} | ${item.scanSide||'—'} PLATE</text>
+      <text x="8" y="28" fill="#00ff88" font-size="9" font-family="JetBrains Mono" opacity=".9">${item.time} | OWNER: ${(item.owner||'Looking up...').substring(0,22)}</text>
       <text x="592" y="16" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="9" font-family="JetBrains Mono" text-anchor="end" opacity=".9">CONF: ${(item.conf*100).toFixed(1)}%</text>
       <text x="592" y="28" fill="#ffb800" font-size="9" font-family="JetBrains Mono" text-anchor="end" opacity=".9">${item.vType.replace(/_/g,' ')}</text>
       <!-- Corners -->
@@ -1557,15 +1736,18 @@ function openEvidence(i){
 
   document.getElementById('modal-details').innerHTML=`
     <div class="modal-detail"><div class="modal-detail-label">Plate Number</div><div class="modal-detail-value">${item.plate}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Plate Side Scanned</div><div class="modal-detail-value amber">${item.scanSide||'—'}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Registered Owner</div><div class="modal-detail-value">${item.owner||'Loading...'}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Owner Phone</div><div class="modal-detail-value">${item.ownerPhone||'—'}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Vehicle</div><div class="modal-detail-value">${[item.color,item.make,item.model].filter(Boolean).join(' ')||item.type.toUpperCase()}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Violation</div><div class="modal-detail-value amber">${item.vType.replace(/_/g,' ')}</div></div>
-    <div class="modal-detail"><div class="modal-detail-label">Vehicle Type</div><div class="modal-detail-value">${item.type.toUpperCase()}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Camera</div><div class="modal-detail-value">${item.cam}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Confidence</div><div class="modal-detail-value ${item.conf>=0.92?'green':'amber'}">${(item.conf*100).toFixed(1)}%</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Time</div><div class="modal-detail-value">${item.time}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Fine Amount</div><div class="modal-detail-value green">TZS ${item.amount.toLocaleString()}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Status</div><div class="modal-detail-value ${item.isAlert?'red':item.isReview?'amber':'green'}">${item.isAlert?'POLICE ALERT':item.isReview?'NEEDS REVIEW':'FINE ISSUED'}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Location</div><div class="modal-detail-value">${cam.name}</div></div>
-    <div class="modal-detail"><div class="modal-detail-label">Face Anonymized</div><div class="modal-detail-value green">${faceAnonEnabled?'YES — PDPA 2022':' OFF'}</div></div>`;
+    <div class="modal-detail"><div class="modal-detail-label">Face Anonymized</div><div class="modal-detail-value green">${faceAnonEnabled?'YES — PDPA 2022':'OFF'}</div></div>`;
 
   document.getElementById('evidence-modal').classList.add('open');
 }
