@@ -601,12 +601,9 @@ function drawCenterDivider(W, H, vy) {
 
 function drawLaneMarkings(W, H, vy) {
   const { roadL, roadR, laneW, sepW } = getRoadGeometry(W);
-  // Dashed dividers between L0/L1 and L2/L3
-  const innerLines = [
-    roadL + laneW,              // between L0 and L1
-    roadL + laneW*4 + sepW*2,   // between L2 and L3
-  ];
-  innerLines.forEach(lx => {
+
+  // ── Helper: draw a dashed lane divider ───────────────────
+  function dashedLine(lx) {
     for(let d=0.04; d<0.98; d+=0.07){
       const p0 = perspective(lx, d);
       const p1 = perspective(lx, d+0.04);
@@ -614,29 +611,41 @@ function drawLaneMarkings(W, H, vy) {
       ctx.lineWidth = 1.5;
       ctx.setLineDash([]);
       ctx.beginPath();
-      ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
+      ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y);
       ctx.stroke();
     }
     // Cats eyes
     for(let d=0.1; d<0.9; d+=0.18){
       const p = perspective(lx, d);
-      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.fillStyle = 'rgba(255,255,255,.28)';
       ctx.beginPath();
       ctx.ellipse(p.x,p.y,2,1,0,0,Math.PI*2);
       ctx.fill();
     }
-  });
-  // Outer edge lines
-  [roadL, roadR].forEach(lx => {
+  }
+
+  // ── Helper: draw a solid edge line ───────────────────────
+  function solidLine(lx, opacity) {
     const vP = perspective(lx, 0.001);
-    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.strokeStyle = `rgba(255,255,255,${opacity})`;
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.moveTo(vP.x,vy+2);
-    ctx.lineTo(lx,H);
+    ctx.moveTo(vP.x, vy+2);
+    ctx.lineTo(lx, H);
     ctx.stroke();
-  });
+  }
+
+  // ── LEFT CARRIAGEWAY ─────────────────────────────────────
+  solidLine(roadL, 0.55);                       // outer left shoulder edge
+  dashedLine(roadL + laneW);                    // L0 / L1 divider
+
+  // ── RIGHT CARRIAGEWAY ────────────────────────────────────
+  solidLine(roadL + laneW*4 + sepW*2, 0.55);   // right carriageway LEFT edge
+  dashedLine(roadL + laneW*5 + sepW*2);         // L2 / L3 divider
+  solidLine(roadL + laneW*6 + sepW*2, 0.55);   // right carriageway RIGHT edge
+  solidLine(roadR, 0.4);                        // outer right shoulder edge
+
   drawLaneArrows(W, H, vy);
 }
 
