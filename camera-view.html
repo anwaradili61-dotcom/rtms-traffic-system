@@ -1695,8 +1695,8 @@ function playDetectionChime(isAlert) {
     const ac=new(window.AudioContext||window.webkitAudioContext)();
     if(ac.state==='suspended') ac.resume();
     const notes = isAlert
-      ? [{f:440,t:0,.d:.2},{f:370,t:.15,d:.2},{f:310,t:.30,d:.3}]   // descending = alert
-      : [{f:880,t:0,d:.15},{f:1046,t:.12,d:.2}];                      // two-tone ping = detection
+      ? [{f:440,t:0,d:0.2},{f:370,t:0.15,d:0.2},{f:310,t:0.30,d:0.3}]   // descending = alert
+      : [{f:880,t:0,d:0.15},{f:1046,t:0.12,d:0.2}];                      // two-tone ping = detection
     notes.forEach(({f,t,d})=>{
       const o=ac.createOscillator(),g=ac.createGain();
       o.type='sine'; o.frequency.value=f;
