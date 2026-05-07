@@ -20,18 +20,10 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden}
-
-/* scanlines */
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:999}
-
-/* watermark */
 .wm{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;overflow:hidden}
 .wm-text{font-family:var(--head);font-size:80px;font-weight:900;color:rgba(0,212,255,.018);text-transform:uppercase;letter-spacing:.2em;white-space:nowrap;transform:rotate(-20deg)}
-
-/* layout */
-.shell{display:grid;grid-template-rows:48px 1fr 32px;height:100vh}
-
-/* topbar */
+.shell{display:grid;grid-template-rows:auto 48px 1fr 32px;height:100vh}
 .topbar{display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(6,13,20,.95);border-bottom:1px solid var(--border);position:relative;z-index:10}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.4}
 .logo{font-family:var(--head);font-size:16px;font-weight:900;color:var(--cyan);letter-spacing:.1em}
@@ -39,98 +31,83 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .cam-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.05em}
 .cam-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .cam-btn.active{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 .live-pill{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);letter-spacing:.08em}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .clock{font-size:11px;color:var(--text2)}
-.back-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;text-decoration:none;transition:all .15s}
+.ctrl-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.ctrl-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.ctrl-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.back-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;text-decoration:none;transition:all .15s;font-family:var(--mono)}
 .back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-
-/* main grid */
-.main{display:grid;grid-template-columns:1fr 320px;overflow:hidden}
-
-/* camera feed */
-.feed-wrap{position:relative;background:var(--bg2);overflow:hidden}
+.main{display:grid;grid-template-columns:1fr 300px;overflow:hidden}
+.feed-wrap{position:relative;background:#000;overflow:hidden}
 .cam-canvas{width:100%;height:100%;display:block}
 .cam-overlay{position:absolute;inset:0;pointer-events:none}
-
-/* HUD elements */
-.hud-corner{position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;opacity:.6}
+.hud-corner{position:absolute;width:22px;height:22px;border-color:var(--cyan);border-style:solid;opacity:.5}
 .hud-tl{top:12px;left:12px;border-width:2px 0 0 2px}
 .hud-tr{top:12px;right:12px;border-width:2px 2px 0 0}
 .hud-bl{bottom:12px;left:12px;border-width:0 0 2px 2px}
 .hud-br{bottom:12px;right:12px;border-width:0 2px 2px 0}
-.hud-info{position:absolute;top:16px;left:36px;font-size:10px;color:var(--cyan);opacity:.7;line-height:1.8}
-.hud-time{position:absolute;top:16px;right:36px;font-size:11px;color:var(--cyan);opacity:.7;text-align:right;line-height:1.8}
-.hud-cam-id{position:absolute;bottom:16px;left:36px;font-size:11px;color:var(--green);opacity:.8}
-.hud-status{position:absolute;bottom:16px;right:36px;font-size:10px;color:var(--amber);opacity:.8}
-
-/* detection box */
-.detection-box{position:absolute;border:2px solid var(--green);box-shadow:0 0 12px rgba(0,255,136,.5);display:none;transition:all .1s}
+.hud-info{position:absolute;top:16px;left:36px;font-size:9.5px;color:var(--cyan);opacity:.75;line-height:1.9}
+.hud-time{position:absolute;top:16px;right:36px;font-size:10px;color:var(--cyan);opacity:.75;text-align:right;line-height:1.9}
+.hud-cam-id{position:absolute;bottom:16px;left:36px;font-size:11px;color:var(--green);opacity:.85}
+.hud-status{position:absolute;bottom:16px;right:36px;font-size:10px;color:var(--amber);opacity:.85}
+.detection-box{position:absolute;border:2px solid var(--green);box-shadow:0 0 14px rgba(0,255,136,.5);display:none;pointer-events:none}
 .detection-box.show{display:block}
-.detection-box::before{content:'PLATE DETECTED';position:absolute;top:-18px;left:0;font-size:9px;color:var(--green);background:rgba(0,255,136,.15);padding:1px 6px;border-radius:2px;white-space:nowrap}
-.plate-label{position:absolute;bottom:-22px;left:0;font-size:11px;font-weight:700;color:var(--green);background:rgba(0,0,0,.8);padding:2px 8px;border-radius:2px;letter-spacing:.1em;white-space:nowrap}
-.conf-label{position:absolute;bottom:-38px;left:0;font-size:9px;color:var(--amber);white-space:nowrap}
-
-/* scan line animation */
-.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3;animation:scanMove 3s linear infinite}
-@keyframes scanMove{0%{top:0}100%{top:100%}}
-
+.detection-box::before{content:'PLATE DETECTED';position:absolute;top:-17px;left:-1px;font-size:9px;color:var(--green);background:rgba(0,255,136,.15);padding:1px 6px;border-radius:2px;white-space:nowrap;font-family:var(--mono)}
+.plate-label{position:absolute;bottom:-22px;left:-1px;font-size:11px;font-weight:700;color:var(--green);background:rgba(0,0,0,.85);padding:2px 8px;border-radius:2px;letter-spacing:.1em;white-space:nowrap;font-family:var(--mono)}
+.conf-label{position:absolute;bottom:-37px;left:-1px;font-size:9px;color:var(--amber);white-space:nowrap;font-family:var(--mono)}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.25;animation:scanMove 3.5s linear infinite}
+@keyframes scanMove{0%{top:0%}100%{top:100%}}
+/* Road signs panel */
+.signs-bar{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:none}
+.road-sign{background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:3px 8px;font-size:9px;color:var(--amber);font-family:var(--mono);white-space:nowrap;letter-spacing:.05em}
 /* right panel */
 .right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .panel-section{padding:12px 14px;border-bottom:1px solid var(--border)}
 .panel-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:10px}
-
-/* stats */
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
 .stat-box{background:var(--bg3);border-radius:6px;padding:8px 10px;border:1px solid var(--border)}
 .stat-num{font-size:20px;font-weight:700;margin-bottom:1px}
 .stat-lbl{font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
 .n-green{color:var(--green)}.n-amber{color:var(--amber)}.n-red{color:var(--red)}.n-cyan{color:var(--cyan)}
-
-/* evidence viewer */
 .evidence-list{flex:1;overflow-y:auto;padding:10px}
 .evidence-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;cursor:pointer;transition:all .15s}
 .evidence-card:hover{border-color:var(--cyan)}
 .evidence-card.alert{border-color:var(--red)}
-.evidence-img{width:100%;height:100px;object-fit:cover;display:block;background:var(--bg2);position:relative}
-.evidence-img-placeholder{width:100%;height:100px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text2)}
-.evidence-info{padding:8px 10px}
+.evidence-img-placeholder{width:100%;height:90px;background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.evidence-info{padding:7px 10px}
 .evidence-plate{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-bottom:3px}
-.evidence-meta{display:flex;justify-content:space-between;align-items:center}
-.evidence-type{font-size:9px;color:var(--text2)}
-.evidence-badge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
-.eb-fine{background:var(--green-dim);color:var(--green)}
-.eb-review{background:var(--amber-dim);color:var(--amber)}
-.eb-alert{background:var(--red-dim);color:var(--red)}
-.evidence-time{font-size:9px;color:var(--text2);margin-top:3px}
-
-/* copyright bar */
-.copyright-bar{background:rgba(2,4,8,.98);border-top:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-size:9px;color:var(--text2);letter-spacing:.04em}
-.cp-name{color:var(--cyan)}
-
-/* evidence modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;padding:20px}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;overflow:hidden;transform:scale(.95);transition:transform .25s}
-.modal-overlay.open .modal{transform:scale(1)}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
-.modal-title{font-size:13px;font-weight:700;color:var(--cyan)}
-.modal-close{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;width:24px;height:24px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{border-color:var(--red);color:var(--red)}
-.modal-img-wrap{position:relative;background:var(--bg);height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.modal-evidence-img{width:100%;height:100%;object-fit:cover}
-.modal-plate-overlay{position:absolute;border:3px solid var(--green);box-shadow:0 0 20px rgba(0,255,136,.6)}
-.modal-details{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.modal-detail{background:var(--bg3);border-radius:6px;padding:8px 12px}
-.modal-detail-label{font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.modal-detail-value{font-size:12px;color:var(--text);font-weight:500}
-.modal-detail-value.green{color:var(--green)}.modal-detail-value.amber{color:var(--amber)}.modal-detail-value.red{color:var(--red)}
-
+.evidence-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.evidence-type{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.evidence-badge{font-size:8px;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.05em}
+.eb-fine{background:var(--green-dim);color:var(--green)}.eb-review{background:var(--amber-dim);color:var(--amber)}.eb-alert{background:var(--red-dim);color:var(--red)}
+.evidence-time{font-size:9px;color:var(--text3)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
-
-/* ── SYSTEM NAVIGATION ── */
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:500;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:90%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:var(--head);font-size:16px;font-weight:700;letter-spacing:.05em}
+.modal-close{width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);border:1px solid var(--border);border-radius:4px;font-size:12px}
+.modal-close:hover{color:var(--text);border-color:var(--cyan)}
+.modal-img-wrap{padding:16px;background:var(--bg)}
+.modal-details{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-top:1px solid var(--border)}
+.modal-detail{background:var(--bg2);padding:10px 14px}
+.modal-detail-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px}
+.modal-detail-value{font-size:13px;font-weight:600}.green{color:var(--green)}.amber{color:var(--amber)}.red{color:var(--red)}
+/* copyright */
+.copyright-bar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(6,13,20,.95);border-top:1px solid var(--border);font-size:10px;color:var(--text3)}
+.cp-name{color:var(--text2)}
+/* lane rules tooltip */
+.lane-rules{position:absolute;top:50px;right:14px;background:rgba(2,4,8,.92);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:9px;color:var(--text2);line-height:2;max-width:190px;pointer-events:none}
+.lane-rules-title{color:var(--cyan);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.lr-row{display:flex;align-items:center;gap:6px}
+.lr-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+/* sys nav */
 .sys-nav{background:rgba(0,0,0,.8);border-bottom:1px solid rgba(255,255,255,.07);padding:7px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;z-index:300}
 .sys-nav-brand{font-family:monospace;font-size:13px;font-weight:700;color:#e0e0e0;letter-spacing:.08em;margin-right:8px}
 .sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -138,10 +115,13 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 a.sys-nav-link{cursor:pointer}
 a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
 .sys-nav-link.active{background:#00ff88;color:#000}
-@media(max-width:600px){.sys-nav{padding:6px 12px}.sys-nav-link{padding:3px 7px;font-size:10px}}
 </style>
 </head>
 <body>
+<div class="wm"><div class="wm-text">SEUSHI ANWAR · RTMS</div></div>
+
+<div class="shell">
+
 <div class="sys-nav">
   <div class="sys-nav-brand">🚦 RTMS</div>
   <div class="sys-nav-links">
@@ -152,76 +132,72 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
   </div>
 </div>
 
+<header class="topbar">
+  <div class="logo">RTMS://CAM-VIEW</div>
+  <div class="cam-selector" id="cam-selector"></div>
+  <div class="topbar-right">
+    <div class="live-pill"><div class="live-dot"></div>RECORDING</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <button class="ctrl-btn active" id="btn-anon" onclick="toggleAnon()" title="Face Anonymization">🔒 ANON ON</button>
+    <button class="ctrl-btn active" id="btn-start" onclick="toggleSim()">⏸ Pause</button>
+    <a href="camera-monitor.html" class="back-btn">← Monitor</a>
+  </div>
+</header>
 
-<div class="wm"><div class="wm-text">SEUSHI ANWAR · RTMS</div></div>
-
-<div class="shell">
-
-  <!-- Topbar -->
-  <header class="topbar">
-    <div class="logo">RTMS://CAM-VIEW</div>
-    <div class="cam-selector" id="cam-selector"></div>
-    <div class="topbar-right">
-      <div class="live-pill"><div class="live-dot"></div>RECORDING</div>
-      <div class="clock" id="clock">--:--:--</div>
-      <a href="camera-monitor.html" class="back-btn">← Monitor</a>
-    </div>
-  </header>
-
-  <!-- Main -->
-  <div class="main">
-
-    <!-- Camera Feed -->
-    <div class="feed-wrap">
-      <canvas class="cam-canvas" id="cam-canvas"></canvas>
-
-      <!-- HUD overlay -->
-      <div class="cam-overlay">
-        <div class="hud-corner hud-tl"></div>
-        <div class="hud-corner hud-tr"></div>
-        <div class="hud-corner hud-bl"></div>
-        <div class="hud-corner hud-br"></div>
-        <div class="hud-info" id="hud-info"></div>
-        <div class="hud-time" id="hud-time"></div>
-        <div class="hud-cam-id" id="hud-cam-id"></div>
-        <div class="hud-status" id="hud-status">● MONITORING</div>
-        <div class="scan-line"></div>
-        <!-- Detection box -->
-        <div class="detection-box" id="detection-box">
-          <div class="plate-label" id="plate-label"></div>
-          <div class="conf-label" id="conf-label"></div>
-        </div>
+<div class="main">
+  <div class="feed-wrap">
+    <canvas class="cam-canvas" id="cam-canvas"></canvas>
+    <div class="cam-overlay">
+      <div class="hud-corner hud-tl"></div>
+      <div class="hud-corner hud-tr"></div>
+      <div class="hud-corner hud-bl"></div>
+      <div class="hud-corner hud-br"></div>
+      <div class="hud-info" id="hud-info"></div>
+      <div class="hud-time" id="hud-time"></div>
+      <div class="hud-cam-id" id="hud-cam-id"></div>
+      <div class="hud-status" id="hud-status">● MONITORING</div>
+      <div class="scan-line"></div>
+      <div class="detection-box" id="detection-box">
+        <div class="plate-label" id="plate-label"></div>
+        <div class="conf-label" id="conf-label"></div>
+      </div>
+      <!-- Lane rules overlay -->
+      <div class="lane-rules" id="lane-rules-panel">
+        <div class="lane-rules-title">🚦 Lane Rules — TZ</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a7a3a"></div>Left lane: normal driving</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a5a8a"></div>Right lane: overtaking only</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#8a7a1a"></div>Return left after overtaking</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ff2244"></div>Keep left rule enforced</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ffb800"></div>No overtaking on solid line</div>
       </div>
     </div>
-
-    <!-- Right Panel -->
-    <div class="right-panel">
-      <div class="panel-section">
-        <div class="panel-title">Live Stats</div>
-        <div class="stat-row">
-          <div class="stat-box"><div class="stat-num n-green" id="s-detections">0</div><div class="stat-lbl">Detections</div></div>
-          <div class="stat-box"><div class="stat-num n-cyan" id="s-fines">0</div><div class="stat-lbl">Fines</div></div>
-          <div class="stat-box"><div class="stat-num n-amber" id="s-review">0</div><div class="stat-lbl">Review</div></div>
-          <div class="stat-box"><div class="stat-num n-red" id="s-alerts">0</div><div class="stat-lbl">Alerts</div></div>
-        </div>
-      </div>
-      <div class="panel-section" style="flex-shrink:0">
-        <div class="panel-title">Evidence Feed</div>
-      </div>
-      <div class="evidence-list" id="evidence-list">
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Copyright bar -->
-  <div class="copyright-bar">
-    <div>&copy; <span class="cp-name">SEUSHI, ANWAR</span> &nbsp;|&nbsp; 2025 &nbsp;|&nbsp; Dar es Salaam, Tanzania &nbsp;|&nbsp; RTMS &mdash; Camera View</div>
-    <div style="opacity:.5">All rights reserved.</div>
+  <div class="right-panel">
+    <div class="panel-section">
+      <div class="panel-title">Live Stats</div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num n-green" id="s-detections">0</div><div class="stat-lbl">Detections</div></div>
+        <div class="stat-box"><div class="stat-num n-cyan" id="s-fines">0</div><div class="stat-lbl">Fines</div></div>
+        <div class="stat-box"><div class="stat-num n-amber" id="s-review">0</div><div class="stat-lbl">Review</div></div>
+        <div class="stat-box"><div class="stat-num n-red" id="s-alerts">0</div><div class="stat-lbl">Alerts</div></div>
+      </div>
+    </div>
+    <div class="panel-section" style="flex-shrink:0">
+      <div class="panel-title">Evidence Feed</div>
+    </div>
+    <div class="evidence-list" id="evidence-list">
+      <div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>
+    </div>
   </div>
-
 </div>
+
+<div class="copyright-bar">
+  <div>&copy; <span class="cp-name">SEUSHI, ANWAR</span> &nbsp;|&nbsp; 2025 &nbsp;|&nbsp; Dar es Salaam, Tanzania &nbsp;|&nbsp; RTMS — Camera View</div>
+  <div style="opacity:.5">All rights reserved.</div>
+</div>
+
+</div><!-- /shell -->
 
 <!-- Evidence Modal -->
 <div class="modal-overlay" id="evidence-modal">
@@ -236,16 +212,17 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
 </div>
 
 <script>
-// ── Camera definitions ────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  CAMERA DEFINITIONS
+// ─────────────────────────────────────────────────────────────
 const CAMERAS = [
-  { id:'CAM-DSM-001', name:'Uhuru Street Junction',     type:'INTERSECTION', lat:-6.8161, lng:39.2894 },
-  { id:'CAM-DSM-002', name:'Morogoro Road Speed Point', type:'SPEED',        lat:-6.7924, lng:39.2083 },
-  { id:'CAM-DSM-003', name:'Kariakoo Pedestrian Zone',  type:'PEDESTRIAN',   lat:-6.8219, lng:39.2741 },
-  { id:'CAM-DSM-004', name:'Bagamoyo Road Junction',    type:'INTERSECTION', lat:-6.7689, lng:39.2456 },
-  { id:'CAM-DSM-005', name:'Nelson Mandela Expressway', type:'SPEED',        lat:-6.8034, lng:39.2612 },
+  { id:'CAM-DSM-001', name:'Uhuru St / Samora Ave Junction',  type:'INTERSECTION', lat:-6.8161, lng:39.2894, road:'Uhuru Street', speedLimit:50 },
+  { id:'CAM-DSM-002', name:'Morogoro Road — Speed Corridor',  type:'SPEED',        lat:-6.7924, lng:39.2083, road:'Morogoro Road', speedLimit:80 },
+  { id:'CAM-DSM-003', name:'Kariakoo Market — Pedestrian Zone',type:'PEDESTRIAN',  lat:-6.8219, lng:39.2741, road:'Msimbazi Street', speedLimit:30 },
+  { id:'CAM-DSM-004', name:'Bagamoyo Road North Junction',    type:'INTERSECTION', lat:-6.7689, lng:39.2456, road:'Bagamoyo Road', speedLimit:60 },
+  { id:'CAM-DSM-005', name:'Nelson Mandela Expressway',       type:'SPEED',        lat:-6.8034, lng:39.2612, road:'NM Expressway', speedLimit:100 },
 ];
 
-// All violations available to every camera with weighted probabilities
 const VIOLATIONS = [
   { type:'RED_LIGHT',       weight:20 },
   { type:'SPEEDING',        weight:18 },
@@ -257,559 +234,1407 @@ const VIOLATIONS = [
   { type:'EXPIRED_PLATE',   weight:3  },
 ];
 
+const AMOUNTS = { RED_LIGHT:150000,SPEEDING:200000,ILLEGAL_PARKING:50000,WRONG_WAY:300000,NO_SEATBELT:30000,PHONE_USE:50000,PEDESTRIAN_ZONE:100000,EXPIRED_PLATE:80000 };
+
 function pickViolation() {
-  const total = VIOLATIONS.reduce((s,v) => s + v.weight, 0);
-  let r = Math.random() * total;
-  for (const v of VIOLATIONS) { r -= v.weight; if (r <= 0) return v.type; }
+  const total = VIOLATIONS.reduce((s,v)=>s+v.weight,0);
+  let r = Math.random()*total;
+  for(const v of VIOLATIONS){r-=v.weight;if(r<=0)return v.type;}
   return 'RED_LIGHT';
 }
 
-const PLATE_COLORS = ['#FFFFFF','#FFFF00','#FF4444'];
-const CAR_COLORS   = ['#1a3a5c','#2d5a27','#4a1a1a','#1a1a4a','#3a2a1a','#1a3a3a','#2a2a2a','#4a3a1a','#1a4a2a','#3a1a3a'];
-const AMOUNTS      = { RED_LIGHT:150000, SPEEDING:200000, ILLEGAL_PARKING:50000, WRONG_WAY:300000, NO_SEATBELT:30000, PHONE_USE:50000, PEDESTRIAN_ZONE:100000 };
+// ─────────────────────────────────────────────────────────────
+//  CAR COLORS — realistic vehicle palette
+// ─────────────────────────────────────────────────────────────
+const CAR_PALETTES = [
+  { body:'#d0cece', roof:'#b8b6b6', glass:'rgba(120,180,220,.55)' }, // Silver
+  { body:'#1a2a3a', roof:'#0f1a24', glass:'rgba(100,180,220,.45)' }, // Dark Blue
+  { body:'#c0392b', roof:'#922b21', glass:'rgba(120,180,220,.5)'  }, // Red
+  { body:'#2c3e50', roof:'#1a252f', glass:'rgba(100,180,220,.5)'  }, // Charcoal
+  { body:'#e8e0d0', roof:'#d0c8b8', glass:'rgba(130,190,230,.55)' }, // White/Cream
+  { body:'#1e3a1e', roof:'#122212', glass:'rgba(100,180,210,.45)' }, // Dark Green
+  { body:'#8b6914', roof:'#6b4f0e', glass:'rgba(120,180,220,.5)'  }, // Gold/Tan
+  { body:'#2a2a2a', roof:'#111111', glass:'rgba(100,180,220,.4)'  }, // Black
+  { body:'#4a90d9', roof:'#2e6fa8', glass:'rgba(140,200,240,.55)' }, // Blue
+  { body:'#e67e22', roof:'#ca6f1e', glass:'rgba(120,180,220,.5)'  }, // Orange
+];
 
-let currentCam = 0;
-let cars = [];
-let frameCount = 0;
-let stats = { detections:0, fines:0, review:0, alerts:0 };
-let evidenceItems = [];
-let animFrame;
+// ─────────────────────────────────────────────────────────────
+//  ROAD GEOMETRY — perspective projection from overhead angle
+//  Camera mounted ~8m high, tilted 45° — gives a realistic 
+//  traffic camera angle used across East Africa
+// ─────────────────────────────────────────────────────────────
 
-const canvas  = document.getElementById('cam-canvas');
-const ctx     = canvas.getContext('2d');
+// The road has 4 lanes: 2 lanes each direction (dual carriageway)
+// Lane assignments (left-hand traffic — Tanzania drives on the LEFT):
+//   Lanes 0,1: LEFT carriageway  — vehicles travel top-to-bottom (toward camera)
+//   Lanes 2,3: RIGHT carriageway — vehicles travel bottom-to-top (away from camera)
+// Lane 0 = left carriageway left lane  (normal/slow lane — keep left rule)
+// Lane 1 = left carriageway right lane (overtaking lane)
+// Lane 2 = right carriageway left lane (normal/slow lane)
+// Lane 3 = right carriageway right lane (overtaking lane)
 
-// ── Canvas resize ─────────────────────────────────────────────
+const canvas = document.getElementById('cam-canvas');
+const ctx    = canvas.getContext('2d');
+
 function resizeCanvas() {
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
+  canvas.width  = wrap.clientWidth  || 800;
+  canvas.height = wrap.clientHeight || 520;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-// ── Build camera selector ─────────────────────────────────────
-function buildSelector() {
-  const sel = document.getElementById('cam-selector');
-  sel.innerHTML = CAMERAS.map((c,i) =>
-    `<button class="cam-btn ${i===0?'active':''}" onclick="switchCam(${i})">${c.id}</button>`
-  ).join('');
+// Perspective math — map a road point to canvas
+// origin: vanishing point at top-center
+// road spans full canvas width at the bottom
+function perspective(roadX, depth) {
+  // depth: 0=vanishing point, 1=camera foreground
+  const W = canvas.width, H = canvas.height;
+  const vx = W * 0.5;  // vanishing point X (center)
+  const vy = H * 0.30; // vanishing point Y (horizon)
+  const bx = roadX;    // X at bottom of canvas
+  const by = H;
+  const x = vx + (bx - vx) * depth;
+  const y = vy + (by - vy) * depth;
+  return { x, y };
 }
-buildSelector();
 
-function switchCam(i) {
-  currentCam = i;
-  cars = [];
-  document.querySelectorAll('.cam-btn').forEach((b,j) => b.classList.toggle('active', j===i));
-  updateHUD();
+// Lane center X positions at the bottom of canvas (ground level)
+// Road occupies 80% of canvas width, centered
+// 4 lanes + center divider + shoulders
+function getLaneX(lane, W) {
+  const roadL  = W * 0.08;  // left shoulder edge
+  const roadR  = W * 0.92;  // right shoulder edge
+  const roadW  = roadR - roadL;
+  const divW   = roadW * 0.04; // center divider width
+  const laneW  = (roadW - divW) / 4;
+  // Lane centers from left to right: 0,1,[divider],2,3
+  const centers = [
+    roadL + laneW * 0.5,
+    roadL + laneW * 1.5,
+    roadL + laneW * 2.5 + divW,
+    roadL + laneW * 3.5 + divW,
+  ];
+  return centers[lane];
 }
 
-// ── HUD ───────────────────────────────────────────────────────
-function updateHUD() {
-  const cam = CAMERAS[currentCam];
-  document.getElementById('hud-info').innerHTML =
-    `${cam.id}<br>${cam.type}<br>GPS: ${cam.lat}, ${cam.lng}`;
-  document.getElementById('hud-cam-id').textContent = cam.name;
-}
-updateHUD();
-
-// ── Clock ─────────────────────────────────────────────────────
-function updateClock() {
-  const now = new Date();
-  const ts  = now.toLocaleTimeString('en-GB');
-  document.getElementById('clock').textContent     = ts;
-  document.getElementById('hud-time').innerHTML    =
-    `${now.toLocaleDateString('en-GB')}<br>${ts}<br>REC ●`;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ── Road drawing ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  ROAD DRAWING — proper perspective dual carriageway
+// ─────────────────────────────────────────────────────────────
 function drawRoad() {
   const W = canvas.width, H = canvas.height;
+  const vx = W * 0.5, vy = H * 0.30;
 
-  // Sky gradient
-  const sky = ctx.createLinearGradient(0,0,0,H*0.45);
-  sky.addColorStop(0,'#0a0e14');
-  sky.addColorStop(1,'#0d1520');
+  // ── Sky ────────────────────────────────────────────────────
+  const sky = ctx.createLinearGradient(0,0,0,vy);
+  sky.addColorStop(0,'#050810');
+  sky.addColorStop(0.6,'#0a1020');
+  sky.addColorStop(1,'#101828');
   ctx.fillStyle = sky;
-  ctx.fillRect(0,0,W,H*0.45);
+  ctx.fillRect(0,0,W,vy);
 
-  // Ground
-  const gnd = ctx.createLinearGradient(0,H*0.45,0,H);
-  gnd.addColorStop(0,'#0c1218');
-  gnd.addColorStop(1,'#080c10');
-  ctx.fillStyle = gnd;
-  ctx.fillRect(0,H*0.45,W,H*0.55);
+  // Ambient haze at horizon
+  const haze = ctx.createLinearGradient(0,vy-30,0,vy+20);
+  haze.addColorStop(0,'transparent');
+  haze.addColorStop(0.5,'rgba(30,60,90,.15)');
+  haze.addColorStop(1,'transparent');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0,vy-30,W,50);
 
-  // Road surface
-  const roadY = H*0.42;
-  const road = ctx.createLinearGradient(0,roadY,0,H);
-  road.addColorStop(0,'#1a1e22');
-  road.addColorStop(1,'#0e1216');
-  ctx.fillStyle = road;
+  // ── Environment background (skyline / trees) ────────────────
+  drawEnvironment(W, vy);
+
+  // ── Road surface ───────────────────────────────────────────
+  // Road trapezoid: narrow at horizon, full width at bottom
+  const roadL = W * 0.08, roadR = W * 0.92;
+  const vRoadL = perspective(roadL, 0.001); // near vanishing
+  const vRoadR = perspective(roadR, 0.001);
+
+  // Road base
+  const roadGrad = ctx.createLinearGradient(0,vy,0,H);
+  roadGrad.addColorStop(0,'#1a1e24');
+  roadGrad.addColorStop(0.3,'#161a1e');
+  roadGrad.addColorStop(1,'#111418');
+  ctx.fillStyle = roadGrad;
   ctx.beginPath();
-  ctx.moveTo(W*0.1,roadY);
-  ctx.lineTo(W*0.9,roadY);
-  ctx.lineTo(W,H);
-  ctx.lineTo(0,H);
+  ctx.moveTo(vRoadL.x, vy+2);
+  ctx.lineTo(vRoadR.x, vy+2);
+  ctx.lineTo(roadR, H);
+  ctx.lineTo(roadL, H);
   ctx.closePath();
   ctx.fill();
 
-  // Road markings - center line
-  ctx.strokeStyle = '#ffb800';
-  ctx.lineWidth   = 2;
-  ctx.setLineDash([30,20]);
-  ctx.beginPath();
-  ctx.moveTo(W*0.5,roadY+20);
-  ctx.lineTo(W*0.5,H);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Lane lines
-  ctx.strokeStyle = 'rgba(255,255,255,.3)';
-  ctx.lineWidth   = 1.5;
-  ctx.setLineDash([20,25]);
-  [0.33, 0.66].forEach(x => {
+  // Road texture — subtle asphalt noise
+  ctx.fillStyle = 'rgba(255,255,255,.012)';
+  for(let i=0;i<8;i++){
+    const d = 0.15 + i*0.12;
+    const p0 = perspective(roadL,d), p1 = perspective(roadR,d);
+    const p2 = perspective(roadR,d+0.08), p3 = perspective(roadL,d+0.08);
     ctx.beginPath();
-    ctx.moveTo(W*x, roadY+10);
-    ctx.lineTo(W*x, H);
-    ctx.stroke();
-  });
-  ctx.setLineDash([]);
+    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.lineTo(p3.x,p3.y);
+    ctx.closePath();
+    ctx.fill();
+  }
 
-  // Buildings silhouette
-  drawBuildings(W, roadY);
+  // ── Shoulders (kerbs) ──────────────────────────────────────
+  drawShoulder(W, H, vy, roadL, true);  // left
+  drawShoulder(W, H, vy, roadR, false); // right
 
-  // Streetlights
-  drawStreetlights(W, roadY);
+  // ── Center divider (raised median / painted) ───────────────
+  drawCenterDivider(W, H, vy);
 
-  // Camera frame effect — vignette
-  const vig = ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.8);
+  // ── Lane markings ──────────────────────────────────────────
+  drawLaneMarkings(W, H, vy);
+
+  // ── Road furniture (signs, poles, cats-eyes) ───────────────
+  drawRoadFurniture(W, H, vy);
+
+  // ── Camera pole ────────────────────────────────────────────
+  drawCameraPole(W, H, vy);
+
+  // ── Vignette ───────────────────────────────────────────────
+  const vig = ctx.createRadialGradient(W/2,H*0.6,H*0.2,W/2,H*0.6,H*0.8);
   vig.addColorStop(0,'transparent');
-  vig.addColorStop(1,'rgba(0,0,0,.5)');
+  vig.addColorStop(1,'rgba(0,0,0,.55)');
   ctx.fillStyle = vig;
   ctx.fillRect(0,0,W,H);
 
-  // Green tint overlay (night vision effect)
-  ctx.fillStyle = 'rgba(0,255,136,.012)';
+  // Night vision tint
+  ctx.fillStyle = 'rgba(0,255,136,.008)';
   ctx.fillRect(0,0,W,H);
 }
 
-function drawBuildings(W, horizonY) {
+function drawEnvironment(W, vy) {
+  // Dark treeline + urban silhouette
+  ctx.fillStyle = '#070b0f';
+  // Left side trees
+  for(let i=0;i<18;i++){
+    const tx = (W*0.0) + i*(W*0.08) - W*0.04;
+    const th = 40 + Math.sin(i*2.3)*20;
+    const tw = 18 + Math.sin(i*1.7)*6;
+    // Tree trunk
+    ctx.fillRect(tx+tw/2-2,vy-th,4,th);
+    // Tree crown (triangle)
+    ctx.beginPath();
+    ctx.moveTo(tx+tw/2,vy-th-20);
+    ctx.lineTo(tx,vy-th+10);
+    ctx.lineTo(tx+tw,vy-th+10);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Buildings far left
   ctx.fillStyle = '#060a0e';
-  const buildings = [
-    {x:0.02,w:0.08,h:0.25},{x:0.12,w:0.06,h:0.18},{x:0.19,w:0.09,h:0.3},
-    {x:0.65,w:0.07,h:0.22},{x:0.73,w:0.05,h:0.15},{x:0.79,w:0.1,h:0.28},
-    {x:0.90,w:0.08,h:0.2},
-  ];
-  buildings.forEach(b => {
-    const bx = W*b.x, by = horizonY - canvas.height*b.h;
-    const bw = W*b.w, bh = canvas.height*b.h;
-    ctx.fillRect(bx, by, bw, bh);
-    // Windows
-    ctx.fillStyle = 'rgba(255,220,100,.15)';
-    for(let r=0;r<Math.floor(bh/12);r++) {
-      for(let c=0;c<Math.floor(bw/10);c++) {
-        if(Math.random()>0.4) ctx.fillRect(bx+c*10+2, by+r*12+3, 5, 6);
-      }
-    }
+  [[0.01,0.22,0.05],[0.07,0.18,0.04],[0.02,0.28,0.04]].forEach(([bx,bh,bw])=>{
+    ctx.fillRect(W*bx, vy-canvas.height*bh, W*bw, canvas.height*bh);
+    // Window glow
+    ctx.fillStyle = 'rgba(255,210,120,.08)';
+    for(let r=0;r<5;r++) for(let c=0;c<3;c++)
+      ctx.fillRect(W*bx+c*8+3, vy-canvas.height*bh+r*10+4, 4, 5);
     ctx.fillStyle = '#060a0e';
   });
+  // Buildings far right
+  [[0.88,0.25,0.05],[0.94,0.2,0.04],[0.91,0.15,0.03]].forEach(([bx,bh,bw])=>{
+    ctx.fillRect(W*bx, vy-canvas.height*bh, W*bw, canvas.height*bh);
+    ctx.fillStyle = 'rgba(255,210,120,.08)';
+    for(let r=0;r<5;r++) for(let c=0;c<2;c++)
+      ctx.fillRect(W*bx+c*8+3, vy-canvas.height*bh+r*10+4, 4, 5);
+    ctx.fillStyle = '#060a0e';
+  });
+
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,255,.4)';
+  for(let i=0;i<60;i++){
+    const sx = (i*137)%(W);
+    const sy = (i*97)%vy*0.7;
+    ctx.fillRect(sx,sy,1,1);
+  }
+  // Moon
+  ctx.fillStyle = 'rgba(220,220,180,.5)';
+  ctx.beginPath();
+  ctx.arc(W*0.85, vy*0.25, 12, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(10,16,32,.7)';
+  ctx.beginPath();
+  ctx.arc(W*0.87, vy*0.22, 10, 0, Math.PI*2);
+  ctx.fill();
 }
 
-function drawStreetlights(W, horizonY) {
-  [[0.15,horizonY+5],[0.45,horizonY+5],[0.85,horizonY+5]].forEach(([x,y]) => {
-    ctx.strokeStyle = '#2a3a4a';
-    ctx.lineWidth   = 3;
+function drawShoulder(W, H, vy, roadEdgeX, isLeft) {
+  const edgeX = isLeft ? W*0.02 : W*0.98;
+  const vEdge = perspective(edgeX, 0.001);
+  const vRoad = perspective(roadEdgeX, 0.001);
+
+  // Pavement / dirt shoulder
+  ctx.fillStyle = isLeft ? '#0f1214' : '#0f1214';
+  ctx.beginPath();
+  ctx.moveTo(vEdge.x, vy+2);
+  ctx.lineTo(vRoad.x, vy+2);
+  ctx.lineTo(roadEdgeX, H);
+  ctx.lineTo(edgeX, H);
+  ctx.closePath();
+  ctx.fill();
+
+  // Kerb line
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(vRoad.x, vy+2);
+  ctx.lineTo(roadEdgeX, H);
+  ctx.stroke();
+}
+
+function drawCenterDivider(W, H, vy) {
+  // Center divider — solid yellow/white lines bounding raised median
+  const d0 = W * 0.08, d1 = W * 0.92;
+  const roadW = d1 - d0;
+  const divW = roadW * 0.04;
+  const midX = W * 0.5;
+  const divL = midX - divW/2;
+  const divR = midX + divW/2;
+
+  // Draw solid divider lines at multiple depth levels for perspective
+  for(let di=0; di<=1; di++){
+    const lx = di===0 ? divL : divR;
+    const vP  = perspective(lx, 0.001);
+    ctx.strokeStyle = di===0 ? '#ffb800' : '#ffb800';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.moveTo(W*x, y);
-    ctx.lineTo(W*x, y-80);
-    ctx.lineTo(W*x+30, y-80);
+    ctx.moveTo(vP.x, vy+2);
+    ctx.lineTo(lx, H);
     ctx.stroke();
-    // Light glow
-    const glow = ctx.createRadialGradient(W*x+30,y-80,0,W*x+30,y-80,40);
-    glow.addColorStop(0,'rgba(255,220,100,.3)');
-    glow.addColorStop(1,'transparent');
-    ctx.fillStyle = glow;
+  }
+
+  // Divider fill (raised median, dark/hatched)
+  const vDL = perspective(divL, 0.001);
+  const vDR = perspective(divR, 0.001);
+  const divGrad = ctx.createLinearGradient(0,vy,0,H);
+  divGrad.addColorStop(0,'#0d1018');
+  divGrad.addColorStop(1,'#151920');
+  ctx.fillStyle = divGrad;
+  ctx.beginPath();
+  ctx.moveTo(vDL.x,vy+2);ctx.lineTo(vDR.x,vy+2);
+  ctx.lineTo(divR,H);ctx.lineTo(divL,H);
+  ctx.closePath();ctx.fill();
+
+  // Median cats eyes / divider markers
+  for(let d=0.12; d<0.95; d+=0.12){
+    const mx = midX;
+    const mp = perspective(mx, d);
+    ctx.fillStyle = 'rgba(255,220,80,.5)';
     ctx.beginPath();
-    ctx.arc(W*x+30,y-80,40,0,Math.PI*2);
+    ctx.ellipse(mp.x,mp.y,2,1,0,0,Math.PI*2);
     ctx.fill();
+  }
+}
+
+function drawLaneMarkings(W, H, vy) {
+  const d0 = W * 0.08, d1 = W * 0.92;
+  const roadW = d1 - d0;
+  const divW = roadW * 0.04;
+  const laneW = (roadW - divW) / 4;
+
+  // Inner lane dividers (dashed white)
+  // Left carriageway: between lane 0 and 1 (x = d0 + laneW)
+  // Right carriageway: between lane 2 and 3 (x = d0 + laneW*3 + divW)
+  const innerLines = [
+    d0 + laneW,        // between L0 and L1
+    d0 + laneW*3 + divW, // between L2 and L3
+  ];
+
+  innerLines.forEach(lx => {
+    // Dashed lane line
+    for(let d=0.05; d<0.98; d+=0.08){
+      const p0 = perspective(lx, d);
+      const p1 = perspective(lx, d+0.045);
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
+      ctx.stroke();
+    }
+  });
+
+  // Edge lines (solid white at carriageway outer edges)
+  [d0, d1].forEach(lx => {
+    const vP = perspective(lx, 0.001);
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(vP.x,vy+2);
+    ctx.lineTo(lx,H);
+    ctx.stroke();
+  });
+
+  // Lane labels (painted road text) — perspective text not easily done in canvas,
+  // so we mark lane arrows on the road surface at mid-depth
+  drawLaneArrows(W, H, vy, laneW, d0, divW);
+
+  // Cats eyes / road studs along lane lines
+  innerLines.forEach(lx => {
+    for(let d=0.1; d<0.9; d+=0.2){
+      const p = perspective(lx, d);
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.beginPath();
+      ctx.ellipse(p.x,p.y,2,1,0,0,Math.PI*2);
+      ctx.fill();
+    }
   });
 }
 
-// ── Car simulation ────────────────────────────────────────────
+function drawLaneArrows(W, H, vy, laneW, d0, divW) {
+  // Lane direction arrows painted on road
+  // Lanes 0,1: downward arrows (toward camera)
+  // Lanes 2,3: upward arrows (away from camera)
+  const laneInfo = [
+    { lane:0, dir:'down',   lx: d0 + laneW*0.5  },
+    { lane:1, dir:'down',   lx: d0 + laneW*1.5  },
+    { lane:2, dir:'up',     lx: d0 + laneW*2.5 + divW },
+    { lane:3, dir:'up',     lx: d0 + laneW*3.5 + divW },
+  ];
+
+  laneInfo.forEach(({dir,lx}) => {
+    [0.45, 0.75].forEach(depth => {
+      const p = perspective(lx, depth);
+      const s = 8 * depth; // arrow scale with perspective
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.fillStyle = 'rgba(255,255,255,.22)';
+      if(dir==='down'){
+        ctx.beginPath();
+        ctx.moveTo(0,-s*1.5);ctx.lineTo(s*0.7,s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,s*0.5);
+        ctx.closePath();ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(0,s*1.5);ctx.lineTo(s*0.7,-s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,-s*0.5);
+        ctx.closePath();ctx.fill();
+      }
+      ctx.restore();
+    });
+  });
+}
+
+function drawRoadFurniture(W, H, vy) {
+  // Street lights on both sides
+  const lightPositions = [0.15, 0.50, 0.85];
+  lightPositions.forEach(depth => {
+    // Left light
+    drawStreetlight(W*0.065, depth, W, vy, H, 'left');
+    // Right light
+    drawStreetlight(W*0.935, depth, W, vy, H, 'right');
+  });
+
+  // KEEP LEFT sign
+  const signP = perspective(W*0.14, 0.38);
+  drawRoadSign(signP.x-20, signP.y, '◀ KEEP\nLEFT', '#1a6a3a', '#fff', 0.38);
+
+  // Speed limit sign (right side)
+  const speedP = perspective(W*0.86, 0.55);
+  const cam = CAMERAS[currentCam];
+  drawRoadSign(speedP.x+5, speedP.y, `${cam.speedLimit}\nkm/h`, '#1a3a7a', '#fff', 0.55);
+
+  // NO OVERTAKING zone markers (dashes on road)
+  drawNoOvertakeZone(W, H, vy);
+}
+
+function drawStreetlight(bx, depth, W, vy, H, side) {
+  const p = perspective(bx, depth);
+  const s = depth; // scale
+  const armLen = 30*s;
+  const poleH  = 60*s;
+
+  ctx.strokeStyle = 'rgba(80,100,120,.7)';
+  ctx.lineWidth   = 2*s;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  ctx.lineTo(p.x, p.y - poleH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y - poleH);
+  ctx.lineTo(p.x + (side==='right'?-armLen:armLen), p.y - poleH - 8*s);
+  ctx.stroke();
+
+  const lx = p.x + (side==='right'?-armLen:armLen);
+  const ly = p.y - poleH - 8*s;
+  // Lamp glow
+  const glow = ctx.createRadialGradient(lx,ly,0,lx,ly,40*s);
+  glow.addColorStop(0,'rgba(255,200,80,.35)');
+  glow.addColorStop(0.3,'rgba(255,200,80,.12)');
+  glow.addColorStop(1,'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();ctx.arc(lx,ly,40*s,0,Math.PI*2);ctx.fill();
+  // Lamp housing
+  ctx.fillStyle = 'rgba(180,160,80,.6)';
+  ctx.beginPath();ctx.ellipse(lx,ly,5*s,3*s,0,0,Math.PI*2);ctx.fill();
+}
+
+function drawRoadSign(x, y, text, bg, fg, scale) {
+  const s = scale * 0.8;
+  const w = 38*s, h = 26*s;
+  ctx.save();
+  ctx.translate(x,y);
+  // Post
+  ctx.strokeStyle = 'rgba(120,130,140,.5)';
+  ctx.lineWidth = 1.5*s;
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,20*s);ctx.stroke();
+  // Sign board
+  ctx.fillStyle = bg;
+  ctx.beginPath();ctx.roundRect(-w/2,-h-4*s,w,h,3*s);ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Text
+  ctx.fillStyle = fg;
+  ctx.font = `bold ${8*s}px JetBrains Mono`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = text.split('\n');
+  lines.forEach((l,i)=>ctx.fillText(l, 0, -h/2-4*s+(i-lines.length/2+.5)*10*s));
+  ctx.restore();
+}
+
+function drawNoOvertakeZone(W, H, vy) {
+  // Solid center lines in no-overtake zone (near foreground)
+  const midX = W * 0.5;
+  // Solid double lines near bottom of frame — no overtaking zone
+  for(const offset of [-4, 4]) {
+    const p0 = perspective(midX + offset, 0.6);
+    const p1 = perspective(midX + offset, 1.0);
+    ctx.strokeStyle = '#ffb800';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
+    ctx.stroke();
+  }
+  // Dashed lines in overtake-permitted zone (far)
+  for(const offset of [-4, 4]) {
+    const p0 = perspective(midX + offset, 0.05);
+    const p1 = perspective(midX + offset, 0.58);
+    ctx.strokeStyle = 'rgba(255,184,0,.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8,8]);
+    ctx.beginPath();
+    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function drawCameraPole(W, H, vy) {
+  // Camera gantry over road at mid-top
+  const poleX = W * 0.5;
+  const poleBase = perspective(poleX, 0.22);
+
+  // Gantry arm across road
+  ctx.strokeStyle = 'rgba(100,130,160,.55)';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([]);
+  // Main pole
+  ctx.beginPath();
+  ctx.moveTo(poleBase.x, poleBase.y);
+  ctx.lineTo(poleBase.x, poleBase.y - 55);
+  ctx.stroke();
+  // Horizontal arm
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(poleBase.x - 60, poleBase.y - 50);
+  ctx.lineTo(poleBase.x + 60, poleBase.y - 50);
+  ctx.stroke();
+  // Camera boxes
+  [-40, -10, 20].forEach(ox => {
+    ctx.fillStyle = '#1a2530';
+    ctx.strokeStyle = 'rgba(0,212,255,.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(poleBase.x+ox-5, poleBase.y-58, 14, 10, 2);
+    ctx.fill();ctx.stroke();
+    // Lens
+    ctx.fillStyle = 'rgba(0,212,255,.5)';
+    ctx.beginPath();
+    ctx.arc(poleBase.x+ox+2, poleBase.y-53, 2, 0, Math.PI*2);
+    ctx.fill();
+  });
+  // "RTMS CAMERA" label
+  ctx.fillStyle = 'rgba(0,212,255,.5)';
+  ctx.font = '7px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText('▼ RTMS ACTIVE ZONE', poleBase.x, poleBase.y - 62);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CAR CLASS — realistic car drawing with proper lane positions
+// ─────────────────────────────────────────────────────────────
+let carIdCounter = 0;
+
 class Car {
-  constructor(W, H, horizonY) {
-    this.lane    = Math.floor(Math.random()*3); // 0,1,2
-    this.progress= 0; // 0=far, 1=close
-    this.speed   = 0.002 + Math.random()*0.003;
-    this.color   = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
-    this.plate   = this.randomPlate();
-    this.detected= false;
-    this.W = W; this.H = H; this.horizonY = horizonY;
+  constructor() {
+    this.id       = carIdCounter++;
+    this.palette  = CAR_PALETTES[Math.floor(Math.random()*CAR_PALETTES.length)];
+    this.plate    = this.randomPlate();
+    this.detected = false;
+    this.type     = this.randomCarType();
+
+    // Lane: 0,1 go toward camera (progress 0→1), 2,3 go away (progress 1→0)
+    this.lane = Math.floor(Math.random() * 4);
+    this.dir  = (this.lane < 2) ? 1 : -1; // 1=toward camera, -1=away
+
+    // Overtaking behavior: lane 1 or 3 (right lane of each carriageway)
+    // Cars in right lane move faster (overtaking), must return to left lane
+    this.isOvertaking = (this.lane === 1 || this.lane === 3);
+
+    if(this.dir === 1) {
+      this.progress = 0.01 + Math.random()*0.1; // start near horizon
+    } else {
+      this.progress = 0.95 - Math.random()*0.1; // start near foreground
+    }
+
+    // Speed: overtaking lane cars are faster
+    this.speed = this.isOvertaking
+      ? 0.0028 + Math.random()*0.0018
+      : 0.0018 + Math.random()*0.0012;
+
+    // Slight lateral offset within lane (randomness)
+    this.laneOffset = (Math.random()-0.5) * 0.3;
+
+    // Turn signal state
+    this.signalTimer  = 0;
+    this.signalOn     = false;
+    this.signalSide   = 'right';
+
+    // Brake lights
+    this.braking = false;
+    this.brakeTimer = 0;
+
+    // Random occasions
+    if(Math.random()<0.08) { this.signalOn=true; this.signalTimer=60+Math.floor(Math.random()*80); }
+    if(Math.random()<0.05) { this.braking=true; this.brakeTimer=30+Math.floor(Math.random()*40); }
+  }
+
+  randomCarType() {
+    const types = ['sedan','sedan','sedan','suv','suv','pickup','bus','minibus','truck'];
+    return types[Math.floor(Math.random()*types.length)];
   }
 
   randomPlate() {
-    // Tanzanian format: T + 3 digits (100-999) + 3 letters (A-Z)
-    // Range: T100AAA to T999ZZZ
     const n = String(Math.floor(Math.random()*900)+100);
     const l = 'ABCDEFGHJKLMNPRSTUVWXYZ';
-    const s = l[Math.floor(Math.random()*l.length)] +
-              l[Math.floor(Math.random()*l.length)] +
-              l[Math.floor(Math.random()*l.length)];
+    const s = l[~~(Math.random()*l.length)]+l[~~(Math.random()*l.length)]+l[~~(Math.random()*l.length)];
     return `T${n}${s}`;
   }
 
+  update() {
+    if(this.signalTimer>0)  this.signalTimer--;
+    else this.signalOn = false;
+    if(this.brakeTimer>0)   this.brakeTimer--;
+    else this.braking = false;
+
+    const effectiveSpeed = this.braking ? this.speed*0.3 : this.speed;
+    this.progress += this.dir * effectiveSpeed;
+
+    // Keep alive if visible
+    if(this.dir===1)  return this.progress < 1.05;
+    else              return this.progress > -0.05;
+  }
+
   get pos() {
-    const W = this.W, H = this.H, hy = this.horizonY;
-    const laneOffsets = [-0.18, 0, 0.18];
-    const t  = this.progress;
-    const x  = W/2 + (W * laneOffsets[this.lane]) * t;
-    const y  = hy + (H - hy) * t;
-    const sc = 0.1 + t * 0.9;
-    return { x, y, scale: sc };
+    const W = canvas.width, H = canvas.height;
+    const d0 = W*0.08, d1 = W*0.92;
+    const roadW = d1-d0;
+    const divW = roadW*0.04;
+    const laneW = (roadW-divW)/4;
+    const laneX = getLaneX(this.lane, W);
+
+    const lateralX = laneX + this.laneOffset * laneW * 0.25;
+    const p  = perspective(lateralX, this.progress);
+    const sc = 0.12 + this.progress * 0.88;
+    return { x:p.x, y:p.y, scale:sc, depth:this.progress };
   }
 
   draw(ctx) {
     const {x, y, scale} = this.pos;
-    const W = 80 * scale, H = 40 * scale;
+    if(scale < 0.08) return;
 
-    // Car body
     ctx.save();
     ctx.translate(x, y);
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,.4)';
-    ctx.beginPath();
-    ctx.ellipse(0, H*0.3, W*0.45, H*0.15, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // Body
-    const bodyGrad = ctx.createLinearGradient(0,-H/2,0,H/2);
-    bodyGrad.addColorStop(0, lighten(this.color, 30));
-    bodyGrad.addColorStop(0.5, this.color);
-    bodyGrad.addColorStop(1, darken(this.color, 40));
-    ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    ctx.roundRect(-W/2, -H/2, W, H, H*0.15);
-    ctx.fill();
-
-    // Windshield
-    ctx.fillStyle = 'rgba(100,200,255,.25)';
-    ctx.beginPath();
-    ctx.roundRect(-W*0.25, -H*0.45, W*0.5, H*0.35, 4*scale);
-    ctx.fill();
-
-    // ── FACE ANONYMIZATION (GDPR / Data Protection) ──────────
-    // Automatically blur/pixelate the driver's face area
-    // conforming to Tanzania Personal Data Protection Act 2022
-    // and international ALPR privacy standards
-    if (faceAnonEnabled && scale > 0.35) { // face anonymization — only when close enough
-      const fx = -W*0.08, fy = -H*0.38, fr = H*0.13;
-      // Pixelation effect — draw mosaic over face region
-      const pixSize = Math.max(2, Math.floor(fr * 0.35));
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(fx, fy, fr, 0, Math.PI*2);
-      ctx.clip();
-      // Draw pixelated blocks
-      for (let px = fx-fr; px < fx+fr; px+=pixSize) {
-        for (let py = fy-fr; py < fy+fr; py+=pixSize) {
-          const shade = 100 + Math.floor(Math.random()*60);
-          ctx.fillStyle = `rgb(${shade},${shade-10},${shade-20})`;
-          ctx.fillRect(px, py, pixSize, pixSize);
-        }
-      }
-      ctx.restore();
-      // Small privacy badge on car
-      if (scale > 0.55) {
-        ctx.fillStyle = 'rgba(0,180,100,.85)';
-        ctx.beginPath();
-        ctx.roundRect(W*0.28, -H*0.48, W*0.22, H*0.16, 2*scale);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${5.5*scale}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('ANON', W*0.39, -H*0.38);
-      }
+    // Draw appropriate car type
+    switch(this.type){
+      case 'bus':     this.drawBus(ctx, scale);     break;
+      case 'minibus': this.drawMinibus(ctx, scale);  break;
+      case 'truck':   this.drawTruck(ctx, scale);    break;
+      case 'pickup':  this.drawPickup(ctx, scale);   break;
+      case 'suv':     this.drawSUV(ctx, scale);      break;
+      default:        this.drawSedan(ctx, scale);    break;
     }
-
-    // Headlights
-    if(this.progress > 0.5) {
-      const glow = ctx.createRadialGradient(-W*0.45, -H*0.1, 0, -W*0.45, -H*0.1, W*0.3);
-      glow.addColorStop(0,'rgba(255,240,200,.8)');
-      glow.addColorStop(1,'transparent');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(-W*0.45,-H*0.1,W*0.3,0,Math.PI*2);
-      ctx.fill();
-    }
-
-    // Plate
-    const pw = W*0.4, ph = H*0.18;
-    ctx.fillStyle = PLATE_COLORS[0];
-    ctx.fillRect(-pw/2, H*0.2, pw, ph);
-    ctx.fillStyle = '#000';
-    ctx.font = `bold ${7*scale}px JetBrains Mono`;
-    ctx.textAlign = 'center';
-    ctx.fillText(this.plate, 0, H*0.2+ph*0.75);
 
     ctx.restore();
   }
 
-  update() {
-    this.progress += this.speed;
-    return this.progress < 1.2;
+  drawSedan(ctx, s) {
+    const W=52*s, H=24*s;
+    const pal = this.palette;
+
+    // Shadow
+    this.drawShadow(ctx, W, H, s);
+
+    // Body — lower
+    const bodyG = ctx.createLinearGradient(-W/2,-H/2,W/2,H/2);
+    bodyG.addColorStop(0, this.lighten(pal.body,20));
+    bodyG.addColorStop(0.5, pal.body);
+    bodyG.addColorStop(1, this.darken(pal.body,30));
+    ctx.fillStyle = bodyG;
+    ctx.beginPath();
+    ctx.roundRect(-W/2, 0, W, H*0.55, [0,0,H*0.12,H*0.12]);
+    ctx.fill();
+
+    // Body highlight line
+    ctx.strokeStyle = this.lighten(pal.body, 40);
+    ctx.lineWidth = 0.8*s;
+    ctx.beginPath();
+    ctx.moveTo(-W*0.45, H*0.15);ctx.lineTo(W*0.45, H*0.15);
+    ctx.stroke();
+
+    // Cabin — upper (shorter, centered)
+    const cabG = ctx.createLinearGradient(0,-H*0.8,0,0);
+    cabG.addColorStop(0, this.darken(pal.body,10));
+    cabG.addColorStop(1, pal.body);
+    ctx.fillStyle = cabG;
+    ctx.beginPath();
+    ctx.roundRect(-W*0.32, -H*0.7, W*0.64, H*0.75, [H*0.12,H*0.12,0,0]);
+    ctx.fill();
+
+    // Windshield front
+    ctx.fillStyle = pal.glass;
+    ctx.beginPath();
+    ctx.roundRect(-W*0.28, -H*0.65, W*0.56, H*0.45, H*0.06);
+    ctx.fill();
+    // Windshield glare
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    ctx.beginPath();
+    ctx.roundRect(-W*0.26, -H*0.62, W*0.18, H*0.15, H*0.04);
+    ctx.fill();
+
+    // Windshield pillar lines
+    ctx.strokeStyle = this.darken(pal.body,20);
+    ctx.lineWidth = 1.2*s;
+    ctx.beginPath();ctx.moveTo(-W*0.32,-H*0.65);ctx.lineTo(-W*0.28,-H*0.65);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(W*0.32,-H*0.65);ctx.lineTo(W*0.28,-H*0.65);ctx.stroke();
+
+    // Wheels
+    this.drawWheels(ctx, W, H, s, 2);
+
+    // Headlights (front = car approaching = larger)
+    const isFront = this.dir===1;
+    this.drawHeadlights(ctx, W, H, s, isFront);
+
+    // Taillights
+    this.drawTaillights(ctx, W, H, s, !isFront);
+
+    // Plate
+    this.drawPlate(ctx, W, H, s);
+
+    // ANON
+    this.drawAnon(ctx, W, H, s);
+
+    // Turn signal
+    if(this.signalOn) this.drawSignal(ctx, W, H, s);
+
+    // Brake lights
+    if(this.braking) this.drawBrakeLights(ctx, W, H, s);
   }
+
+  drawSUV(ctx, s) {
+    const W=58*s, H=28*s;
+    const pal = this.palette;
+    this.drawShadow(ctx, W, H, s);
+
+    // Lower body
+    const bg = ctx.createLinearGradient(-W/2,0,W/2,H*0.6);
+    bg.addColorStop(0,this.lighten(pal.body,15));
+    bg.addColorStop(1,this.darken(pal.body,25));
+    ctx.fillStyle=bg;
+    ctx.beginPath();ctx.roundRect(-W/2,0,W,H*0.6,[0,0,H*0.1,H*0.1]);ctx.fill();
+
+    // Cabin — taller, boxier
+    const cg=ctx.createLinearGradient(0,-H,0,0);
+    cg.addColorStop(0,this.darken(pal.body,8));
+    cg.addColorStop(1,pal.body);
+    ctx.fillStyle=cg;
+    ctx.beginPath();ctx.roundRect(-W*0.42,-H*0.85,W*0.84,H*0.9,[H*0.1,H*0.1,0,0]);ctx.fill();
+
+    ctx.fillStyle=pal.glass;
+    ctx.beginPath();ctx.roundRect(-W*0.36,-H*0.8,W*0.72,H*0.55,H*0.07);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.1)';
+    ctx.beginPath();ctx.roundRect(-W*0.34,-H*0.77,W*0.22,H*0.18,H*0.04);ctx.fill();
+
+    this.drawWheels(ctx,W,H,s,2.5);
+    this.drawHeadlights(ctx,W,H,s,this.dir===1);
+    this.drawTaillights(ctx,W,H,s,this.dir!==1);
+    this.drawPlate(ctx,W,H,s);
+    this.drawAnon(ctx,W,H,s);
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawPickup(ctx, s) {
+    const W=64*s, H=26*s;
+    const pal=this.palette;
+    this.drawShadow(ctx,W,H,s);
+
+    // Bed (rear open)
+    ctx.fillStyle=this.darken(pal.body,20);
+    ctx.beginPath();ctx.roundRect(-W/2,0,W*0.55,H*0.55,[0,0,H*0.08,H*0.08]);ctx.fill();
+
+    // Cab (front)
+    const cg=ctx.createLinearGradient(0,-H,0,0);
+    cg.addColorStop(0,this.darken(pal.body,5));cg.addColorStop(1,pal.body);
+    ctx.fillStyle=cg;
+    ctx.beginPath();ctx.roundRect(W*0.05,-H*0.75,W*0.45,H*0.8,[H*0.12,H*0.12,0,0]);ctx.fill();
+
+    // Full lower body
+    const bg=ctx.createLinearGradient(-W/2,0,W/2,H*0.55);
+    bg.addColorStop(0,this.lighten(pal.body,10));bg.addColorStop(1,this.darken(pal.body,25));
+    ctx.fillStyle=bg;
+    ctx.beginPath();ctx.roundRect(-W/2,0,W,H*0.55,[0,0,H*0.08,H*0.08]);ctx.fill();
+
+    ctx.fillStyle=pal.glass;
+    ctx.beginPath();ctx.roundRect(W*0.08,-H*0.7,W*0.4,H*0.45,H*0.07);ctx.fill();
+
+    this.drawWheels(ctx,W,H,s,2.8);
+    this.drawHeadlights(ctx,W,H,s,this.dir===1);
+    this.drawTaillights(ctx,W,H,s,this.dir!==1);
+    this.drawPlate(ctx,W,H,s);
+    this.drawAnon(ctx,W,H,s);
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawMinibus(ctx, s) {
+    // Dalla-dalla style minibus — very common in Dar es Salaam
+    const W=70*s, H=30*s;
+    const pal=this.palette;
+    this.drawShadow(ctx,W*1.1,H,s);
+
+    // Body — boxy
+    const bg=ctx.createLinearGradient(-W/2,-H*0.5,W/2,H*0.6);
+    bg.addColorStop(0,this.lighten(pal.body,25));
+    bg.addColorStop(0.4,pal.body);
+    bg.addColorStop(1,this.darken(pal.body,30));
+    ctx.fillStyle=bg;
+    ctx.beginPath();ctx.roundRect(-W/2,-H*0.5,W,H*1.1,H*0.06);ctx.fill();
+
+    // Color stripe (dalla-dalla signature stripe)
+    ctx.fillStyle='rgba(255,80,0,.55)';
+    ctx.beginPath();ctx.roundRect(-W/2,H*0.05,W,H*0.2,0);ctx.fill();
+
+    // Windows (multiple side windows)
+    for(let i=0;i<4;i++){
+      ctx.fillStyle=pal.glass;
+      ctx.beginPath();ctx.roundRect(-W*0.42+i*W*0.22,-H*0.42,W*0.18,H*0.38,H*0.04);ctx.fill();
+    }
+    // Windshield
+    ctx.fillStyle=pal.glass;
+    ctx.beginPath();ctx.roundRect(-W*0.44,-H*0.44,W*0.88,H*0.35,H*0.04);ctx.fill();
+
+    this.drawWheels(ctx,W,H*0.6,s,3.2);
+    this.drawHeadlights(ctx,W,H,s,this.dir===1);
+    this.drawTaillights(ctx,W,H,s,this.dir!==1);
+    this.drawPlate(ctx,W,H,s);
+    this.drawAnon(ctx,W,H,s);
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawBus(ctx, s) {
+    const W=90*s, H=34*s;
+    const pal=this.palette;
+    this.drawShadow(ctx,W*1.1,H,s);
+
+    const bg=ctx.createLinearGradient(-W/2,-H*0.6,W/2,H*0.65);
+    bg.addColorStop(0,this.lighten(pal.body,20));
+    bg.addColorStop(0.5,pal.body);
+    bg.addColorStop(1,this.darken(pal.body,35));
+    ctx.fillStyle=bg;
+    ctx.beginPath();ctx.roundRect(-W/2,-H*0.6,W,H*1.2,H*0.04);ctx.fill();
+
+    // Destination board
+    ctx.fillStyle='rgba(255,200,0,.25)';
+    ctx.fillRect(-W*0.3,-H*0.62,W*0.6,H*0.15);
+    ctx.fillStyle='rgba(255,200,0,.7)';
+    ctx.font=`bold ${7*s}px JetBrains Mono`;
+    ctx.textAlign='center';
+    ctx.fillText('DAR ES SALAAM',0,-H*0.52);
+
+    // Windows
+    for(let i=0;i<6;i++){
+      ctx.fillStyle=pal.glass;
+      ctx.beginPath();ctx.roundRect(-W*0.46+i*W*0.16,-H*0.52,W*0.13,H*0.38,H*0.04);ctx.fill();
+    }
+    ctx.fillStyle=pal.glass;
+    ctx.beginPath();ctx.roundRect(-W*0.46,-H*0.45,W*0.92,H*0.25,H*0.04);ctx.fill();
+
+    this.drawWheels(ctx,W,H*0.55,s,4);
+    this.drawHeadlights(ctx,W,H,s,this.dir===1);
+    this.drawTaillights(ctx,W,H,s,this.dir!==1);
+    this.drawPlate(ctx,W,H,s);
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawTruck(ctx, s) {
+    const W=100*s, H=32*s;
+    const pal=this.palette;
+    this.drawShadow(ctx,W*1.1,H,s);
+
+    // Trailer
+    ctx.fillStyle=this.darken(pal.body,15);
+    ctx.beginPath();ctx.roundRect(-W/2,0,W*0.65,H*0.6,[0,0,H*0.06,H*0.06]);ctx.fill();
+    // Trailer lines
+    ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=s;
+    for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(-W/2+i*W*0.15,0);ctx.lineTo(-W/2+i*W*0.15,H*0.6);ctx.stroke();}
+
+    // Cab
+    const cg=ctx.createLinearGradient(0,-H*0.8,0,0);
+    cg.addColorStop(0,this.lighten(pal.body,10));cg.addColorStop(1,pal.body);
+    ctx.fillStyle=cg;
+    ctx.beginPath();ctx.roundRect(W*0.12,-H*0.65,W*0.38,H*0.7,[H*0.1,H*0.1,0,0]);ctx.fill();
+    ctx.fillStyle=pal.glass;
+    ctx.beginPath();ctx.roundRect(W*0.15,-H*0.6,W*0.32,H*0.4,H*0.07);ctx.fill();
+
+    this.drawWheels(ctx,W,H*0.55,s,4);
+    this.drawHeadlights(ctx,W,H,s,this.dir===1);
+    this.drawTaillights(ctx,W,H,s,this.dir!==1);
+    this.drawPlate(ctx,W,H,s);
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) this.drawBrakeLights(ctx,W,H,s);
+  }
+
+  drawShadow(ctx, W, H, s) {
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    ctx.beginPath();
+    ctx.ellipse(0, H*0.65, W*0.45, H*0.18, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  drawWheels(ctx, W, H, s, radius) {
+    const wr = radius*s;
+    const positions = [[-W*0.36, H*0.48],[W*0.36, H*0.48]];
+    positions.forEach(([wx,wy])=>{
+      // Tyre
+      ctx.fillStyle='#0a0a0c';
+      ctx.beginPath();ctx.ellipse(wx,wy,wr,wr*0.55,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(60,60,70,.8)';ctx.lineWidth=0.8*s;
+      ctx.stroke();
+      // Rim
+      ctx.fillStyle='#2a2e38';
+      ctx.beginPath();ctx.ellipse(wx,wy,wr*0.55,wr*0.32,0,0,Math.PI*2);ctx.fill();
+      // Hub
+      ctx.fillStyle='rgba(180,180,200,.3)';
+      ctx.beginPath();ctx.ellipse(wx,wy,wr*0.2,wr*0.12,0,0,Math.PI*2);ctx.fill();
+      // Spokes
+      ctx.strokeStyle='rgba(150,155,165,.25)';ctx.lineWidth=0.6*s;
+      for(let a=0;a<6;a++){
+        const ang=a*Math.PI/3;
+        ctx.beginPath();
+        ctx.moveTo(wx,wy);
+        ctx.lineTo(wx+Math.cos(ang)*wr*0.45, wy+Math.sin(ang)*wr*0.28);
+        ctx.stroke();
+      }
+    });
+  }
+
+  drawHeadlights(ctx, W, H, s, isActive) {
+    if(!isActive) return;
+    // Headlights at front (left side if dir=1)
+    const lx = -W*0.44;
+    const ly = H*0.1;
+    // Lens
+    ctx.fillStyle='rgba(255,240,200,.9)';
+    ctx.beginPath();ctx.ellipse(lx,ly,4*s,2.5*s,0,0,Math.PI*2);ctx.fill();
+    // Beam glow
+    const glow=ctx.createRadialGradient(lx,ly,0,lx,ly,50*s);
+    glow.addColorStop(0,'rgba(255,240,180,.35)');
+    glow.addColorStop(0.3,'rgba(255,240,180,.12)');
+    glow.addColorStop(1,'transparent');
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.arc(lx,ly,50*s,0,Math.PI*2);ctx.fill();
+    // DRL line
+    ctx.strokeStyle='rgba(255,240,200,.5)';ctx.lineWidth=1.5*s;
+    ctx.beginPath();ctx.moveTo(lx-6*s,ly+3*s);ctx.lineTo(lx+6*s,ly+3*s);ctx.stroke();
+  }
+
+  drawTaillights(ctx, W, H, s, isActive) {
+    if(!isActive) return;
+    const lx = W*0.44;
+    const ly = H*0.1;
+    ctx.fillStyle='rgba(220,30,30,.85)';
+    ctx.beginPath();ctx.ellipse(lx,ly,4*s,2.5*s,0,0,Math.PI*2);ctx.fill();
+    const glow=ctx.createRadialGradient(lx,ly,0,lx,ly,30*s);
+    glow.addColorStop(0,'rgba(220,30,30,.3)');
+    glow.addColorStop(1,'transparent');
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.arc(lx,ly,30*s,0,Math.PI*2);ctx.fill();
+  }
+
+  drawBrakeLights(ctx, W, H, s) {
+    const lx = W*0.44, ly=H*0.1;
+    ctx.fillStyle='rgba(255,40,40,.95)';
+    ctx.beginPath();ctx.ellipse(lx,ly,6*s,4*s,0,0,Math.PI*2);ctx.fill();
+    const glow=ctx.createRadialGradient(lx,ly,0,lx,ly,50*s);
+    glow.addColorStop(0,'rgba(255,40,40,.45)');
+    glow.addColorStop(1,'transparent');
+    ctx.fillStyle=glow;
+    ctx.beginPath();ctx.arc(lx,ly,50*s,0,Math.PI*2);ctx.fill();
+  }
+
+  drawSignal(ctx, W, H, s) {
+    const flash = (Date.now() % 700) < 350;
+    if(!flash) return;
+    const side = this.isOvertaking ? -1 : 1; // right lane signals left to return
+    const sx = side * W*0.44, sy = H*0.15;
+    ctx.fillStyle='rgba(255,165,0,.95)';
+    ctx.beginPath();ctx.ellipse(sx,sy,3.5*s,2.2*s,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,165,0,.3)';
+    ctx.beginPath();ctx.arc(sx,sy,18*s,0,Math.PI*2);ctx.fill();
+  }
+
+  drawPlate(ctx, W, H, s) {
+    if(s < 0.15) return;
+    const pw=28*s, ph=8*s;
+    // TZ plate: white background, black text
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();ctx.roundRect(-pw/2, H*0.22, pw, ph, 1.5*s);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=0.5*s;ctx.stroke();
+    // Blue TZ strip left
+    ctx.fillStyle='#1a3a8a';
+    ctx.beginPath();ctx.roundRect(-pw/2,H*0.22,4*s,ph,[1.5*s,0,0,1.5*s]);ctx.fill();
+    // Plate text
+    ctx.fillStyle='#000';
+    ctx.font=`bold ${5.5*s}px JetBrains Mono`;
+    ctx.textAlign='center';
+    ctx.fillText(this.plate, pw*0.08, H*0.22+ph*0.75);
+  }
+
+  drawAnon(ctx, W, H, s) {
+    if(!faceAnonEnabled || s < 0.28) return;
+    // Pixelate driver face area (windshield region)
+    const fx=-W*0.08, fy=-H*0.45, fw=H*0.28, fh=H*0.24;
+    const px=Math.max(2,~~(fw*0.22));
+    ctx.save();
+    ctx.beginPath();ctx.ellipse(fx,fy+fh/2,fw*0.45,fh*0.55,0,0,Math.PI*2);ctx.clip();
+    for(let bx=fx-fw*0.45;bx<fx+fw*0.45;bx+=px){
+      for(let by=fy;by<fy+fh;by+=px){
+        const sh=90+~~(Math.random()*55);
+        ctx.fillStyle=`rgb(${sh},${sh-8},${sh-15})`;
+        ctx.fillRect(bx,by,px,px);
+      }
+    }
+    ctx.restore();
+    if(s>0.45){
+      ctx.fillStyle='rgba(0,180,100,.85)';
+      ctx.beginPath();ctx.roundRect(W*0.26,-H*0.52,W*0.24,H*0.16,2*s);ctx.fill();
+      ctx.fillStyle='#fff';
+      ctx.font=`bold ${5*s}px monospace`;
+      ctx.textAlign='center';
+      ctx.fillText('ANON',W*0.38,-H*0.42);
+    }
+  }
+
+  lighten(hex,amt){
+    if(!hex||hex[0]!=='#')return hex;
+    const n=parseInt(hex.slice(1),16);
+    const r=Math.min(255,((n>>16)&0xff)+amt);
+    const g=Math.min(255,((n>>8)&0xff)+amt);
+    const b=Math.min(255,(n&0xff)+amt);
+    return `rgb(${r},${g},${b})`;
+  }
+  darken(hex,amt){return this.lighten(hex,-amt);}
 }
 
-// ── FACE ANONYMIZATION TOGGLE ────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  SIMULATION STATE
+// ─────────────────────────────────────────────────────────────
+let currentCam = 0;
+let cars       = [];
+let frameCount = 0;
+let simRunning = true;
+let animFrame;
 let faceAnonEnabled = true;
-function toggleAnon() {
-  faceAnonEnabled = !faceAnonEnabled;
-  const btn = document.getElementById('btn-anon');
-  if (btn) {
-    btn.textContent = faceAnonEnabled ? '🔒 ANON ON' : '👁 ANON OFF';
-    btn.className = faceAnonEnabled ? 'ctrl-btn active' : 'ctrl-btn';
-  }
-}
-
-function lighten(hex, amt) {
-  const n = parseInt(hex.slice(1),16);
-  const r = Math.min(255,((n>>16)&0xff)+amt);
-  const g = Math.min(255,((n>>8)&0xff)+amt);
-  const b = Math.min(255,(n&0xff)+amt);
-  return `rgb(${r},${g},${b})`;
-}
-function darken(hex, amt) { return lighten(hex,-amt); }
-
-// ── Detection logic ───────────────────────────────────────────
+let stats = { detections:0, fines:0, review:0, alerts:0 };
+let evidenceItems = [];
 let detectionCooldown = 0;
 
-function tryDetect() {
-  if (detectionCooldown > 0) { detectionCooldown--; return; }
-  const visible = cars.filter(c => c.progress > 0.4 && c.progress < 0.8 && !c.detected);
-  if (!visible.length || Math.random() > 0.015) return;
+// ─────────────────────────────────────────────────────────────
+//  UI / HUD
+// ─────────────────────────────────────────────────────────────
+function buildSelector(){
+  const sel=document.getElementById('cam-selector');
+  sel.innerHTML=CAMERAS.map((c,i)=>
+    `<button class="cam-btn ${i===0?'active':''}" onclick="switchCam(${i})">${c.id.replace('CAM-DSM-','CAM-')}</button>`
+  ).join('');
+}
+buildSelector();
 
-  const car  = visible[Math.floor(Math.random()*visible.length)];
-  car.detected = true;
-  detectionCooldown = 120;
+function switchCam(i){
+  currentCam=i;
+  cars=[];
+  document.querySelectorAll('.cam-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  updateHUD();
+}
 
-  const cam      = CAMERAS[currentCam];
-  const vType    = pickViolation();
-  const conf     = 0.88 + Math.random()*0.11;
-  const isReview = conf < 0.92;
-  const isAlert  = Math.random() < 0.03;
+function updateHUD(){
+  const cam=CAMERAS[currentCam];
+  document.getElementById('hud-info').innerHTML=
+    `${cam.id}<br>${cam.road}<br>${cam.type}<br>GPS: ${cam.lat}, ${cam.lng}`;
+  document.getElementById('hud-cam-id').textContent=cam.name;
+}
+updateHUD();
+
+function updateClock(){
+  const now=new Date();
+  const ts=now.toLocaleTimeString('en-GB');
+  document.getElementById('clock').textContent=ts;
+  document.getElementById('hud-time').innerHTML=
+    `${now.toLocaleDateString('en-GB')}<br>${ts}<br>REC ●`;
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function toggleSim(){
+  simRunning=!simRunning;
+  const btn=document.getElementById('btn-start');
+  btn.textContent=simRunning?'⏸ Pause':'▶ Resume';
+  btn.className=simRunning?'ctrl-btn active':'ctrl-btn';
+  if(simRunning) render();
+}
+
+function toggleAnon(){
+  faceAnonEnabled=!faceAnonEnabled;
+  const btn=document.getElementById('btn-anon');
+  btn.textContent=faceAnonEnabled?'🔒 ANON ON':'👁 ANON OFF';
+  btn.className=faceAnonEnabled?'ctrl-btn active':'ctrl-btn';
+}
+
+function updateStats(){
+  document.getElementById('s-detections').textContent=stats.detections;
+  document.getElementById('s-fines').textContent=stats.fines;
+  document.getElementById('s-review').textContent=stats.review;
+  document.getElementById('s-alerts').textContent=stats.alerts;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  DETECTION
+// ─────────────────────────────────────────────────────────────
+function tryDetect(){
+  if(detectionCooldown>0){detectionCooldown--;return;}
+  // Only detect cars in lanes coming toward camera (lanes 0,1)
+  const visible=cars.filter(c=>c.dir===1&&c.progress>0.35&&c.progress<0.75&&!c.detected);
+  if(!visible.length||Math.random()>0.018) return;
+
+  const car=visible[~~(Math.random()*visible.length)];
+  car.detected=true;
+  detectionCooldown=100;
+
+  const vType=pickViolation();
+  const conf=0.87+Math.random()*0.12;
+  const isReview=conf<0.92;
+  const isAlert=Math.random()<0.04;
 
   stats.detections++;
-  if (isAlert)       stats.alerts++;
-  else if (isReview) stats.review++;
-  else               stats.fines++;
-
+  if(isAlert) stats.alerts++;
+  else if(isReview) stats.review++;
+  else stats.fines++;
   updateStats();
 
-  // Show detection box
   showDetectionBox(car, conf, isAlert);
-
-  // Add evidence card
   addEvidenceCard(car, vType, conf, isReview, isAlert);
+
+  // Send to RTMS API
+  sendToAPI(car, vType, conf, isAlert);
 }
 
-function showDetectionBox(car, conf, isAlert) {
-  const box   = document.getElementById('detection-box');
-  const label = document.getElementById('plate-label');
-  const clbl  = document.getElementById('conf-label');
-  const {x,y,scale} = car.pos;
-  const W = canvas.width, H = canvas.height;
-  const cw = 80*scale, ch = 40*scale;
+async function sendToAPI(car, vType, conf, isAlert) {
+  const cam=CAMERAS[currentCam];
+  try {
+    await fetch(API+'/violations', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('rtms_token')},
+      body:JSON.stringify({
+        plate_number:car.plate, violation_type:vType,
+        camera_id:cam.id, confidence_score:conf,
+        evidence_image_url:'https://rtms.local/evidence/'+car.plate+'-'+Date.now()+'.jpg',
+        occurred_at:new Date().toISOString()
+      })
+    });
+  } catch(e){}
+}
 
-  box.style.left   = `${x-cw/2}px`;
-  box.style.top    = `${y-ch/2}px`;
-  box.style.width  = `${cw}px`;
-  box.style.height = `${ch}px`;
-  box.style.borderColor = isAlert ? 'var(--red)' : 'var(--green)';
-  box.style.boxShadow   = isAlert ? '0 0 12px rgba(255,34,68,.6)' : '0 0 12px rgba(0,255,136,.5)';
-  label.textContent = car.plate;
-  clbl.textContent  = `CONF: ${(conf*100).toFixed(1)}%`;
+const API='https://rtms-traffic-system.onrender.com';
+
+function showDetectionBox(car, conf, isAlert){
+  const box=document.getElementById('detection-box');
+  const {x,y,scale}=car.pos;
+  let W_=52,H_=24;
+  if(car.type==='bus'||car.type==='truck'){W_=90;H_=32;}
+  else if(car.type==='minibus'){W_=70;H_=30;}
+  else if(car.type==='suv'){W_=58;H_=28;}
+  const cw=W_*scale, ch=(H_+H_*0.4)*scale;
+
+  box.style.left=`${x-cw/2}px`;
+  box.style.top=`${y-ch/2-ch*0.3}px`;
+  box.style.width=`${cw}px`;
+  box.style.height=`${ch}px`;
+  box.style.borderColor=isAlert?'var(--red)':'var(--green)';
+  box.style.boxShadow=isAlert?'0 0 14px rgba(255,34,68,.6)':'0 0 14px rgba(0,255,136,.5)';
+  document.getElementById('plate-label').textContent=car.plate;
+  document.getElementById('conf-label').textContent=`CONF: ${(conf*100).toFixed(1)}%`;
   box.classList.add('show');
-
-  setTimeout(() => box.classList.remove('show'), 2000);
+  setTimeout(()=>box.classList.remove('show'),2500);
 }
 
-function addEvidenceCard(car, vType, conf, isReview, isAlert) {
-  const now  = new Date();
-  const item = {
-    plate:    car.plate,
-    vType,
-    conf,
-    isReview,
-    isAlert,
-    time:     now.toLocaleTimeString('en-GB'),
-    cam:      CAMERAS[currentCam].id,
-    amount:   AMOUNTS[vType] || 50000,
-  };
-  evidenceItems.unshift(item);
-  if (evidenceItems.length > 20) evidenceItems.pop();
+function addEvidenceCard(car, vType, conf, isReview, isAlert){
+  const now=new Date();
+  evidenceItems.unshift({
+    plate:car.plate, vType, conf, isReview, isAlert, type:car.type,
+    time:now.toLocaleTimeString('en-GB'), cam:CAMERAS[currentCam].id,
+    amount:AMOUNTS[vType]||50000, palette:car.palette,
+  });
+  if(evidenceItems.length>20) evidenceItems.pop();
   renderEvidenceList();
 }
 
-function renderEvidenceList() {
-  const list = document.getElementById('evidence-list');
-  if (!evidenceItems.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>';
+function renderEvidenceList(){
+  const list=document.getElementById('evidence-list');
+  if(!evidenceItems.length){
+    list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2);font-size:11px">Waiting for detections...</div>';
     return;
   }
-  list.innerHTML = evidenceItems.map((item,i) => {
-    const badgeCls = item.isAlert ? 'eb-alert' : item.isReview ? 'eb-review' : 'eb-fine';
-    const badgeTxt = item.isAlert ? 'ALERT' : item.isReview ? 'REVIEW' : 'FINE';
-    return `
-    <div class="evidence-card ${item.isAlert?'alert':''}" onclick="openEvidence(${i})">
-      <div class="evidence-img-placeholder">
-        ${renderMiniCar(item)}
-      </div>
+  list.innerHTML=evidenceItems.map((item,i)=>{
+    const bc=item.isAlert?'eb-alert':item.isReview?'eb-review':'eb-fine';
+    const bt=item.isAlert?'ALERT':item.isReview?'REVIEW':'FINE';
+    return `<div class="evidence-card ${item.isAlert?'alert':''}" onclick="openEvidence(${i})">
+      <div class="evidence-img-placeholder">${renderMiniEvidence(item)}</div>
       <div class="evidence-info">
         <div class="evidence-plate">${item.plate}</div>
         <div class="evidence-meta">
           <span class="evidence-type">${item.vType.replace(/_/g,' ')}</span>
-          <span class="evidence-badge ${badgeCls}">${badgeTxt}</span>
+          <span class="evidence-badge ${bc}">${bt}</span>
         </div>
-        <div class="evidence-time">${item.time} &bull; ${item.cam} &bull; TZS ${item.amount.toLocaleString()}</div>
+        <div class="evidence-time">${item.time} · ${item.cam} · TZS ${item.amount.toLocaleString()}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-function renderMiniCar(item) {
-  // SVG mini car evidence frame
-  const color = CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)];
-  return `<svg width="100%" height="100" viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="300" height="100" fill="#0a1218"/>
-    <!-- Road -->
-    <rect x="0" y="65" width="300" height="35" fill="#141820"/>
-    <line x1="150" y1="65" x2="150" y2="100" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="8,6"/>
+function renderMiniEvidence(item){
+  const c=item.palette?.body||'#2a4a6a';
+  const g=item.palette?.glass||'rgba(100,180,220,.4)';
+  return `<svg width="100%" height="90" viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+    <rect width="280" height="90" fill="#050a0f"/>
+    <rect x="0" y="50" width="280" height="40" fill="#111520"/>
+    <line x1="140" y1="50" x2="140" y2="90" stroke="#ffb800" stroke-width="1.5"/>
+    <line x1="90" y1="50" x2="90" y2="90" stroke="rgba(255,255,255,.2)" stroke-width="1" stroke-dasharray="5,5"/>
+    <line x1="190" y1="50" x2="190" y2="90" stroke="rgba(255,255,255,.2)" stroke-width="1" stroke-dasharray="5,5"/>
     <!-- Car body -->
-    <rect x="90" y="38" width="120" height="38" rx="6" fill="${color}"/>
-    <!-- Windshield -->
-    <rect x="118" y="40" width="64" height="22" rx="3" fill="rgba(100,200,255,0.3)"/>
+    <rect x="85" y="34" width="110" height="30" rx="4" fill="${c}"/>
+    <rect x="100" y="28" width="80" height="24" rx="3" fill="${c}"/>
+    <rect x="104" y="30" width="72" height="18" rx="2" fill="${g}"/>
     <!-- Wheels -->
-    <circle cx="110" cy="76" r="10" fill="#0a0a0a"/><circle cx="110" cy="76" r="5" fill="#222"/>
-    <circle cx="190" cy="76" r="10" fill="#0a0a0a"/><circle cx="190" cy="76" r="5" fill="#222"/>
+    <ellipse cx="103" cy="64" rx="9" ry="5" fill="#0a0a0c"/>
+    <ellipse cx="177" cy="64" rx="9" ry="5" fill="#0a0a0c"/>
     <!-- Plate -->
-    <rect x="126" y="66" width="48" height="14" fill="white" rx="2"/>
-    <text x="150" y="76.5" fill="#000" font-size="8" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
-    <!-- Detection box -->
-    <rect x="118" y="58" width="64" height="18" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="2"/>
-    <!-- Scanlines -->
-    <rect x="0" y="0" width="300" height="100" fill="url(#scan)" opacity="0.1"/>
-    <!-- Timestamp -->
-    <text x="8" y="14" fill="#00d4ff" font-size="7" font-family="JetBrains Mono" opacity="0.8">${item.time}</text>
-    <text x="8" y="24" fill="#00ff88" font-size="7" font-family="JetBrains Mono" opacity="0.8">${item.cam}</text>
-    <text x="292" y="14" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="7" font-family="JetBrains Mono" text-anchor="end" opacity="0.8">CONF ${(item.conf*100).toFixed(0)}%</text>
+    <rect x="115" y="54" width="50" height="12" fill="white" rx="1"/>
+    <rect x="115" y="54" width="6" height="12" fill="#1a3a8a" rx="1"/>
+    <text x="143" y="63" fill="#000" font-size="7" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
+    <!-- Detection -->
+    <rect x="100" y="46" width="80" height="22" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="2"/>
+    <rect x="102" y="48" width="76" height="18" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="0.8" opacity=".5"/>
+    <rect x="100" y="37" width="80" height="9" fill="${item.isAlert?'rgba(255,34,68,.8)':'rgba(0,255,136,.8)'}"/>
+    <text x="140" y="44" fill="#000" font-size="6" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">PLATE DETECTED</text>
+    <!-- HUD -->
+    <text x="4" y="11" fill="#00d4ff" font-size="6.5" font-family="JetBrains Mono" opacity=".8">${item.cam}</text>
+    <text x="4" y="20" fill="#00ff88" font-size="6" font-family="JetBrains Mono" opacity=".8">${item.time}</text>
+    <text x="276" y="11" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="6.5" font-family="JetBrains Mono" text-anchor="end" opacity=".9">CONF ${(item.conf*100).toFixed(0)}%</text>
+    <!-- Corners -->
+    <path d="M1,1 L1,8 M1,1 L8,1" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity=".5"/>
+    <path d="M279,1 L279,8 M279,1 L272,1" stroke="#00d4ff" stroke-width="1.5" fill="none" opacity=".5"/>
   </svg>`;
 }
 
-function updateStats() {
-  document.getElementById('s-detections').textContent = stats.detections;
-  document.getElementById('s-fines').textContent      = stats.fines;
-  document.getElementById('s-review').textContent     = stats.review;
-  document.getElementById('s-alerts').textContent     = stats.alerts;
-}
-
-// ── Evidence modal ────────────────────────────────────────────
-function openEvidence(i) {
-  const item = evidenceItems[i];
-  if (!item) return;
-
-  document.getElementById('modal-title').textContent = `Evidence — ${item.plate}`;
-
-  const imgWrap = document.getElementById('modal-img-wrap');
-  imgWrap.innerHTML = `
-    <svg width="100%" height="280" viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg">
-      <rect width="600" height="280" fill="#080c10"/>
+// ─────────────────────────────────────────────────────────────
+//  EVIDENCE MODAL
+// ─────────────────────────────────────────────────────────────
+function openEvidence(i){
+  const item=evidenceItems[i];
+  if(!item) return;
+  const cam=CAMERAS[currentCam];
+  const c=item.palette?.body||'#2a4a6a';
+  const g=item.palette?.glass||'rgba(100,180,220,.4)';
+  document.getElementById('modal-title').textContent=`Evidence — ${item.plate}`;
+  document.getElementById('modal-img-wrap').innerHTML=`
+    <svg width="100%" height="260" viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="260" fill="#060a10"/>
       <!-- Sky -->
-      <rect width="600" height="140" fill="#0a0e14"/>
-      <!-- Road -->
-      <rect x="0" y="140" width="600" height="140" fill="#111620"/>
-      <rect x="50" y="140" width="500" height="140" fill="#141820"/>
-      <!-- Road lines -->
-      <line x1="300" y1="140" x2="300" y2="280" stroke="#ffb800" stroke-width="2" stroke-dasharray="20,15"/>
-      <line x1="180" y1="140" x2="180" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="12,18"/>
-      <line x1="420" y1="140" x2="420" y2="280" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="12,18"/>
+      <rect width="600" height="110" fill="#080d16"/>
+      <!-- Stars -->
+      <circle cx="50" cy="30" r="1" fill="rgba(255,255,255,.5)"/>
+      <circle cx="150" cy="20" r="1" fill="rgba(255,255,255,.4)"/>
+      <circle cx="400" cy="40" r="1" fill="rgba(255,255,255,.5)"/>
+      <circle cx="500" cy="15" r="1.2" fill="rgba(255,255,255,.6)"/>
       <!-- Buildings -->
-      <rect x="10" y="80" width="60" height="60" fill="#060a0e"/>
-      <rect x="80" y="95" width="50" height="45" fill="#060a0e"/>
-      <rect x="460" y="75" width="70" height="65" fill="#060a0e"/>
-      <rect x="540" y="90" width="55" height="50" fill="#060a0e"/>
-      <!-- Car -->
-      <rect x="220" y="155" width="160" height="70" rx="8" fill="${CAR_COLORS[Math.floor(Math.random()*CAR_COLORS.length)]}"/>
-      <rect x="252" y="158" width="96" height="38" rx="4" fill="rgba(100,200,255,0.25)"/>
-      <circle cx="245" cy="225" r="16" fill="#0a0a0a"/><circle cx="245" cy="225" r="8" fill="#1a1a1a"/>
-      <circle cx="355" cy="225" r="16" fill="#0a0a0a"/><circle cx="355" cy="225" r="8" fill="#1a1a1a"/>
+      <rect x="10" y="60" width="55" height="50" fill="#060a0e"/>
+      <rect x="70" y="70" width="45" height="40" fill="#060a0e"/>
+      <rect x="480" y="55" width="60" height="55" fill="#060a0e"/>
+      <rect x="545" y="65" width="50" height="45" fill="#060a0e"/>
+      <!-- Road -->
+      <rect x="0" y="110" width="600" height="150" fill="#121620"/>
+      <rect x="30" y="110" width="540" height="150" fill="#161a24"/>
+      <!-- Lane markings -->
+      <line x1="300" y1="110" x2="300" y2="260" stroke="#ffb800" stroke-width="3"/>
+      <line x1="296" y1="110" x2="296" y2="260" stroke="#ffb800" stroke-width="1.5" stroke-dasharray="0" opacity=".6"/>
+      <line x1="304" y1="110" x2="304" y2="260" stroke="#ffb800" stroke-width="1.5" opacity=".6"/>
+      <!-- Lane dashes -->
+      <line x1="165" y1="110" x2="165" y2="260" stroke="rgba(255,255,255,.4)" stroke-width="1.5" stroke-dasharray="14,10"/>
+      <line x1="435" y1="110" x2="435" y2="260" stroke="rgba(255,255,255,.4)" stroke-width="1.5" stroke-dasharray="14,10"/>
+      <!-- Edge lines -->
+      <line x1="32" y1="110" x2="32" y2="260" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+      <line x1="568" y1="110" x2="568" y2="260" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+      <!-- Car body -->
+      <rect x="190" y="130" width="220" height="80" rx="8" fill="${c}"/>
+      <rect x="225" y="118" width="150" height="60" rx="6" fill="${c}"/>
+      <rect x="232" y="122" width="136" height="50" rx="4" fill="${g}"/>
+      <!-- Car highlight -->
+      <rect x="232" y="122" width="50" height="12" rx="3" fill="rgba(255,255,255,.12)"/>
+      <!-- Wheels -->
+      <ellipse cx="228" cy="210" rx="22" ry="12" fill="#0a0a0c"/>
+      <ellipse cx="228" cy="210" rx="13" ry="7" fill="#1c1c22"/>
+      <ellipse cx="372" cy="210" rx="22" ry="12" fill="#0a0a0c"/>
+      <ellipse cx="372" cy="210" rx="13" ry="7" fill="#1c1c22"/>
+      <!-- Headlights -->
+      <ellipse cx="194" cy="162" rx="8" ry="5" fill="rgba(255,245,200,.9)"/>
+      <circle cx="194" cy="162" r="20" fill="rgba(255,240,180,.1)"/>
       <!-- Plate -->
-      <rect x="260" y="206" width="80" height="22" fill="white" rx="3"/>
-      <text x="300" y="221" fill="#000" font-size="12" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
+      <rect x="255" y="196" width="90" height="18" fill="white" rx="2"/>
+      <rect x="255" y="196" width="10" height="18" fill="#1a3a8a" rx="2"/>
+      <text x="305" y="209" fill="#000" font-size="11" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">${item.plate}</text>
       <!-- Detection boxes -->
-      <rect x="252" y="196" width="96" height="36" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="3" opacity="0.9"/>
-      <rect x="256" y="200" width="88" height="28" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="1" opacity="0.4"/>
-      <!-- Label -->
-      <rect x="252" y="178" width="96" height="16" fill="${item.isAlert?'rgba(255,34,68,0.8)':'rgba(0,255,136,0.8)'}"/>
-      <text x="300" y="189" fill="#000" font-size="9" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">PLATE DETECTED</text>
-      <!-- HUD -->
-      <text x="10" y="20" fill="#00d4ff" font-size="9" font-family="JetBrains Mono">${item.cam} | ${CAMERAS[currentCam].name}</text>
-      <text x="10" y="32" fill="#00ff88" font-size="9" font-family="JetBrains Mono">${item.time} | ${new Date().toLocaleDateString('en-GB')}</text>
-      <text x="590" y="20" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="9" font-family="JetBrains Mono" text-anchor="end">CONF: ${(item.conf*100).toFixed(1)}%</text>
-      <text x="590" y="32" fill="#ffb800" font-size="9" font-family="JetBrains Mono" text-anchor="end">${item.vType.replace(/_/g,' ')}</text>
-      <!-- Corner brackets -->
-      <path d="M2,2 L2,20 M2,2 L20,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M598,2 L598,20 M598,2 L580,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M2,278 L2,260 M2,278 L20,278" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
-      <path d="M598,278 L598,260 M598,278 L580,278" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+      <rect x="226" y="188" width="148" height="30" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="3" opacity=".9"/>
+      <rect x="224" y="114" width="152" height="112" fill="none" stroke="${item.isAlert?'#ff2244':'#00ff88'}" stroke-width="1.5" opacity=".4"/>
+      <!-- Label tag -->
+      <rect x="226" y="168" width="148" height="18" fill="${item.isAlert?'rgba(255,34,68,.85)':'rgba(0,255,136,.85)'}"/>
+      <text x="300" y="180" fill="#000" font-size="9" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">▶ PLATE DETECTED</text>
+      <!-- Camera pole -->
+      <line x1="300" y1="110" x2="300" y2="58" stroke="rgba(100,130,160,.5)" stroke-width="3"/>
+      <line x1="230" y1="62" x2="370" y2="62" stroke="rgba(100,130,160,.5)" stroke-width="2"/>
+      <rect x="248" y="56" width="16" height="10" rx="2" fill="#1a2530" stroke="rgba(0,212,255,.4)" stroke-width="1"/>
+      <rect x="292" y="56" width="16" height="10" rx="2" fill="#1a2530" stroke="rgba(0,212,255,.4)" stroke-width="1"/>
+      <rect x="336" y="56" width="16" height="10" rx="2" fill="#1a2530" stroke="rgba(0,212,255,.4)" stroke-width="1"/>
+      <!-- HUD overlays -->
+      <text x="8" y="16" fill="#00d4ff" font-size="9" font-family="JetBrains Mono" opacity=".9">${cam.id} | ${cam.name}</text>
+      <text x="8" y="28" fill="#00ff88" font-size="9" font-family="JetBrains Mono" opacity=".9">${item.time} | ${new Date().toLocaleDateString('en-GB')}</text>
+      <text x="592" y="16" fill="${item.isAlert?'#ff2244':'#00ff88'}" font-size="9" font-family="JetBrains Mono" text-anchor="end" opacity=".9">CONF: ${(item.conf*100).toFixed(1)}%</text>
+      <text x="592" y="28" fill="#ffb800" font-size="9" font-family="JetBrains Mono" text-anchor="end" opacity=".9">${item.vType.replace(/_/g,' ')}</text>
+      <!-- Corners -->
+      <path d="M2,2 L2,18 M2,2 L18,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity=".6"/>
+      <path d="M598,2 L598,18 M598,2 L582,2" stroke="#00d4ff" stroke-width="2" fill="none" opacity=".6"/>
+      <path d="M2,258 L2,242 M2,258 L18,258" stroke="#00d4ff" stroke-width="2" fill="none" opacity=".6"/>
+      <path d="M598,258 L598,242 M598,258 L582,258" stroke="#00d4ff" stroke-width="2" fill="none" opacity=".6"/>
       <!-- Scanlines -->
-      <rect width="600" height="280" fill="rgba(0,20,10,0.08)" style="background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px)"/>
+      <rect width="600" height="260" fill="rgba(0,0,0,.06)" style="background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px)"/>
+      <!-- ANON badge if enabled -->
+      ${faceAnonEnabled?`<rect x="232" y="118" width="40" height="14" fill="rgba(0,180,100,.8)" rx="2"/>
+      <text x="252" y="128" fill="white" font-size="7" font-family="JetBrains Mono" text-anchor="middle" font-weight="bold">ANON</text>`:''}
     </svg>`;
 
-  document.getElementById('modal-details').innerHTML = `
+  document.getElementById('modal-details').innerHTML=`
     <div class="modal-detail"><div class="modal-detail-label">Plate Number</div><div class="modal-detail-value">${item.plate}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Violation</div><div class="modal-detail-value amber">${item.vType.replace(/_/g,' ')}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Vehicle Type</div><div class="modal-detail-value">${item.type.toUpperCase()}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Camera</div><div class="modal-detail-value">${item.cam}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Confidence</div><div class="modal-detail-value ${item.conf>=0.92?'green':'amber'}">${(item.conf*100).toFixed(1)}%</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Time</div><div class="modal-detail-value">${item.time}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Fine Amount</div><div class="modal-detail-value green">TZS ${item.amount.toLocaleString()}</div></div>
     <div class="modal-detail"><div class="modal-detail-label">Status</div><div class="modal-detail-value ${item.isAlert?'red':item.isReview?'amber':'green'}">${item.isAlert?'POLICE ALERT':item.isReview?'NEEDS REVIEW':'FINE ISSUED'}</div></div>
-    <div class="modal-detail"><div class="modal-detail-label">Location</div><div class="modal-detail-value">${CAMERAS[currentCam].name}</div></div>`;
+    <div class="modal-detail"><div class="modal-detail-label">Location</div><div class="modal-detail-value">${cam.name}</div></div>
+    <div class="modal-detail"><div class="modal-detail-label">Face Anonymized</div><div class="modal-detail-value green">${faceAnonEnabled?'YES — PDPA 2022':' OFF'}</div></div>`;
 
   document.getElementById('evidence-modal').classList.add('open');
 }
 
-function closeModal() {
+function closeModal(){
   document.getElementById('evidence-modal').classList.remove('open');
 }
-
-document.getElementById('evidence-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('evidence-modal')) closeModal();
+document.getElementById('evidence-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('evidence-modal')) closeModal();
 });
 
-// ── Main render loop ──────────────────────────────────────────
-function spawnCar() {
-  if (cars.length < 6 && Math.random() < 0.02) {
-    cars.push(new Car(canvas.width, canvas.height, canvas.height * 0.42));
+// ─────────────────────────────────────────────────────────────
+//  SPAWN LOGIC — ensure cars in all 4 lanes
+// ─────────────────────────────────────────────────────────────
+const LANE_SPAWN_INTERVALS = [0,1,2,3].map(()=>0);
+
+function spawnCars(){
+  // Target: 1-2 cars per lane, staggered
+  for(let lane=0;lane<4;lane++){
+    LANE_SPAWN_INTERVALS[lane]--;
+    if(LANE_SPAWN_INTERVALS[lane]>0) continue;
+
+    const carsInLane = cars.filter(c=>c.lane===lane).length;
+    if(carsInLane >= 2) { LANE_SPAWN_INTERVALS[lane]=40; continue; }
+
+    // Check minimum spacing in this lane
+    const sameDir = (lane<2) ? cars.filter(c=>c.lane===lane&&c.dir===1) : cars.filter(c=>c.lane===lane&&c.dir===-1);
+    const tooClose = sameDir.some(c => {
+      const dist = (lane<2) ? c.progress : (1-c.progress);
+      return dist < 0.12;
+    });
+    if(tooClose) { LANE_SPAWN_INTERVALS[lane]=20; continue; }
+
+    const car = new Car();
+    car.lane = lane;
+    car.dir  = lane<2 ? 1 : -1;
+    car.isOvertaking = (lane===1||lane===3);
+    if(car.dir===1) car.progress=0.01+Math.random()*0.05;
+    else            car.progress=0.92+Math.random()*0.05;
+    cars.push(car);
+    LANE_SPAWN_INTERVALS[lane] = 60 + ~~(Math.random()*80);
   }
 }
 
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// ─────────────────────────────────────────────────────────────
+//  MAIN RENDER LOOP
+// ─────────────────────────────────────────────────────────────
+function render(){
+  if(!simRunning) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   drawRoad();
 
-  // Sort cars by progress (far to near)
-  cars.sort((a,b) => a.progress - b.progress);
+  // Sort: far cars drawn first (smaller scale = further)
+  cars.sort((a,b)=>a.progress-b.progress);
+  cars.forEach(c=>c.draw(ctx));
+  cars=cars.filter(c=>c.update());
 
-  cars.forEach(c => c.draw(ctx));
-  cars = cars.filter(c => c.update());
-
-  spawnCar();
+  spawnCars();
   tryDetect();
   frameCount++;
-  animFrame = requestAnimationFrame(render);
+  animFrame=requestAnimationFrame(render);
+}
+
+// Initial spawn — put cars in all lanes from start
+for(let lane=0;lane<4;lane++){
+  const car=new Car();
+  car.lane=lane;
+  car.dir=lane<2?1:-1;
+  car.isOvertaking=(lane===1||lane===3);
+  car.progress=lane<2?(0.2+lane*0.15):(0.6+lane*0.1);
+  cars.push(car);
 }
 
 render();
