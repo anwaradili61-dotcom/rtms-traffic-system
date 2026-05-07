@@ -41,8 +41,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .ctrl-btn.active{background:var(--green-dim);border-color:var(--green);color:var(--green)}
 .back-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:4px 10px;font-size:10px;cursor:pointer;text-decoration:none;transition:all .15s;font-family:var(--mono)}
 .back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.main{display:grid;grid-template-columns:1fr 300px;overflow:hidden}
-.feed-wrap{position:relative;background:#000;overflow:hidden}
+.main{display:grid;grid-template-columns:1fr 300px;overflow:hidden;height:100%;min-height:0}
+.feed-wrap{position:relative;background:#000;overflow:hidden;height:100%;min-height:0}
 .cam-canvas{width:100%;height:100%;display:block}
 .cam-overlay{position:absolute;inset:0;pointer-events:none}
 .hud-corner{position:absolute;width:22px;height:22px;border-color:var(--cyan);border-style:solid;opacity:.5}
@@ -65,7 +65,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .signs-bar{position:absolute;bottom:50px;left:50%;transform:translateX(-50%);display:flex;gap:8px;pointer-events:none}
 .road-sign{background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:3px 8px;font-size:9px;color:var(--amber);font-family:var(--mono);white-space:nowrap;letter-spacing:.05em}
 /* right panel */
-.right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.right-panel{background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;height:100%;min-height:0}
 .panel-section{padding:12px 14px;border-bottom:1px solid var(--border)}
 .panel-title{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:10px}
 .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
@@ -1502,22 +1502,58 @@ const API='https://rtms-traffic-system.onrender.com';
 const ownerCache = new Map();
 
 async function lookupOwner(plate) {
+  // Return cached result instantly (even if null — stops repeated calls)
   if (ownerCache.has(plate)) return ownerCache.get(plate);
+
+  // Mark as in-flight immediately to prevent duplicate concurrent lookups
+  ownerCache.set(plate, null);
+
+  let info = null;
   try {
-    const r = await fetch(API + '/portal/fines?plate=' + encodeURIComponent(plate));
-    if (!r.ok) throw new Error();
-    const d = await r.json();
-    const fines = d?.data || [];
-    const info = fines.length ? {
-      name:   fines[0].owner_name  || 'Unknown',
-      phone:  fines[0].owner_phone || '—',
-      make:   fines[0].make        || '',
-      model:  fines[0].model       || '',
-      color:  fines[0].color       || '',
-    } : null;
-    if (info) ownerCache.set(plate, info);
-    return info;
-  } catch(e) { return null; }
+    // Try /portal/fines first — has owner_name even if plate has no outstanding fines
+    const r = await fetch(API + '/portal/fines?plate=' + encodeURIComponent(plate),
+      { headers: { 'Content-Type': 'application/json' } });
+    if (r.ok) {
+      const d = await r.json();
+      const rows = d?.data || [];
+      if (rows.length && rows[0].owner_name) {
+        info = {
+          name:  rows[0].owner_name,
+          phone: rows[0].owner_phone || '—',
+          make:  rows[0].make  || '',
+          model: rows[0].model || '',
+          color: rows[0].color || '',
+        };
+      }
+    }
+  } catch(e) {}
+
+  // Fallback: try /vehicles?plate= (staff endpoint — works if token present)
+  if (!info) {
+    try {
+      const tok = localStorage.getItem('rtms_token') || '';
+      const r2  = await fetch(API + '/vehicles?plate=' + encodeURIComponent(plate),
+        { headers: tok ? { Authorization: 'Bearer ' + tok } : {} });
+      if (r2.ok) {
+        const d2 = await r2.json();
+        const rows2 = d2?.data || (Array.isArray(d2) ? d2 : []);
+        const match = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
+        if (match && match.owner_name) {
+          info = {
+            name:  match.owner_name,
+            phone: match.owner_phone || '—',
+            make:  match.make  || '',
+            model: match.model || '',
+            color: match.color || '',
+          };
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Cache result (info or null) so we never re-query the same plate
+  ownerCache.set(plate, info);
+  return info;
 }
 
 function showDetectionBox(car, conf, isAlert){
@@ -1573,18 +1609,17 @@ function addEvidenceCard(car, vType, conf, isReview, isAlert){
     scanSide: car.dir===1 ? 'FRONT' : 'REAR', // cars toward camera = front plate; away = rear plate
   };
   evidenceItems.unshift(item);
-  // Async enrich with owner info
+  // Async enrich with owner info — always re-render when done
   lookupOwner(car.plate).then(info => {
-    if (info) {
-      item.owner = info.name;
-      item.ownerPhone = info.phone;
-      item.make  = info.make;
-      item.model = info.model;
-      item.color = info.color;
-      renderEvidenceList(); // refresh panel
-    } else {
-      item.owner = 'Not registered';
-    }
+    item.owner      = info ? info.name  : 'Not registered';
+    item.ownerPhone = info ? info.phone : '—';
+    item.make       = info ? info.make  : '';
+    item.model      = info ? info.model : '';
+    item.color      = info ? info.color : '';
+    renderEvidenceList(); // always refresh, even if not found
+  }).catch(() => {
+    item.owner = 'Lookup failed';
+    renderEvidenceList();
   });
   if(evidenceItems.length>20) evidenceItems.pop();
   renderEvidenceList();
@@ -1824,44 +1859,30 @@ function initCars() {
   }
 }
 
-// ── SAFE STARTUP ─────────────────────────────────────────────
-// Defer until layout is painted so canvas has real dimensions.
-// Use ResizeObserver so it also restarts correctly on window resize.
-let _started = false;
+// ── STARTUP ──────────────────────────────────────────────────
+// With height:100% on .main and .feed-wrap, canvas now gets real
+// dimensions as soon as the browser does its first layout.
+// We start after the first rAF so the layout pass is complete.
 
-function safeStart() {
+function doStart() {
   const wrap = canvas.parentElement;
-  const W = wrap.clientWidth;
-  const H = wrap.clientHeight;
-  if(!W || !H) return; // layout not ready yet
-  canvas.width  = W;
-  canvas.height = H;
-  if(!_started) {
-    _started = true;
-    initCars();
-    if(simRunning) render();
+  canvas.width  = wrap.clientWidth  || 900;
+  canvas.height = wrap.clientHeight || 520;
+  initCars();
+  render();
+}
+
+// Handle window resize — resize canvas without restarting loop
+window.addEventListener('resize', () => {
+  const wrap = canvas.parentElement;
+  if(wrap.clientWidth && wrap.clientHeight){
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
   }
-}
+});
 
-// ResizeObserver fires when element gets real size
-if(window.ResizeObserver) {
-  const ro = new ResizeObserver(() => {
-    const wrap = canvas.parentElement;
-    if(wrap.clientWidth && wrap.clientHeight) {
-      canvas.width  = wrap.clientWidth;
-      canvas.height = wrap.clientHeight;
-      if(!_started) { _started=true; initCars(); if(simRunning) render(); }
-    }
-  });
-  ro.observe(canvas.parentElement);
-} else {
-  // Fallback: try every 50ms until layout is ready
-  const poll = setInterval(()=>{ safeStart(); if(_started) clearInterval(poll); }, 50);
-}
-
-// Also try immediately and via rAF
-safeStart();
-requestAnimationFrame(safeStart);
+// Start after first paint so CSS layout is resolved
+requestAnimationFrame(() => requestAnimationFrame(doStart));
 </script>
 </body>
 </html>

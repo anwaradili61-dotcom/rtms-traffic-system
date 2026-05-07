@@ -1243,14 +1243,91 @@ async function pollAlerts() {
             details:    v.details    || {},
           }));
         })(),
-        ownerName:   '',
-        vehicleDesc: '',
+        ownerName:   a.owner_name   || a.vehicle?.owner_name || '',
+        vehicleDesc: a.vehicle_desc || [a.vehicle?.make, a.vehicle?.model, a.vehicle?.color].filter(Boolean).join(' ') || '',
+        ownerPhone:  a.owner_phone  || a.vehicle?.owner_phone || '',
         location:    { direction: a.direction || 'UNKNOWN' },
         time:        a.created_at,
       });
+      // Async enrich owner if not already set
+      const lastPushed = alertQueue[alertQueue.length - 1];
+      if (lastPushed && !lastPushed.ownerName) {
+        fetchAlertOwner(lastPushed);
+      }
     });
     updateQueueBadge();
     if (!alertShowing) showNextAlert();
+  }
+}
+
+// Fetch owner info for an alert and update popup if it's showing
+const _alertOwnerCache = new Map();
+async function fetchAlertOwner(alertObj) {
+  const plate = alertObj.plateNumber;
+  if (!plate) return;
+  if (_alertOwnerCache.has(plate)) {
+    alertObj.ownerName   = _alertOwnerCache.get(plate).name   || '';
+    alertObj.vehicleDesc = _alertOwnerCache.get(plate).vehicle || '';
+    alertObj.ownerPhone  = _alertOwnerCache.get(plate).phone   || '';
+    refreshAlertPopupOwner(alertObj);
+    return;
+  }
+  try {
+    // Try portal/fines first (no auth needed)
+    const r = await fetch(API + '/portal/fines?plate=' + encodeURIComponent(plate));
+    if (r.ok) {
+      const d = await r.json();
+      const rows = d?.data || [];
+      if (rows.length) {
+        const v = rows[0];
+        const info = {
+          name:    v.owner_name  || '',
+          phone:   v.owner_phone || '',
+          vehicle: [v.make, v.model, v.color].filter(Boolean).join(' '),
+        };
+        _alertOwnerCache.set(plate, info);
+        alertObj.ownerName   = info.name;
+        alertObj.vehicleDesc = info.vehicle;
+        alertObj.ownerPhone  = info.phone;
+        refreshAlertPopupOwner(alertObj);
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback: vehicles endpoint with token
+  try {
+    const r2 = await apiFetch('/vehicles?plate=' + encodeURIComponent(plate));
+    const rows2 = r2?.data || [];
+    const match = (Array.isArray(rows2) ? rows2 : []).find(
+      v => (v.plate_number||'').toUpperCase() === plate.toUpperCase()
+    );
+    if (match) {
+      const info = {
+        name:    match.owner_name  || '',
+        phone:   match.owner_phone || '',
+        vehicle: [match.make, match.model, match.color].filter(Boolean).join(' '),
+      };
+      _alertOwnerCache.set(plate, info);
+      alertObj.ownerName   = info.name;
+      alertObj.vehicleDesc = info.vehicle;
+      alertObj.ownerPhone  = info.phone;
+      refreshAlertPopupOwner(alertObj);
+    }
+  } catch(e) {}
+}
+
+function refreshAlertPopupOwner(alertObj) {
+  // If this alert is the one currently showing, update the owner row
+  const popup = document.getElementById('alert-popup');
+  if (!popup || !popup.classList.contains('show')) return;
+  if (!window._lastAlert || window._lastAlert.plateNumber !== alertObj.plateNumber) return;
+  // Update the owner element if it exists in the popup
+  const ownerEl = document.getElementById('alert-owner-row');
+  if (ownerEl && alertObj.ownerName) {
+    ownerEl.innerHTML = '👤 ' + alertObj.ownerName +
+      (alertObj.vehicleDesc ? ' &bull; ' + alertObj.vehicleDesc : '') +
+      (alertObj.ownerPhone  ? ' &bull; ' + alertObj.ownerPhone : '');
+    ownerEl.style.display = '';
   }
 }
 
@@ -1324,6 +1401,7 @@ function renderAlertPopup(alert) {
 
   document.getElementById("alert-popup-body").innerHTML=
     `<div class="alert-plate" style="cursor:pointer" onclick="openAlertDetail(window._lastAlert)" title="Click for full details">${alert.plateNumber||"UNKNOWN"} <span style="font-size:11px;opacity:.6">tap for details</span></div>`+
+    `<div id="alert-owner-row" style="font-size:11px;color:rgba(255,255,255,.7);padding:4px 0 6px;font-family:var(--mono);${alert.ownerName?'':'display:none'}">${alert.ownerName?'👤 '+alert.ownerName+(alert.vehicleDesc?' &bull; '+alert.vehicleDesc:'')+(alert.ownerPhone?' &bull; '+alert.ownerPhone:''):''}</div>`+
     (vHtml?`<div class="alert-violations">${vHtml}</div>`:'<div class="alert-violations"><div class="alert-violation"><div class="alert-violation-icon">⚠️</div><div><div class="alert-violation-text">Integration violation detected</div></div></div></div>')+
     `<div class="alert-meta">📡 ${cam.name} &bull; ➡ ${direction} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
     `<div class="alert-actions">
@@ -1439,6 +1517,7 @@ function openAlertDetail(alert) {
       <div style="text-align:center">
         <div style="font-family:var(--head);font-size:36px;font-weight:800;color:#fff;letter-spacing:4px;background:rgba(255,255,255,.08);border-radius:8px;padding:12px;margin-bottom:8px">${alert.plateNumber||"UNKNOWN"}</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);font-family:var(--mono)">Detected at ${new Date(alert.time||Date.now()).toLocaleString()}</div>
+      ${alert.ownerName ? `<div style="margin-top:8px;font-size:13px;color:rgba(255,255,255,.8);font-family:var(--mono)">👤 ${alert.ownerName}${alert.vehicleDesc?' &bull; '+alert.vehicleDesc:''}${alert.ownerPhone?' &bull; '+alert.ownerPhone:''}</div>` : ''}
       </div>
     </div>
 
