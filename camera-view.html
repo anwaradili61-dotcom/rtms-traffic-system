@@ -163,11 +163,12 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
       <!-- Lane rules overlay -->
       <div class="lane-rules" id="lane-rules-panel">
         <div class="lane-rules-title">🚦 Lane Rules — TZ</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#3a7a3a"></div>Left carriageway: vehicles away</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#3a5a8a"></div>Right carriageway: toward camera</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#ff2244"></div>Keep LEFT rule enforced</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#8a7a1a"></div>Right lane: overtaking only</div>
-        <div class="lr-row"><div class="lr-dot" style="background:#ffb800"></div>No overtaking on solid centre line</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a7a3a"></div>Left: L0/L1 — away from camera</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#e06020"></div>Centre: DART BRT corridor</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#3a5a8a"></div>Right: L2/L3 — toward camera</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ff2244"></div>Keep LEFT — slow lane always</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#8a7a1a"></div>Right lane: overtake &amp; return</div>
+        <div class="lr-row"><div class="lr-dot" style="background:#ffb800"></div>BRT: buses only, no entry</div>
       </div>
     </div>
   </div>
@@ -264,14 +265,21 @@ const CAR_PALETTES = [
 //  traffic camera angle used across East Africa
 // ─────────────────────────────────────────────────────────────
 
-// The road has 4 lanes: 2 lanes each direction (dual carriageway)
-// Lane assignments (left-hand traffic — Tanzania drives on the LEFT):
-//   Lanes 0,1: LEFT carriageway  — vehicles travel top-to-bottom (toward camera)
-//   Lanes 2,3: RIGHT carriageway — vehicles travel bottom-to-top (away from camera)
-// Lane 0 = left carriageway left lane  (normal/slow lane — keep left rule)
-// Lane 1 = left carriageway right lane (overtaking lane)
-// Lane 2 = right carriageway left lane (normal/slow lane)
-// Lane 3 = right carriageway right lane (overtaking lane)
+// ─── ROAD LAYOUT ─────────────────────────────────────────────
+// 6 traffic lanes + BRT centre corridor (DART Dar es Salaam)
+// Left-hand traffic — Tanzania drives on the LEFT
+//
+// [shoulder] L0 | L1 || BRT-L | BRT-R || L2 | L3 [shoulder]
+//
+// L0  (lane 0): Left carriageway slow lane      — away from camera
+// L1  (lane 1): Left carriageway overtaking     — away from camera
+// BRT-L (lane 4): DART BRT left track           — away from camera
+// BRT-R (lane 5): DART BRT right track          — toward camera
+// L2  (lane 2): Right carriageway slow lane     — toward camera
+// L3  (lane 3): Right carriageway overtaking    — toward camera
+//
+// Centre BRT corridor is raised/painted and reserved for DART buses only
+// ─────────────────────────────────────────────────────────────
 
 const canvas = document.getElementById('cam-canvas');
 const ctx    = canvas.getContext('2d');
@@ -303,20 +311,31 @@ function perspective(roadX, depth) {
 // Lane center X positions at the bottom of canvas (ground level)
 // Road occupies 80% of canvas width, centered
 // 4 lanes + center divider + shoulders
-function getLaneX(lane, W) {
-  const roadL  = W * 0.08;  // left shoulder edge
-  const roadR  = W * 0.92;  // right shoulder edge
+// Road geometry constants — called by multiple functions
+function getRoadGeometry(W) {
+  const roadL  = W * 0.06;   // left shoulder edge
+  const roadR  = W * 0.94;   // right shoulder edge
   const roadW  = roadR - roadL;
-  const divW   = roadW * 0.04; // center divider width
-  const laneW  = (roadW - divW) / 4;
-  // Lane centers from left to right: 0,1,[divider],2,3
-  const centers = [
-    roadL + laneW * 0.5,
-    roadL + laneW * 1.5,
-    roadL + laneW * 2.5 + divW,
-    roadL + laneW * 3.5 + divW,
-  ];
-  return centers[lane];
+  const laneW  = roadW / 8;  // 6 traffic lanes + 2 BRT lanes = 8 slots
+  // Slots left→right: L0, L1, BRT-L, BRT-R, L2, L3
+  // With small separator gaps between carriageways
+  const sepW   = laneW * 0.15; // carriageway separator
+  return { roadL, roadR, roadW, laneW, sepW };
+}
+
+function getLaneX(lane, W) {
+  const { roadL, laneW, sepW } = getRoadGeometry(W);
+  // Layout: roadL | L0(laneW) | L1(laneW) | sep | BRT-L(laneW) | BRT-R(laneW) | sep | L2(laneW) | L3(laneW) | roadR
+  // lane 0 = L0, lane 1 = L1, lane 4 = BRT-L, lane 5 = BRT-R, lane 2 = L2, lane 3 = L3
+  const slots = {
+    0: roadL + laneW * 0.5,                    // L0  left slow
+    1: roadL + laneW * 1.5,                    // L1  left overtaking
+    4: roadL + laneW * 2.5 + sepW,             // BRT-L  
+    5: roadL + laneW * 3.5 + sepW,             // BRT-R
+    2: roadL + laneW * 4.5 + sepW * 2,         // L2  right slow
+    3: roadL + laneW * 5.5 + sepW * 2,         // L3  right overtaking
+  };
+  return slots[lane] ?? (W * 0.5);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -346,9 +365,8 @@ function drawRoad() {
   drawEnvironment(W, vy);
 
   // ── Road surface ───────────────────────────────────────────
-  // Road trapezoid: narrow at horizon, full width at bottom
-  const roadL = W * 0.08, roadR = W * 0.92;
-  const vRoadL = perspective(roadL, 0.001); // near vanishing
+  const roadL = W * 0.06, roadR = W * 0.94; // wider road for 6 lanes
+  const vRoadL = perspective(roadL, 0.001);
   const vRoadR = perspective(roadR, 0.001);
 
   // Road base
@@ -378,8 +396,9 @@ function drawRoad() {
   }
 
   // ── Shoulders (kerbs) ──────────────────────────────────────
-  drawShoulder(W, H, vy, roadL, true);  // left
-  drawShoulder(W, H, vy, roadR, false); // right
+  const { roadL: sL, roadR: sR } = getRoadGeometry(W);
+  drawShoulder(W, H, vy, sL, true);
+  drawShoulder(W, H, vy, sR, false);
 
   // ── Center divider (raised median / painted) ───────────────
   drawCenterDivider(W, H, vy);
@@ -487,80 +506,128 @@ function drawShoulder(W, H, vy, roadEdgeX, isLeft) {
 }
 
 function drawCenterDivider(W, H, vy) {
-  // Center divider — solid yellow/white lines bounding raised median
-  const d0 = W * 0.08, d1 = W * 0.92;
-  const roadW = d1 - d0;
-  const divW = roadW * 0.04;
-  const midX = W * 0.5;
-  const divL = midX - divW/2;
-  const divR = midX + divW/2;
+  const { roadL, laneW, sepW } = getRoadGeometry(W);
+  // BRT corridor bounds: between L1 and L2
+  const brtL = roadL + laneW * 2 + sepW * 0.1;   // left edge of BRT corridor
+  const brtR = roadL + laneW * 4 + sepW * 1.9;   // right edge of BRT corridor
+  const brtMid = (brtL + brtR) / 2;
 
-  // Draw solid divider lines at multiple depth levels for perspective
-  for(let di=0; di<=1; di++){
-    const lx = di===0 ? divL : divR;
-    const vP  = perspective(lx, 0.001);
-    ctx.strokeStyle = di===0 ? '#ffb800' : '#ffb800';
-    ctx.lineWidth = 2.5;
+  // ── BRT corridor surface ──────────────────────────────────
+  const vBL = perspective(brtL, 0.001);
+  const vBR = perspective(brtR, 0.001);
+  const brtGrad = ctx.createLinearGradient(0,vy,0,H);
+  brtGrad.addColorStop(0,'#1a1008');
+  brtGrad.addColorStop(1,'#221508');
+  ctx.fillStyle = brtGrad;
+  ctx.beginPath();
+  ctx.moveTo(vBL.x,vy+2);ctx.lineTo(vBR.x,vy+2);
+  ctx.lineTo(brtR,H);ctx.lineTo(brtL,H);
+  ctx.closePath();ctx.fill();
+
+  // BRT surface tint — orange
+  const brtTint = ctx.createLinearGradient(0,vy,0,H);
+  brtTint.addColorStop(0,'rgba(200,80,20,.18)');
+  brtTint.addColorStop(1,'rgba(200,80,20,.08)');
+  ctx.fillStyle = brtTint;
+  ctx.beginPath();
+  ctx.moveTo(vBL.x,vy+2);ctx.lineTo(vBR.x,vy+2);
+  ctx.lineTo(brtR,H);ctx.lineTo(brtL,H);
+  ctx.closePath();ctx.fill();
+
+  // ── BRT solid kerb lines (yellow) ────────────────────────
+  [brtL, brtR].forEach(lx => {
+    const vP = perspective(lx, 0.001);
+    ctx.strokeStyle = '#ffb800';
+    ctx.lineWidth = 3;
     ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(vP.x, vy+2);
     ctx.lineTo(lx, H);
     ctx.stroke();
-  }
+  });
 
-  // Divider fill (raised median, dark/hatched)
-  const vDL = perspective(divL, 0.001);
-  const vDR = perspective(divR, 0.001);
-  const divGrad = ctx.createLinearGradient(0,vy,0,H);
-  divGrad.addColorStop(0,'#0d1018');
-  divGrad.addColorStop(1,'#151920');
-  ctx.fillStyle = divGrad;
-  ctx.beginPath();
-  ctx.moveTo(vDL.x,vy+2);ctx.lineTo(vDR.x,vy+2);
-  ctx.lineTo(divR,H);ctx.lineTo(divL,H);
-  ctx.closePath();ctx.fill();
-
-  // Median cats eyes / divider markers
-  for(let d=0.12; d<0.95; d+=0.12){
-    const mx = midX;
-    const mp = perspective(mx, d);
-    ctx.fillStyle = 'rgba(255,220,80,.5)';
+  // ── BRT centre dashed divider (separates two tracks) ─────
+  for(let d=0.04; d<0.98; d+=0.06){
+    const p0 = perspective(brtMid, d);
+    const p1 = perspective(brtMid, d+0.03);
+    ctx.strokeStyle = 'rgba(255,184,0,.6)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.ellipse(mp.x,mp.y,2,1,0,0,Math.PI*2);
-    ctx.fill();
+    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
+    ctx.stroke();
   }
+
+  // ── BRT diamond road markers ──────────────────────────────
+  [0.25, 0.5, 0.75].forEach(depth => {
+    [[brtL + laneW*0.5, 'up'],[brtL + laneW*1.5, 'down']].forEach(([lx,dir]) => {
+      const mp = perspective(lx, depth);
+      const sz = 7*depth;
+      ctx.fillStyle = 'rgba(255,140,30,.5)';
+      ctx.save();ctx.translate(mp.x,mp.y);ctx.rotate(Math.PI/4);
+      ctx.fillRect(-sz/2,-sz/2,sz,sz);
+      ctx.restore();
+    });
+  });
+
+  // ── BRT label ────────────────────────────────────────────
+  const lp = perspective(brtMid, 0.45);
+  ctx.fillStyle = 'rgba(255,140,30,.55)';
+  ctx.font = 'bold 9px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText('DART BRT', lp.x, lp.y);
+
+  // ── Left carriageway kerb ────────────────────────────────
+  const leftKerb = roadL + laneW * 2 - sepW*0.5;
+  const vLK = perspective(leftKerb, 0.001);
+  ctx.strokeStyle = 'rgba(255,255,255,.3)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(vLK.x, vy+2);
+  ctx.lineTo(leftKerb, H);
+  ctx.stroke();
+
+  // ── Right carriageway kerb ───────────────────────────────
+  const rightKerb = roadL + laneW * 4 + sepW * 1.5;
+  const vRK = perspective(rightKerb, 0.001);
+  ctx.strokeStyle = 'rgba(255,255,255,.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(vRK.x, vy+2);
+  ctx.lineTo(rightKerb, H);
+  ctx.stroke();
 }
 
 function drawLaneMarkings(W, H, vy) {
-  const d0 = W * 0.08, d1 = W * 0.92;
-  const roadW = d1 - d0;
-  const divW = roadW * 0.04;
-  const laneW = (roadW - divW) / 4;
-
-  // Inner lane dividers (dashed white)
-  // Left carriageway: between lane 0 and 1 (x = d0 + laneW)
-  // Right carriageway: between lane 2 and 3 (x = d0 + laneW*3 + divW)
+  const { roadL, roadR, laneW, sepW } = getRoadGeometry(W);
+  // Dashed dividers between L0/L1 and L2/L3
   const innerLines = [
-    d0 + laneW,        // between L0 and L1
-    d0 + laneW*3 + divW, // between L2 and L3
+    roadL + laneW,              // between L0 and L1
+    roadL + laneW*4 + sepW*2,   // between L2 and L3
   ];
-
   innerLines.forEach(lx => {
-    // Dashed lane line
-    for(let d=0.05; d<0.98; d+=0.08){
+    for(let d=0.04; d<0.98; d+=0.07){
       const p0 = perspective(lx, d);
-      const p1 = perspective(lx, d+0.045);
-      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      const p1 = perspective(lx, d+0.04);
+      ctx.strokeStyle = 'rgba(255,255,255,.42)';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
       ctx.stroke();
     }
+    // Cats eyes
+    for(let d=0.1; d<0.9; d+=0.18){
+      const p = perspective(lx, d);
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.beginPath();
+      ctx.ellipse(p.x,p.y,2,1,0,0,Math.PI*2);
+      ctx.fill();
+    }
   });
-
-  // Edge lines (solid white at carriageway outer edges)
-  [d0, d1].forEach(lx => {
+  // Outer edge lines
+  [roadL, roadR].forEach(lx => {
     const vP = perspective(lx, 0.001);
     ctx.strokeStyle = 'rgba(255,255,255,.55)';
     ctx.lineWidth = 2;
@@ -570,84 +637,31 @@ function drawLaneMarkings(W, H, vy) {
     ctx.lineTo(lx,H);
     ctx.stroke();
   });
-
-  // Lane labels (painted road text) — perspective text not easily done in canvas,
-  // so we mark lane arrows on the road surface at mid-depth
-  drawLaneArrows(W, H, vy, laneW, d0, divW);
-  drawBRTLane(W, H, vy, d0, laneW);
-
-  // Cats eyes / road studs along lane lines
-  innerLines.forEach(lx => {
-    for(let d=0.1; d<0.9; d+=0.2){
-      const p = perspective(lx, d);
-      ctx.fillStyle = 'rgba(255,255,255,.35)';
-      ctx.beginPath();
-      ctx.ellipse(p.x,p.y,2,1,0,0,Math.PI*2);
-      ctx.fill();
-    }
-  });
+  drawLaneArrows(W, H, vy);
 }
 
-function drawBRTLane(W, H, vy, d0, laneW) {
-  // DART BRT corridor — lane 0 (leftmost) has orange-tinted surface
-  const laneL = d0;
-  const laneR = d0 + laneW;
-  const vL0 = perspective(laneL, 0.001);
-  const vR0 = perspective(laneR, 0.001);
-  // Subtle orange tint on BRT lane
-  const brtGrad = ctx.createLinearGradient(0, vy, 0, H);
-  brtGrad.addColorStop(0, 'rgba(200,80,20,.06)');
-  brtGrad.addColorStop(1, 'rgba(200,80,20,.03)');
-  ctx.fillStyle = brtGrad;
-  ctx.beginPath();
-  ctx.moveTo(vL0.x, vy+2); ctx.lineTo(vR0.x, vy+2);
-  ctx.lineTo(laneR, H); ctx.lineTo(laneL, H);
-  ctx.closePath(); ctx.fill();
+// BRT lane drawing is now in drawCenterDivider
 
-  // BRT diamond markers on lane
-  [0.3, 0.6, 0.85].forEach(depth => {
-    const mp = perspective((laneL+laneR)/2, depth);
-    const sz = 8*depth;
-    ctx.fillStyle = 'rgba(220,100,30,.35)';
-    ctx.save(); ctx.translate(mp.x, mp.y); ctx.rotate(Math.PI/4);
-    ctx.fillRect(-sz/2,-sz/2,sz,sz);
-    ctx.restore();
-  });
-
-  // "BRT" label on lane
-  const lp = perspective((laneL+laneR)/2, 0.5);
-  ctx.fillStyle = 'rgba(220,100,30,.4)';
-  ctx.font = `bold ${9}px JetBrains Mono`;
-  ctx.textAlign = 'center';
-  ctx.fillText('BRT', lp.x, lp.y);
-}
-
-function drawLaneArrows(W, H, vy, laneW, d0, divW) {
-  // Lane direction arrows painted on road
-  // Lanes 0,1: downward arrows (toward camera)
-  // Lanes 2,3: upward arrows (away from camera)
+function drawLaneArrows(W, H, vy) {
+  const { roadL, laneW, sepW } = getRoadGeometry(W);
   const laneInfo = [
-    { lane:0, dir:'up',     lx: d0 + laneW*0.5  },   // left carriageway: away
-    { lane:1, dir:'up',     lx: d0 + laneW*1.5  },   // left carriageway: away
-    { lane:2, dir:'down',   lx: d0 + laneW*2.5 + divW }, // right carriageway: toward
-    { lane:3, dir:'down',   lx: d0 + laneW*3.5 + divW }, // right carriageway: toward
+    { dir:'up',   lx: roadL + laneW*0.5 },              // L0  away
+    { dir:'up',   lx: roadL + laneW*1.5 },              // L1  away
+    { dir:'up',   lx: roadL + laneW*2.5 + sepW },       // BRT-L away
+    { dir:'down', lx: roadL + laneW*3.5 + sepW },       // BRT-R toward
+    { dir:'down', lx: roadL + laneW*4.5 + sepW*2 },     // L2  toward
+    { dir:'down', lx: roadL + laneW*5.5 + sepW*2 },     // L3  toward
   ];
-
   laneInfo.forEach(({dir,lx}) => {
-    [0.45, 0.75].forEach(depth => {
+    [0.38, 0.68].forEach(depth => {
       const p = perspective(lx, depth);
-      const s = 8 * depth; // arrow scale with perspective
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.fillStyle = 'rgba(255,255,255,.22)';
+      const s = 7 * depth;
+      ctx.save();ctx.translate(p.x, p.y);
+      ctx.fillStyle = 'rgba(255,255,255,.2)';
       if(dir==='down'){
-        ctx.beginPath();
-        ctx.moveTo(0,-s*1.5);ctx.lineTo(s*0.7,s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,s*0.5);
-        ctx.closePath();ctx.fill();
+        ctx.beginPath();ctx.moveTo(0,-s*1.5);ctx.lineTo(s*0.7,s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,s*0.5);ctx.closePath();ctx.fill();
       } else {
-        ctx.beginPath();
-        ctx.moveTo(0,s*1.5);ctx.lineTo(s*0.7,-s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,-s*0.5);
-        ctx.closePath();ctx.fill();
+        ctx.beginPath();ctx.moveTo(0,s*1.5);ctx.lineTo(s*0.7,-s*0.5);ctx.lineTo(0,0);ctx.lineTo(-s*0.7,-s*0.5);ctx.closePath();ctx.fill();
       }
       ctx.restore();
     });
@@ -664,14 +678,17 @@ function drawRoadFurniture(W, H, vy) {
     drawStreetlight(W*0.935, depth, W, vy, H, 'right');
   });
 
-  // KEEP LEFT sign
-  const signP = perspective(W*0.14, 0.38);
-  drawRoadSign(signP.x-20, signP.y, '◀ KEEP\nLEFT', '#1a6a3a', '#fff', 0.38);
-
-  // Speed limit sign (right side)
-  const speedP = perspective(W*0.86, 0.55);
+  // KEEP LEFT sign (left shoulder)
+  const signP = perspective(W*0.04, 0.38);
+  drawRoadSign(signP.x, signP.y, '◀ KEEP\nLEFT', '#1a6a3a', '#fff', 0.38);
+  // Speed limit sign (right shoulder)
+  const speedP = perspective(W*0.96, 0.55);
   const cam = CAMERAS[currentCam];
-  drawRoadSign(speedP.x+5, speedP.y, `${cam.speedLimit}\nkm/h`, '#1a3a7a', '#fff', 0.55);
+  drawRoadSign(speedP.x, speedP.y, `${cam.speedLimit}\nkm/h`, '#1a3a7a', '#fff', 0.55);
+  // BRT ONLY sign on BRT corridor left edge
+  const { roadL: rl, laneW: lw, sepW: sp } = getRoadGeometry(W);
+  const brtSignP = perspective(rl + lw*2, 0.32);
+  drawRoadSign(brtSignP.x, brtSignP.y, 'BRT\nONLY', '#8a3a00', '#ffcc00', 0.32);
 
   // NO OVERTAKING zone markers (dashes on road)
   drawNoOvertakeZone(W, H, vy);
@@ -735,35 +752,27 @@ function drawRoadSign(x, y, text, bg, fg, scale) {
 }
 
 function drawNoOvertakeZone(W, H, vy) {
-  // Solid center lines in no-overtake zone (near foreground)
-  const midX = W * 0.5;
-  // Solid double lines near bottom of frame — no overtaking zone
-  for(const offset of [-4, 4]) {
-    const p0 = perspective(midX + offset, 0.6);
-    const p1 = perspective(midX + offset, 1.0);
-    ctx.strokeStyle = '#ffb800';
-    ctx.lineWidth = 1.5;
+  // No-overtake solid lines on left/right carriageway kerbs near BRT
+  const { roadL, laneW, sepW } = getRoadGeometry(W);
+  const leftKerb  = roadL + laneW*2 - sepW*0.4;
+  const rightKerb = roadL + laneW*4 + sepW*1.6;
+  [leftKerb, rightKerb].forEach(lx => {
+    // Solid near foreground
+    const p0 = perspective(lx, 0.55); const p1 = perspective(lx, 1.0);
+    ctx.strokeStyle = '#ffb800'; ctx.lineWidth = 2;
     ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
-    ctx.stroke();
-  }
-  // Dashed lines in overtake-permitted zone (far)
-  for(const offset of [-4, 4]) {
-    const p0 = perspective(midX + offset, 0.05);
-    const p1 = perspective(midX + offset, 0.58);
-    ctx.strokeStyle = 'rgba(255,184,0,.5)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([8,8]);
-    ctx.beginPath();
-    ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.stroke();
+    // Dashed further away
+    const p2 = perspective(lx, 0.04); const p3 = perspective(lx, 0.53);
+    ctx.strokeStyle = 'rgba(255,184,0,.45)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([10,10]);
+    ctx.beginPath(); ctx.moveTo(p2.x,p2.y); ctx.lineTo(p3.x,p3.y); ctx.stroke();
     ctx.setLineDash([]);
-  }
+  });
 }
 
 function drawCameraPole(W, H, vy) {
-  // Camera gantry over road at mid-top
+  // Camera gantry over road — centred over BRT corridor
   const poleX = W * 0.5;
   const poleBase = perspective(poleX, 0.22);
 
@@ -819,47 +828,71 @@ class Car {
     // Tanzania keep-left rule — dual carriageway camera view:
     // Left carriageway (lanes 0,1): vehicles travel AWAY from camera (up the road)
     // Right carriageway (lanes 2,3): vehicles travel TOWARD camera (down the road)
-    this.lane = Math.floor(Math.random() * 4);
-    this.dir  = (this.lane < 2) ? -1 : 1; // left=away(-1), right=toward(+1)
-
-    // Overtaking behavior: lane 1 or 3 (right lane of each carriageway)
-    // Cars in right lane move faster (overtaking), must return to left lane
-    this.isOvertaking = (this.lane === 1 || this.lane === 3);
+    // Lane: 0,1=left carriageway(away), 2,3=right carriageway(toward), 4=BRT-L(away), 5=BRT-R(toward)
+    const isBRT = (this.type === 'dart');
+    if(isBRT) {
+      this.lane = Math.random() < 0.5 ? 4 : 5;
+    } else {
+      this.lane = [0,1,2,3][Math.floor(Math.random()*4)];
+    }
+    this.dir = (this.lane === 0 || this.lane === 1 || this.lane === 4) ? -1 : 1;
 
     if(this.dir === 1) {
-      this.progress = 0.01 + Math.random()*0.1; // start near horizon, move toward camera
+      this.progress = 0.01 + Math.random()*0.1;
     } else {
-      this.progress = 0.95 - Math.random()*0.1; // start near foreground, move away
+      this.progress = 0.95 - Math.random()*0.1;
     }
 
-    // Speed: overtaking lane cars are faster
-    this.speed = this.isOvertaking
-      ? 0.0028 + Math.random()*0.0018
-      : 0.0018 + Math.random()*0.0012;
+    // ── SYSTEMATIC OVERTAKING STATE MACHINE ──────────────────
+    // States: 'normal' | 'signalling_out' | 'moving_out' | 'overtaking' | 'signalling_in' | 'moving_in'
+    this.overtakeState  = 'normal';
+    this.overtakeTimer  = 0;
+    this.targetLane     = this.lane;
+    this.baseLane       = this.lane;
+    this.isSlowLane     = (this.lane === 0 || this.lane === 2);
+    // displayX = current road X for smooth lane-change interpolation
+    // undefined = use getLaneX(this.lane) directly (no drift)
+    this.displayX       = undefined;
+    this.fromX          = 0;
+    this.toX            = 0;
 
-    // Slight lateral offset within lane (randomness)
-    this.laneOffset = (Math.random()-0.5) * 0.3;
+    // BRT buses never overtake — they stay in BRT corridor
+    if(isBRT) { this.isSlowLane = false; this.overtakeState = 'normal'; }
 
-    // Turn signal state
-    this.signalTimer  = 0;
-    this.signalOn     = false;
-    this.signalSide   = 'right';
+    // Speed
+    const speedBase = {
+      0: 0.0016, 1: 0.0022, 2: 0.0016, 3: 0.0022, // traffic lanes
+      4: 0.0014, 5: 0.0014,                          // BRT slightly slower, stops
+    }[this.lane] || 0.0016;
+    this.baseSpeed = speedBase + Math.random()*0.0008;
+    this.speed     = this.baseSpeed;
 
-    // Brake lights
-    this.braking = false;
+    // Overtake trigger: slow cars behind fast car trigger overtaking
+    this.overtakeTriggerTimer = 80 + Math.floor(Math.random()*200);
+
+    // Braking
+    this.braking    = false;
     this.brakeTimer = 0;
+    if(Math.random()<0.04){ this.braking=true; this.brakeTimer=20+~~(Math.random()*30); }
 
-    // Random occasions
-    if(Math.random()<0.08) { this.signalOn=true; this.signalTimer=60+Math.floor(Math.random()*80); }
-    if(Math.random()<0.05) { this.braking=true; this.brakeTimer=30+Math.floor(Math.random()*40); }
+    // Signals (managed by overtake state machine)
+    this.signalOn   = false;
+    this.signalSide = 'right'; // 'left' or 'right'
+    this.signalFlash= 0; // frame counter for flash
+
+    // BRT stops
+    this.brtStopTimer = isBRT ? (100 + ~~(Math.random()*150)) : 0;
   }
 
   randomCarType() {
-    // DART BRT buses are assigned exclusively to lane 0 (left carriageway outer)
-    // to simulate the DART dedicated BRT corridor in Dar es Salaam
-    if (this.lane === 0 && Math.random() < 0.35) return 'dart';
-    const types = ['sedan','sedan','sedan','suv','suv','pickup','minibus','truck'];
-    return types[Math.floor(Math.random()*types.length)];
+    // dart is assigned by spawn logic (lane 4/5), motorcycle is rare
+    const roll = Math.random();
+    if(roll < 0.10) return 'motorcycle';
+    if(roll < 0.18) return 'minibus';    // dalla-dalla
+    if(roll < 0.24) return 'truck';
+    if(roll < 0.30) return 'pickup';
+    if(roll < 0.46) return 'suv';
+    return 'sedan';
   }
 
   randomPlate() {
@@ -870,30 +903,129 @@ class Car {
   }
 
   update() {
-    if(this.signalTimer>0)  this.signalTimer--;
-    else this.signalOn = false;
-    if(this.brakeTimer>0)   this.brakeTimer--;
+    // ── Braking ───────────────────────────────────────────
+    if(this.brakeTimer > 0) { this.brakeTimer--; this.braking = true; }
     else this.braking = false;
 
-    const effectiveSpeed = this.braking ? this.speed*0.3 : this.speed;
+    // ── BRT stop simulation ───────────────────────────────
+    if((this.lane===4||this.lane===5) && this.brtStopTimer > 0) {
+      this.brtStopTimer--;
+      if(this.brtStopTimer > 60) { // doors open phase
+        this.braking = true;
+        this.signalOn = true;
+        this.signalSide = 'right'; // hazard lights approximation
+      } else if(this.brtStopTimer > 0) {
+        this.braking = true; // still stopped/departing
+      }
+      if(this.brtStopTimer === 0) {
+        this.brtStopTimer = 200 + ~~(Math.random()*300); // next stop
+      }
+      if(this.brtStopTimer > 60) return true; // hold position at stop
+    }
+
+    // ── Systematic overtaking state machine ───────────────
+    if(this.isSlowLane && this.overtakeState === 'normal') {
+      this.overtakeTriggerTimer--;
+      if(this.overtakeTriggerTimer <= 0 && this.progress > 0.2 && this.progress < 0.75) {
+        // Start overtaking: signal OUT
+        const overtakeLane = this.dir === -1 ? 1 : 3; // right lane of same carriageway
+        this.targetLane     = overtakeLane;
+        this.overtakeState  = 'signalling_out';
+        this.overtakeTimer  = 35;  // signal for 35 frames
+        this.signalOn       = true;
+        this.signalSide     = 'right'; // signal to overtaking lane
+        this.overtakeTriggerTimer = 150 + ~~(Math.random()*200);
+      }
+    }
+
+    if(this.overtakeState === 'signalling_out') {
+      this.overtakeTimer--;
+      if(this.overtakeTimer <= 0) {
+        const W = canvas.width;
+        this.fromX     = getLaneX(this.lane, W);
+        this.toX       = getLaneX(this.targetLane, W);
+        this.displayX  = this.fromX;
+        this.overtakeState = 'moving_out';
+        this.overtakeTimer = 40;
+      }
+    }
+
+    if(this.overtakeState === 'moving_out') {
+      // Lerp displayX from fromX to toX over overtakeTimer frames
+      const total = 40;
+      const t = 1 - (this.overtakeTimer / total);
+      this.displayX = this.fromX + (this.toX - this.fromX) * Math.min(t, 1);
+      this.overtakeTimer--;
+      if(this.overtakeTimer <= 0) {
+        this.lane      = this.targetLane;
+        this.displayX  = undefined; // snap to lane, no drift
+        this.speed     = this.baseSpeed * 1.35;
+        this.overtakeState = 'overtaking';
+        this.overtakeTimer = 80 + ~~(Math.random()*60);
+        this.signalOn  = false;
+      }
+    }
+
+    if(this.overtakeState === 'overtaking') {
+      this.overtakeTimer--;
+      if(this.overtakeTimer <= 0) {
+        // Signal to return
+        this.overtakeState = 'signalling_in';
+        this.overtakeTimer = 30;
+        this.signalOn      = true;
+        this.signalSide    = 'left'; // signal back to slow lane
+      }
+    }
+
+    if(this.overtakeState === 'signalling_in') {
+      this.overtakeTimer--;
+      if(this.overtakeTimer <= 0) {
+        this.targetLane    = this.baseLane;
+        const W = canvas.width;
+        this.fromX     = getLaneX(this.lane, W);
+        this.toX       = getLaneX(this.targetLane, W);
+        this.displayX  = this.fromX;
+        this.overtakeState = 'moving_in';
+        this.overtakeTimer = 40;
+      }
+    }
+
+    if(this.overtakeState === 'moving_in') {
+      const total = 40;
+      const t = 1 - (this.overtakeTimer / total);
+      this.displayX = this.fromX + (this.toX - this.fromX) * Math.min(t, 1);
+      this.overtakeTimer--;
+      if(this.overtakeTimer <= 0) {
+        this.lane      = this.baseLane;
+        this.displayX  = undefined; // back to straight lane
+        this.speed     = this.baseSpeed;
+        this.overtakeState = 'normal';
+        this.signalOn  = false;
+        this.overtakeTriggerTimer = 120 + ~~(Math.random()*150);
+      }
+    }
+
+    // ── Signal flash counter ──────────────────────────────
+    if(this.signalOn) this.signalFlash = (this.signalFlash + 1) % 30;
+
+    // ── Move ─────────────────────────────────────────────
+    const effectiveSpeed = this.braking ? this.speed*0.25 : this.speed;
     this.progress += this.dir * effectiveSpeed;
 
-    // Keep alive if visible
-    if(this.dir===1)  return this.progress < 1.05;
-    else              return this.progress > -0.05;
+    if(this.dir===1)  return this.progress < 1.06;
+    else              return this.progress > -0.06;
   }
 
   get pos() {
-    const W = canvas.width, H = canvas.height;
-    const d0 = W*0.08, d1 = W*0.92;
-    const roadW = d1-d0;
-    const divW = roadW*0.04;
-    const laneW = (roadW-divW)/4;
-    const laneX = getLaneX(this.lane, W);
-
-    const lateralX = laneX + this.laneOffset * laneW * 0.25;
-    const p  = perspective(lateralX, this.progress);
-    const sc = 0.12 + this.progress * 0.88;
+    const W = canvas.width;
+    // displayX is the interpolated road X position (pixels at bottom of canvas)
+    // During normal driving = getLaneX(this.lane, W)
+    // During lane change = lerp between fromLaneX and toLaneX
+    const roadX = this.displayX !== undefined ? this.displayX : getLaneX(this.lane, W);
+    const p  = perspective(roadX, this.progress);
+    const sc = this.type === 'motorcycle'
+      ? 0.08 + this.progress * 0.65
+      : 0.12 + this.progress * 0.88;
     return { x:p.x, y:p.y, scale:sc, depth:this.progress };
   }
 
@@ -906,13 +1038,14 @@ class Car {
 
     // Draw appropriate car type
     switch(this.type){
-      case 'bus':     this.drawBus(ctx, scale);     break;
-      case 'dart':    this.drawDART(ctx, scale);    break;
-      case 'minibus': this.drawMinibus(ctx, scale);  break;
-      case 'truck':   this.drawTruck(ctx, scale);    break;
-      case 'pickup':  this.drawPickup(ctx, scale);   break;
-      case 'suv':     this.drawSUV(ctx, scale);      break;
-      default:        this.drawSedan(ctx, scale);    break;
+      case 'bus':        this.drawBus(ctx, scale);        break;
+      case 'dart':       this.drawDART(ctx, scale);       break;
+      case 'minibus':    this.drawMinibus(ctx, scale);    break;
+      case 'truck':      this.drawTruck(ctx, scale);      break;
+      case 'pickup':     this.drawPickup(ctx, scale);     break;
+      case 'suv':        this.drawSUV(ctx, scale);        break;
+      case 'motorcycle': this.drawMotorcycle(ctx, scale); break;
+      default:           this.drawSedan(ctx, scale);      break;
     }
 
     ctx.restore();
@@ -1234,6 +1367,106 @@ class Car {
     if(this.braking) this.drawBrakeLights(ctx,W,H,s);
   }
 
+  drawMotorcycle(ctx, s) {
+    // Realistic top-down motorcycle — body, tank, wheels, rider
+    const W=20*s, H=42*s;
+    const pal = this.palette;
+
+    // Shadow (narrow — motorcycle footprint)
+    ctx.fillStyle='rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, H*0.55, W*0.3, H*0.12, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // Rear wheel
+    ctx.fillStyle='#080808';
+    ctx.beginPath(); ctx.ellipse(0, H*0.42, W*0.55, W*0.28, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#282830';
+    ctx.beginPath(); ctx.ellipse(0, H*0.42, W*0.3, W*0.16, 0, 0, Math.PI*2); ctx.fill();
+
+    // Swing arm
+    ctx.strokeStyle=this.darken(pal.body,20); ctx.lineWidth=1.5*s;
+    ctx.beginPath(); ctx.moveTo(0,H*0.05); ctx.lineTo(0,H*0.42); ctx.stroke();
+
+    // Body / frame
+    const bg=ctx.createLinearGradient(-W/2,-H*0.1,W/2,H*0.1);
+    bg.addColorStop(0,this.lighten(pal.body,20));
+    bg.addColorStop(1,this.darken(pal.body,15));
+    ctx.fillStyle=bg;
+    ctx.beginPath();
+    ctx.roundRect(-W*0.45,-H*0.1,W*0.9,H*0.25,W*0.15);
+    ctx.fill();
+
+    // Fuel tank (top)
+    const tg=ctx.createLinearGradient(-W*0.3,-H*0.28,W*0.3,-H*0.05);
+    tg.addColorStop(0,this.lighten(pal.body,25));
+    tg.addColorStop(1,pal.body);
+    ctx.fillStyle=tg;
+    ctx.beginPath();
+    ctx.roundRect(-W*0.35,-H*0.28,W*0.7,H*0.22,W*0.12);
+    ctx.fill();
+
+    // Fairing highlight
+    ctx.fillStyle='rgba(255,255,255,.18)';
+    ctx.beginPath();
+    ctx.roundRect(-W*0.28,-H*0.26,W*0.28,H*0.08,W*0.08);
+    ctx.fill();
+
+    // Handlebars
+    ctx.strokeStyle='rgba(120,125,135,.85)'; ctx.lineWidth=1.8*s;
+    ctx.beginPath(); ctx.moveTo(-W*0.55,-H*0.32); ctx.lineTo(W*0.55,-H*0.32); ctx.stroke();
+    // Mirror stubs
+    ctx.beginPath(); ctx.moveTo(-W*0.55,-H*0.32); ctx.lineTo(-W*0.7,-H*0.22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*0.55,-H*0.32);  ctx.lineTo(W*0.7,-H*0.22);  ctx.stroke();
+
+    // Rider helmet (top-down view — circle with visor)
+    ctx.fillStyle='#1a1a22';
+    ctx.beginPath(); ctx.ellipse(0,-H*0.44,W*0.38,W*0.32,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(100,180,220,.45)'; // visor
+    ctx.beginPath(); ctx.ellipse(0,-H*0.5,W*0.22,W*0.12,0,0,Math.PI*2); ctx.fill();
+
+    // Rider body
+    ctx.fillStyle='#22252e';
+    ctx.beginPath();
+    ctx.roundRect(-W*0.28,-H*0.38,W*0.56,H*0.22,W*0.1);
+    ctx.fill();
+
+    // Front wheel
+    ctx.fillStyle='#080808';
+    ctx.beginPath(); ctx.ellipse(0,-H*0.42,W*0.52,W*0.26,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#282830';
+    ctx.beginPath(); ctx.ellipse(0,-H*0.42,W*0.28,W*0.14,0,0,Math.PI*2); ctx.fill();
+
+    // Headlight
+    if(this.dir===1){
+      ctx.fillStyle='rgba(255,245,200,.95)';
+      ctx.beginPath(); ctx.ellipse(0,-H*0.48,W*0.18,W*0.1,0,0,Math.PI*2); ctx.fill();
+      const gl=ctx.createRadialGradient(0,-H*0.48,0,0,-H*0.48,35*s);
+      gl.addColorStop(0,'rgba(255,245,200,.4)'); gl.addColorStop(1,'transparent');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(0,-H*0.48,35*s,0,Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle='rgba(220,30,30,.9)';
+      ctx.beginPath(); ctx.ellipse(0,H*0.48,W*0.16,W*0.09,0,0,Math.PI*2); ctx.fill();
+    }
+
+    // Plate
+    if(s>0.22){
+      const pw=16*s,ph=5*s;
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(-pw/2,H*0.44,pw,ph,1*s); ctx.fill();
+      ctx.fillStyle='#1a3a8a'; ctx.beginPath(); ctx.roundRect(-pw/2,H*0.44,3*s,ph,[1*s,0,0,1*s]); ctx.fill();
+      ctx.fillStyle='#000'; ctx.font=`bold ${4*s}px JetBrains Mono`; ctx.textAlign='center';
+      ctx.fillText(this.plate, pw*0.06, H*0.44+ph*0.82);
+    }
+
+    // Anon (skip for motorcycle — too small for face)
+    // Indicators
+    if(this.signalOn) this.drawSignal(ctx,W,H,s);
+    if(this.braking) {
+      ctx.fillStyle='rgba(255,40,40,.9)';
+      ctx.beginPath(); ctx.ellipse(0,H*0.44,3*s,2*s,0,0,Math.PI*2); ctx.fill();
+    }
+  }
+
   drawShadow(ctx, W, H, s) {
     ctx.fillStyle='rgba(0,0,0,.4)';
     ctx.beginPath();
@@ -1313,14 +1546,23 @@ class Car {
   }
 
   drawSignal(ctx, W, H, s) {
-    const flash = (Date.now() % 700) < 350;
+    if(!this.signalOn) return;
+    const flash = this.signalFlash < 15; // 15/30 frames on = 2Hz at 60fps
     if(!flash) return;
-    const side = this.isOvertaking ? -1 : 1; // right lane signals left to return
-    const sx = side * W*0.44, sy = H*0.15;
-    ctx.fillStyle='rgba(255,165,0,.95)';
-    ctx.beginPath();ctx.ellipse(sx,sy,3.5*s,2.2*s,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='rgba(255,165,0,.3)';
-    ctx.beginPath();ctx.arc(sx,sy,18*s,0,Math.PI*2);ctx.fill();
+    // signalSide: 'right' = moving right (out to overtaking), 'left' = returning
+    const side = this.signalSide === 'right' ? 1 : -1;
+    const sx = side * W * 0.44, sy = H * 0.12;
+    ctx.fillStyle = 'rgba(255,165,0,.98)';
+    ctx.beginPath(); ctx.ellipse(sx,sy,4*s,2.5*s,0,0,Math.PI*2); ctx.fill();
+    const glow = ctx.createRadialGradient(sx,sy,0,sx,sy,22*s);
+    glow.addColorStop(0,'rgba(255,165,0,.5)');
+    glow.addColorStop(1,'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(sx,sy,22*s,0,Math.PI*2); ctx.fill();
+    // Rear signal too
+    const rsx = -side * W * 0.44;
+    ctx.fillStyle = 'rgba(255,165,0,.5)';
+    ctx.beginPath(); ctx.ellipse(rsx,sy,3*s,2*s,0,0,Math.PI*2); ctx.fill();
   }
 
   drawPlate(ctx, W, H, s) {
@@ -1452,14 +1694,14 @@ function updateStats(){
 // ─────────────────────────────────────────────────────────────
 function tryDetect(){
   if(detectionCooldown>0){detectionCooldown--;return;}
-  // ALPR scans ALL lanes — front plates (toward camera) and rear plates (away)
-  const visible=cars.filter(c=>c.progress>0.25&&c.progress<0.82&&!c.detected);
+  // ALPR scans ALL 6 lanes — front and rear plates in all lanes including BRT
+  const visible=cars.filter(c=>c.progress>0.22&&c.progress<0.82&&!c.detected);
   if(!visible.length) return;
   // Always detect when a car is in range — no random skip
   // (real ALPR systems detect every vehicle, not random ones)
   const car=visible[~~(Math.random()*visible.length)];
   car.detected=true;
-  detectionCooldown=20; // ~0.3s between detections at 60fps
+  detectionCooldown=80; // ~1.3s between detections at 60fps
 
   const vType=pickViolation();
   const conf=0.87+Math.random()*0.12;
@@ -1905,35 +2147,44 @@ document.getElementById('evidence-modal').addEventListener('click',e=>{
 });
 
 // ─────────────────────────────────────────────────────────────
-//  SPAWN LOGIC — ensure cars in all 4 lanes
+//  SPAWN LOGIC — all 6 lanes (0,1 left; 2,3 right; 4,5 BRT)
 // ─────────────────────────────────────────────────────────────
-const LANE_SPAWN_INTERVALS = [0,1,2,3].map(()=>0);
+const LANE_SPAWN_INTERVALS = [0,1,2,3,4,5].map(()=>0);
+// Lane directions: 0,1,4 = away(-1); 2,3,5 = toward(+1)
+const LANE_DIR = {0:-1, 1:-1, 2:1, 3:1, 4:-1, 5:1};
+const LANE_MAX  = {0:2, 1:1, 2:2, 3:1, 4:1, 5:1}; // BRT max 1 at a time
 
 function spawnCars(){
-  // Target: 1-2 cars per lane, staggered
-  for(let lane=0;lane<4;lane++){
+  for(let lane=0;lane<6;lane++){
     LANE_SPAWN_INTERVALS[lane]--;
     if(LANE_SPAWN_INTERVALS[lane]>0) continue;
 
     const carsInLane = cars.filter(c=>c.lane===lane).length;
-    if(carsInLane >= 2) { LANE_SPAWN_INTERVALS[lane]=40; continue; }
+    if(carsInLane >= LANE_MAX[lane]) { LANE_SPAWN_INTERVALS[lane]=50; continue; }
 
-    // Check minimum spacing in this lane
-    const sameDir = (lane<2) ? cars.filter(c=>c.lane===lane&&c.dir===1) : cars.filter(c=>c.lane===lane&&c.dir===-1);
+    const dir = LANE_DIR[lane];
+    const sameDir = cars.filter(c=>c.lane===lane);
+    const minSpacing = (lane===4||lane===5) ? 0.20 : 0.10;
     const tooClose = sameDir.some(c => {
-      const dist = (lane<2) ? c.progress : (1-c.progress);
-      return dist < 0.12;
+      const dist = dir===1 ? c.progress : (1-c.progress);
+      return dist < minSpacing;
     });
-    if(tooClose) { LANE_SPAWN_INTERVALS[lane]=20; continue; }
+    if(tooClose) { LANE_SPAWN_INTERVALS[lane]=25; continue; }
 
     const car = new Car();
     car.lane = lane;
-    car.dir  = lane<2 ? -1 : 1; // left lanes away, right lanes toward
-    car.isOvertaking = (lane===1||lane===3);
-    if(car.dir===1) car.progress=0.01+Math.random()*0.05;
-    else            car.progress=0.92+Math.random()*0.05;
+    car.dir  = dir;
+    car.type = (lane===4||lane===5) ? 'dart' : car.randomCarType();
+    // Motorcycles can use any traffic lane but not BRT
+    car.isSlowLane = (lane===0||lane===2);
+    car.baseLane   = lane;
+    car.targetLane = lane;
+    car.speed      = car.baseSpeed || 0.0016;
+    if(dir===1)  car.progress = 0.01 + Math.random()*0.05;
+    else         car.progress = 0.92 + Math.random()*0.05;
     cars.push(car);
-    LANE_SPAWN_INTERVALS[lane] = 60 + ~~(Math.random()*80);
+    const interval = (lane===4||lane===5) ? 200+~~(Math.random()*150) : 55+~~(Math.random()*70);
+    LANE_SPAWN_INTERVALS[lane] = interval;
   }
 }
 
@@ -1956,17 +2207,25 @@ function render(){
   animFrame=requestAnimationFrame(render);
 }
 
-// Initial spawn — put cars in all lanes from start
+// Initial spawn — cars in all 6 lanes
 function initCars() {
   cars = [];
-  for(let lane=0;lane<4;lane++){
-    const car=new Car();
-    car.lane=lane;
-    car.dir=lane<2?-1:1;
-    car.isOvertaking=(lane===1||lane===3);
-    car.progress=lane<2?(0.55+lane*0.15):(0.15+lane*0.1);
+  const initData = [
+    {lane:0, dir:-1, prog:0.55}, {lane:1, dir:-1, prog:0.38},
+    {lane:2, dir: 1, prog:0.18}, {lane:3, dir: 1, prog:0.32},
+    {lane:4, dir:-1, prog:0.62}, {lane:5, dir: 1, prog:0.48},
+  ];
+  initData.forEach(({lane,dir,prog}) => {
+    const car = new Car();
+    car.lane = lane;
+    car.dir  = dir;
+    car.type = (lane===4||lane===5) ? 'dart' : car.randomCarType();
+    car.isSlowLane = (lane===0||lane===2);
+    car.baseLane   = lane;
+    car.targetLane = lane;
+    car.progress   = prog;
     cars.push(car);
-  }
+  });
 }
 
 // ── STARTUP ──────────────────────────────────────────────────
