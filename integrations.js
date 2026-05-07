@@ -307,11 +307,52 @@ async function isCommercialVehicle(vehicleId, plateNumber) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LATRA/TIRA CHECK THROTTLE
+// Prevents repeated alerts for the same plate within 4 minutes
+// This matches simulation speed and avoids alert flooding
+// ─────────────────────────────────────────────────────────────
+const INTEGRATION_COOLDOWN_MS = 4 * 60 * 1000; // 4 minutes
+const _lastChecked = new Map(); // plate → timestamp of last full check
+
+// ─────────────────────────────────────────────────────────────
 // MAIN: RUN ALL CHECKS FOR A PLATE
 // Called by processor.js on every detection
 // Returns array of violations found
 // ─────────────────────────────────────────────────────────────
 async function runAllChecks(plateNumber, vehicleId, cameraId, gpsLat, gpsLng) {
+  // ── 4-MINUTE COOLDOWN PER PLATE ──────────────────────────
+  const key = plateNumber.toUpperCase();
+  const lastTime = _lastChecked.get(key) || 0;
+  const elapsed  = Date.now() - lastTime;
+
+  if (elapsed < INTEGRATION_COOLDOWN_MS) {
+    const remaining = Math.ceil((INTEGRATION_COOLDOWN_MS - elapsed) / 1000);
+    log('INTEGRATIONS', 'INFO',
+      `Skipping check for ${plateNumber} — cooldown active (${remaining}s remaining)`,
+      { plate: plateNumber });
+    return {
+      plate:      plateNumber,
+      vehicleId,
+      cameraId,
+      violations: [],
+      allPassed:  true,
+      skipped:    true,
+      cooldownRemaining: remaining,
+      checkedAt:  new Date().toISOString(),
+    };
+  }
+
+  // Record this check time immediately (prevents concurrent duplicate checks)
+  _lastChecked.set(key, Date.now());
+
+  // Clean up old entries to prevent memory leak (keep last 500 plates)
+  if (_lastChecked.size > 500) {
+    const cutoff = Date.now() - INTEGRATION_COOLDOWN_MS;
+    for (const [k, t] of _lastChecked) {
+      if (t < cutoff) _lastChecked.delete(k);
+    }
+  }
+
   log('INTEGRATIONS', 'INFO', 'Running all external checks', { plate: plateNumber });
 
   // Determine if this is a commercial vehicle BEFORE running checks
