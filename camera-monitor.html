@@ -636,6 +636,73 @@ function addLog(msg,type='info'){
 }
 
 // ── Simulator ──────────────────────────────────────────────────
+// ── OWNER CACHE — persists across cameras so duplicates show owner name ──
+const monitorOwnerCache = new Map();
+
+// Enrich a detection row with owner name fetched from API
+async function enrichOwner(plate, camera, violation, confidence, type) {
+  // Check cache first
+  const cached = monitorOwnerCache.get(plate.toUpperCase());
+  if (cached) {
+    // Find the most recent detection row for this plate and update it
+    updateDetectionOwner(plate, cached);
+    return;
+  }
+  try {
+    const r = await fetch(`${API}/portal/fines?plate=${encodeURIComponent(plate)}`);
+    if (r.ok) {
+      const d = await r.json();
+      const rows = d?.data || [];
+      if (rows.length && rows[0].owner_name) {
+        const name = rows[0].owner_name;
+        monitorOwnerCache.set(plate.toUpperCase(), name);
+        updateDetectionOwner(plate, name);
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback: try vehicles endpoint with token
+  try {
+    const r2 = await fetch(`${API}/vehicles?plate=${encodeURIComponent(plate)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (r2.ok) {
+      const d2 = await r2.json();
+      const rows2 = d2?.data || (Array.isArray(d2) ? d2 : []);
+      const match = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
+      if (match?.owner_name) {
+        monitorOwnerCache.set(plate.toUpperCase(), match.owner_name);
+        updateDetectionOwner(plate, match.owner_name);
+      }
+    }
+  } catch(e) {}
+}
+
+// Update owner display in the feed for a given plate
+function updateDetectionOwner(plate, ownerName) {
+  if (!ownerName) return;
+  const feed = document.getElementById('feed-area');
+  if (!feed) return;
+  // Find all detection rows for this plate and update their owner display
+  const rows = feed.querySelectorAll('.detection');
+  rows.forEach(row => {
+    const plateEl = row.querySelector('.det-plate');
+    if (plateEl && plateEl.textContent.trim().startsWith(plate)) {
+      let ownerEl = row.querySelector('.det-owner');
+      if (!ownerEl) {
+        // Create owner element
+        const info = row.querySelector('.det-info');
+        if (info) {
+          ownerEl = document.createElement('div');
+          ownerEl.className = 'det-owner';
+          info.parentNode.insertBefore(ownerEl, info.nextSibling);
+        }
+      }
+      if (ownerEl) ownerEl.innerHTML = `&#x1F464; ${ownerName}`;
+    }
+  });
+}
+
 function generatePayload(camera){
   const prob={INTERSECTION:0.35,SPEED:0.45,PEDESTRIAN:0.25}[camera.type]||0.3;
   if(Math.random()>prob)return null;
@@ -654,6 +721,42 @@ function generatePayload(camera){
     occurred_at:new Date().toISOString(),
     gps_lat:camera.gps_lat,gps_lng:camera.gps_lng,
   };
+}
+
+// ── OWNER CACHE — resolves owner across all cameras ─────────
+const _ownerCache = new Map();
+
+async function getOwner(plate) {
+  if (_ownerCache.has(plate)) return _ownerCache.get(plate);
+  // Mark in-flight
+  const promise = _doOwnerLookup(plate);
+  _ownerCache.set(plate, promise);
+  return promise;
+}
+
+async function _doOwnerLookup(plate) {
+  // First try without auth (portal endpoint)
+  try {
+    const r = await fetch(`${API}/portal/fines?plate=${encodeURIComponent(plate)}`);
+    if (r.ok) {
+      const d = await r.json();
+      const rows = d?.data || [];
+      const row = rows.find(r => r.owner_name);
+      if (row?.owner_name) return row.owner_name;
+    }
+  } catch(e) {}
+  // Fallback: vehicles endpoint with token
+  try {
+    const r2 = await fetch(`${API}/vehicles?plate=${encodeURIComponent(plate)}`,
+      { headers: { Authorization: `Bearer ${token}` } });
+    if (r2.ok) {
+      const d2 = await r2.json();
+      const rows2 = d2?.data || (Array.isArray(d2) ? d2 : []);
+      const match = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
+      if (match?.owner_name) return match.owner_name;
+    }
+  } catch(e) {}
+  return '';
 }
 
 async function simTick(){
@@ -676,13 +779,23 @@ async function simTick(){
         updateCamera(camera.id,false);
       } else if(data.needsReview){
         counters.review++;document.getElementById('s-review').textContent=counters.review;
-        const owner=data.vehicle?.owner_name||'';
+        const owner=data.vehicle?.owner_name||data.vehicle?.name||'';
+        if(owner) _ownerCache.set(payload.plate_number, Promise.resolve(owner));
         addDetection({type:'review',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score});
         addLog(`Review queued: ${payload.plate_number} ${owner?'('+owner+')':''}`,'warn');
         updateCamera(camera.id,false);
       } else {
         counters.fines++;document.getElementById('s-fines').textContent=counters.fines;
-        const owner=data.vehicle?.owner_name||'';
+        const owner=data.vehicle?.owner_name||data.vehicle?.name||'';
+        // Cache owner; if empty kick off async lookup so next camera (duplicate) shows name
+        if(owner) {
+          _ownerCache.set(payload.plate_number, Promise.resolve(owner));
+        } else {
+          // Async lookup — warms cache for duplicate on next camera
+          getOwner(payload.plate_number).then(name => {
+            if(name) updateDetectionOwner(payload.plate_number, name);
+          });
+        }
         addDetection({type:'fine',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score,amount:data.fine?.amount_tzs||AMOUNTS[payload.violation_type],fine_num:data.fine?.fine_number});
         addLog(`Fine: ${data.fine?.fine_number} → ${payload.plate_number} ${owner?'('+owner+')':''}  TZS ${fmt(data.fine?.amount_tzs||0)}`,'ok');
         updateCamera(camera.id,true);
@@ -690,7 +803,11 @@ async function simTick(){
     } else if(res.status===202){
       const reason=(data.reason||data.message||'').toLowerCase();
       if(reason.includes('duplicate')){
-        addDetection({type:'duplicate',plate:payload.plate_number,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score});
+        // Owner IS known for duplicates — vehicle was already fined = it's in DB
+        getOwner(payload.plate_number).then(owner => {
+          addDetection({type:'duplicate',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score});
+          if(owner) addLog(`Duplicate: ${payload.plate_number} (${owner}) — already fined`,'info');
+        });
       } else {
         addDetection({type:'rejected',plate:payload.plate_number,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score});
         addLog(`Rejected: ${payload.plate_number} — ${data.reason||'low confidence'}`,'warn');

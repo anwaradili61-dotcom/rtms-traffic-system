@@ -1452,14 +1452,14 @@ function updateStats(){
 // ─────────────────────────────────────────────────────────────
 function tryDetect(){
   if(detectionCooldown>0){detectionCooldown--;return;}
-  // Detect cars in ALL lanes — ALPR scans both front plates (toward camera)
-  // and rear plates (away from camera) simultaneously
-  const visible=cars.filter(c=>c.progress>0.30&&c.progress<0.78&&!c.detected);
-  if(!visible.length||Math.random()>0.018) return;
-
+  // ALPR scans ALL lanes — front plates (toward camera) and rear plates (away)
+  const visible=cars.filter(c=>c.progress>0.25&&c.progress<0.82&&!c.detected);
+  if(!visible.length) return;
+  // Always detect when a car is in range — no random skip
+  // (real ALPR systems detect every vehicle, not random ones)
   const car=visible[~~(Math.random()*visible.length)];
   car.detected=true;
-  detectionCooldown=100;
+  detectionCooldown=80; // ~1.3s between detections at 60fps
 
   const vType=pickViolation();
   const conf=0.87+Math.random()*0.12;
@@ -1497,48 +1497,160 @@ async function sendToAPI(car, vType, conf, isAlert) {
 
 const API='https://rtms-traffic-system.onrender.com';
 
-// ── OWNER LOOKUP CACHE ────────────────────────────────────
-// Cache vehicle owner info keyed by plate number
-const ownerCache = new Map();
+// ── REAL-TIME VIOLATION POLL ──────────────────────────────────
+// Polls the API for recent violations submitted by camera monitor
+// so camera view evidence panel shows real detections, not just simulation
+const _seenViolationIds = new Set();
+let _violationPollTimer = null;
 
-async function lookupOwner(plate) {
-  // Return cached result instantly (even if null — stops repeated calls)
-  if (ownerCache.has(plate)) return ownerCache.get(plate);
+function startViolationPoll() {
+  if (_violationPollTimer) return;
+  _violationPollTimer = setInterval(pollViolations, 3000);
+  pollViolations(); // immediate first fetch
+}
 
-  // Mark as in-flight immediately to prevent duplicate concurrent lookups
-  ownerCache.set(plate, null);
-
-  let info = null;
+async function pollViolations() {
   try {
-    // Try /portal/fines first — has owner_name even if plate has no outstanding fines
+    const tok = localStorage.getItem('rtms_token') || '';
+    const url = API + '/violations?limit=20&sort=desc';
+    const r = await fetch(url, {
+      headers: tok ? { Authorization: 'Bearer ' + tok, 'Content-Type':'application/json' } : {}
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+    const rows = d?.data || (Array.isArray(d) ? d : []);
+    // Process newest-first, skip already seen
+    rows.forEach(v => {
+      const vid = v.id || v.violation_id;
+      if (!vid || _seenViolationIds.has(vid)) return;
+      _seenViolationIds.add(vid);
+      // Build a synthetic car-like item for the evidence panel
+      const item = {
+        plate:      v.plate_number || '—',
+        vType:      v.violation_type || 'UNKNOWN',
+        conf:       parseFloat(v.confidence_score) || 0.90,
+        isReview:   parseFloat(v.confidence_score) < 0.92,
+        isAlert:    v.status === 'POLICE_ALERT_TRIGGERED',
+        type:       'sedan',
+        time:       v.occurred_at ? new Date(v.occurred_at).toLocaleTimeString('en-GB') : new Date().toLocaleTimeString('en-GB'),
+        cam:        v.camera_id || 'CAM-?',
+        amount:     AMOUNTS[v.violation_type] || 50000,
+        palette:    CAR_PALETTES[Math.floor(Math.random()*CAR_PALETTES.length)],
+        owner:      'Loading...',
+        ownerPhone: v.owner_phone || '—',
+        make:       v.make  || '',
+        model:      v.model || '',
+        color:      v.color || '',
+        scanSide:   'API',
+        fromAPI:    true,
+      };
+      // ALWAYS lookup owner — even for duplicates the cache returns instantly
+      // The cache holds the result from the first camera encounter
+      lookupOwner(item.plate).then(info => {
+        item.owner      = info ? info.name  : (v.owner_name || 'Not registered');
+        item.ownerPhone = info ? info.phone : (v.owner_phone || '—');
+        item.make       = info ? info.make  : (v.make  || '');
+        item.model      = info ? info.model : (v.model || '');
+        item.color      = info ? info.color : (v.color || '');
+        renderEvidenceList();
+      }).catch(() => {
+        item.owner = v.owner_name || 'Not registered';
+        renderEvidenceList();
+      });
+      // Add to evidence without triggering canvas detection box
+      evidenceItems.unshift(item);
+      if (evidenceItems.length > 30) evidenceItems.pop();
+      renderEvidenceList();
+    });
+    // Keep seen set bounded
+    if (_seenViolationIds.size > 500) {
+      const arr = [..._seenViolationIds];
+      arr.slice(0, 200).forEach(id => _seenViolationIds.delete(id));
+    }
+  } catch(e) {}
+}
+
+// ── OWNER LOOKUP CACHE ────────────────────────────────────
+// Keyed by plate → Promise<info|null>
+// Using Promises as the cache value means:
+//   • concurrent lookups for the same plate share ONE network call
+//   • the result is stored even if null (no fines found)
+//   • BUT: we re-try after 60s if result was null, in case a fine
+//     was just issued (owner visible on 2nd camera pass)
+const ownerCache   = new Map(); // plate → Promise<info>
+const ownerCacheTs = new Map(); // plate → timestamp of last fetch
+
+function lookupOwner(plate) {
+  const key = plate.toUpperCase();
+
+  // Return cached result instantly — cache stores resolved values, not Promises
+  if (ownerCache.has(key)) {
+    const cached = ownerCache.get(key);
+    // If we found an owner, return it forever (owner never changes)
+    if (cached !== null && cached !== 'pending') return Promise.resolve(cached);
+    // If still pending (in-flight), wait for it
+    if (cached === 'pending' && ownerCacheTs.has(key)) return ownerCacheTs.get(key);
+    // null means not found — retry after 30s (in case fine was just issued)
+    if (cached === null) {
+      const ts = ownerCacheTs.get('ts_'+key) || 0;
+      if (Date.now() - ts < 30000) return Promise.resolve(null);
+      // Clear and retry
+      ownerCache.delete(key);
+      ownerCacheTs.delete('ts_'+key);
+    }
+  }
+
+  // Mark as in-flight
+  ownerCache.set(key, 'pending');
+  const promise = _fetchOwner(key).then(info => {
+    ownerCache.set(key, info);                   // store resolved value
+    ownerCacheTs.set('ts_'+key, Date.now());     // store timestamp
+    ownerCacheTs.delete(key);                    // remove in-flight marker
+    return info;
+  }).catch(() => {
+    ownerCache.delete(key); // allow retry on error
+    return null;
+  });
+  ownerCacheTs.set(key, promise); // store promise for concurrent calls
+  return promise;
+}
+
+async function _fetchOwner(plate) {
+  let info = null;
+
+  // 1. Try /portal/fines — works without auth, returns owner even for paid fines
+  try {
     const r = await fetch(API + '/portal/fines?plate=' + encodeURIComponent(plate),
       { headers: { 'Content-Type': 'application/json' } });
     if (r.ok) {
       const d = await r.json();
-      const rows = d?.data || [];
-      if (rows.length && rows[0].owner_name) {
+      const rows = Array.isArray(d?.data) ? d.data : [];
+      // Use first row that has an owner name
+      const row = rows.find(r => r.owner_name);
+      if (row) {
         info = {
-          name:  rows[0].owner_name,
-          phone: rows[0].owner_phone || '—',
-          make:  rows[0].make  || '',
-          model: rows[0].model || '',
-          color: rows[0].color || '',
+          name:  row.owner_name,
+          phone: row.owner_phone || '—',
+          make:  row.make  || '',
+          model: row.model || '',
+          color: row.color || '',
         };
       }
     }
   } catch(e) {}
 
-  // Fallback: try /vehicles?plate= (staff endpoint — works if token present)
+  // 2. Try /vehicles?plate= with staff token if available
   if (!info) {
     try {
       const tok = localStorage.getItem('rtms_token') || '';
-      const r2  = await fetch(API + '/vehicles?plate=' + encodeURIComponent(plate),
-        { headers: tok ? { Authorization: 'Bearer ' + tok } : {} });
+      const headers = { 'Content-Type': 'application/json' };
+      if (tok) headers['Authorization'] = 'Bearer ' + tok;
+      const r2 = await fetch(API + '/vehicles?plate=' + encodeURIComponent(plate), { headers });
       if (r2.ok) {
         const d2 = await r2.json();
-        const rows2 = d2?.data || (Array.isArray(d2) ? d2 : []);
+        const rows2 = Array.isArray(d2?.data) ? d2.data : (Array.isArray(d2) ? d2 : []);
         const match = rows2.find(v => (v.plate_number||'').toUpperCase() === plate.toUpperCase());
-        if (match && match.owner_name) {
+        if (match?.owner_name) {
           info = {
             name:  match.owner_name,
             phone: match.owner_phone || '—',
@@ -1551,9 +1663,7 @@ async function lookupOwner(plate) {
     } catch(e) {}
   }
 
-  // Cache result (info or null) so we never re-query the same plate
-  ownerCache.set(plate, info);
-  return info;
+  return info; // null if not found — will retry after 60s
 }
 
 function showDetectionBox(car, conf, isAlert){
@@ -1859,30 +1969,40 @@ function initCars() {
   }
 }
 
-// ── STARTUP ──────────────────────────────────────────────────
-// With height:100% on .main and .feed-wrap, canvas now gets real
-// dimensions as soon as the browser does its first layout.
-// We start after the first rAF so the layout pass is complete.
+// ── BULLETPROOF STARTUP ──────────────────────────────────────
+let _renderStarted = false;
 
 function doStart() {
+  if (_renderStarted) return;
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth  || 900;
-  canvas.height = wrap.clientHeight || 520;
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  // Only start if we have real dimensions
+  if (!W || !H) return;
+  _renderStarted = true;
+  canvas.width  = W;
+  canvas.height = H;
   initCars();
   render();
+  // Also start polling API for real detections from camera monitor
+  startViolationPoll();
 }
 
-// Handle window resize — resize canvas without restarting loop
+// Handle window resize
 window.addEventListener('resize', () => {
   const wrap = canvas.parentElement;
-  if(wrap.clientWidth && wrap.clientHeight){
+  if (wrap.clientWidth && wrap.clientHeight) {
     canvas.width  = wrap.clientWidth;
     canvas.height = wrap.clientHeight;
   }
 });
 
-// Start after first paint so CSS layout is resolved
-requestAnimationFrame(() => requestAnimationFrame(doStart));
+// Try multiple ways to start — whichever fires first with real dimensions wins
+requestAnimationFrame(() => requestAnimationFrame(doStart));           // after 2 paints
+setTimeout(doStart, 100);   // 100ms fallback
+setTimeout(doStart, 300);   // 300ms fallback
+setTimeout(doStart, 800);   // 800ms last resort
+document.addEventListener('DOMContentLoaded', () => requestAnimationFrame(doStart));
 </script>
 </body>
 </html>
