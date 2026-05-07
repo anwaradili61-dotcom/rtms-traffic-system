@@ -202,9 +202,29 @@ td.mono{font-family:var(--mono);font-size:12px}td.primary{color:var(--text);font
 .filter-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:all .15s}
 .filter-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 ::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* ── SYSTEM NAVIGATION ── */
+.sys-nav{background:rgba(0,0,0,.6);border-bottom:1px solid var(--border2);padding:7px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:300;backdrop-filter:blur(10px)}
+.sys-nav-brand{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.08em;margin-right:8px}
+.sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sys-nav-link{font-size:11px;font-weight:600;color:var(--text3);text-decoration:none;padding:4px 10px;border-radius:5px;transition:all .15s;cursor:default;font-family:var(--mono);letter-spacing:.02em}
+a.sys-nav-link{cursor:pointer}
+a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.sys-nav-link.active{background:var(--accent2);color:#fff}
+@media(max-width:600px){.sys-nav{padding:6px 12px}.sys-nav-link{padding:3px 7px;font-size:10px}}
 </style>
 </head>
 <body>
+<div class="sys-nav">
+  <div class="sys-nav-brand">🚦 RTMS</div>
+  <div class="sys-nav-links">
+    <a class="sys-nav-link" href="citizen-portal.html">🏠 Citizen Portal</a>
+    <span class="sys-nav-link active">👮 Staff Dashboard</span>
+    <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
+    <a class="sys-nav-link" href="camera-view.html">📷 Camera View</a>
+  </div>
+</div>
+
 
 <div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
 

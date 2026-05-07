@@ -191,9 +191,29 @@
   ::-webkit-scrollbar{width:4px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── SYSTEM NAVIGATION ── */
+.sys-nav{background:rgba(0,0,0,.7);border-bottom:1px solid rgba(255,255,255,.07);padding:7px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:300;backdrop-filter:blur(10px)}
+.sys-nav-brand{font-family:monospace;font-size:13px;font-weight:700;color:#e0e0e0;letter-spacing:.08em;margin-right:8px}
+.sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sys-nav-link{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-decoration:none;padding:4px 10px;border-radius:5px;transition:all .15s;cursor:default;letter-spacing:.02em}
+a.sys-nav-link{cursor:pointer}
+a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.sys-nav-link.active{background:#00c896;color:#000}
+@media(max-width:600px){.sys-nav{padding:6px 12px}.sys-nav-link{padding:3px 7px;font-size:10px}}
 </style>
 </head>
 <body>
+<div class="sys-nav">
+  <div class="sys-nav-brand">🚦 RTMS</div>
+  <div class="sys-nav-links">
+    <a class="sys-nav-link" href="citizen-portal.html">🏠 Citizen Portal</a>
+    <a class="sys-nav-link" href="dashboard.html">👮 Staff Dashboard</a>
+    <span class="sys-nav-link active">📡 Camera Monitor</span>
+    <a class="sys-nav-link" href="camera-view.html">📷 Camera View</a>
+  </div>
+</div>
+
 
 <!-- Watermark -->
 <div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
@@ -394,9 +414,9 @@ const SCENARIOS = {
 };
 
 const AMOUNTS = {
-  RED_LIGHT:15000,SPEEDING:20000,ILLEGAL_PARKING:50000,
-  WRONG_WAY:30000,NO_SEATBELT:30000,PHONE_USE:50000,
-  PEDESTRIAN_ZONE:15000,EXPIRED_PLATE:50000
+  RED_LIGHT:150000,SPEEDING:200000,ILLEGAL_PARKING:50000,
+  WRONG_WAY:300000,NO_SEATBELT:30000,PHONE_USE:50000,
+  PEDESTRIAN_ZONE:100000,EXPIRED_PLATE:80000
 };
 
 const CAR_COLORS = ['#1a3a5c','#2d5a27','#4a1a1a','#1a1a4a','#3a2a1a','#1a3a3a','#2a2a2a'];

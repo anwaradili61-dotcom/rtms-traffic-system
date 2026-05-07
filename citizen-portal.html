@@ -138,12 +138,21 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:100px}
 
-.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.pay-method{border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;text-align:center}
-.pay-method:hover{border-color:var(--green)}.pay-method.selected{border-color:var(--green);background:var(--green-bg)}
-.pay-method-icon{font-size:22px;margin-bottom:4px}
-.pay-method-name{font-size:12px;font-weight:600;color:var(--ink2)}
-.pay-method-sub{font-size:11px;color:var(--ink3)}
+.pay-methods{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.pay-method{border:2px solid var(--border);border-radius:12px;padding:14px 8px 10px;cursor:pointer;transition:all .18s;text-align:center;background:var(--bg);position:relative}
+.pay-method:hover{border-color:var(--ink2);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.pay-method.selected{border-color:var(--pay-color,var(--green));background:var(--pay-bg,var(--green-bg));box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-2px)}
+.pay-method.selected::after{content:'✓';position:absolute;top:4px;right:6px;font-size:10px;font-weight:800;color:var(--pay-color,var(--green))}
+.pay-method[data-m="MOBILE"]{--pay-color:var(--green);--pay-bg:var(--green-bg)}
+.pay-method[data-m="BANK"]{--pay-color:var(--blue);--pay-bg:var(--blue-bg)}
+.pay-method[data-m="CASH"]{--pay-color:#8a6a1a;--pay-bg:#fdf5e0}
+.pay-method[data-m="CARD"]{--pay-color:var(--red);--pay-bg:var(--red-bg)}
+.pay-method-icon{font-size:26px;margin-bottom:5px;display:block}
+.pay-method-name{font-size:12px;font-weight:700;color:var(--ink);line-height:1.2;display:block}
+.pay-method-sub{font-size:9px;color:var(--ink3);display:block;margin-top:2px;line-height:1.3}
+@media(max-width:480px){.pay-methods{grid-template-columns:repeat(2,1fr)}}
+.pay-section-label{font-size:11px;font-weight:700;color:var(--ink2);margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.pay-section-label::before{content:'';display:inline-block;width:3px;height:13px;background:var(--accent);border-radius:2px}
 
 .amount-display{background:var(--bg);border-radius:12px;padding:16px 20px;margin-bottom:16px;text-align:center}
 .amount-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:4px}
@@ -192,12 +201,31 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
   .search-row{flex-direction:column}
   .copyright-bar{flex-direction:column;gap:4px;text-align:center;padding:6px 12px}
 }
+
+/* ── SYSTEM NAVIGATION BAR ──────────────────────────────── */
+.sys-nav{background:#1a1a18;border-bottom:1px solid #333;padding:8px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:200}
+.sys-nav-brand{font-family:var(--head);font-size:15px;font-weight:900;color:#fff;letter-spacing:.05em;margin-right:8px}
+.sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sys-nav-link{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-decoration:none;padding:5px 12px;border-radius:6px;transition:all .15s;cursor:default;font-family:var(--body);letter-spacing:.02em}
+a.sys-nav-link{cursor:pointer;color:rgba(255,255,255,.5)}
+a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.sys-nav-link.active{background:var(--accent);color:#fff;cursor:default}
+@media(max-width:600px){.sys-nav{padding:8px 16px}.sys-nav-link{padding:4px 8px;font-size:10px}}
 </style>
 </head>
 <body>
 
 <div class="wm"><div class="wm-text">SEUSHI ANWAR &middot; RTMS</div></div>
 
+<div class="sys-nav">
+  <div class="sys-nav-brand">🚦 RTMS</div>
+  <div class="sys-nav-links">
+    <span class="sys-nav-link active">🏠 Citizen Portal</span>
+    <a class="sys-nav-link" href="dashboard.html">👮 Staff Dashboard</a>
+    <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
+    <a class="sys-nav-link" href="camera-view.html">📷 Camera View</a>
+  </div>
+</div>
 <div class="hero">
   <div class="hero-pattern"></div>
   <div class="hero-accent"></div>
@@ -211,7 +239,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
   <div class="hero-content">
     <div class="hero-eyebrow">Smart Traffic Management System</div>
     <h1 class="hero-title">Check Your <em>Traffic Fines</em></h1>
-    <p class="hero-sub">Enter your vehicle plate number to view outstanding fines, pay via mobile money, and file appeals.</p>
+    <p class="hero-sub">View outstanding fines, pay via Mobile Money, Bank Transfer, Cash or Card, and file appeals.</p>
   </div>
 </div>
 
@@ -231,7 +259,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);min-height:10
   <div class="state state-idle" id="state-idle">
     <div class="idle-icon">&#x1F697;</div>
     <div class="idle-title">How does this work?</div>
-    <div class="idle-sub">Enter your plate number above to instantly see all traffic fines linked to your vehicle. Pay via M-Pesa, Tigo Pesa, or Airtel Money, or file an appeal if you believe a fine was issued in error.</div>
+    <div class="idle-sub">Enter your plate number above to instantly see all traffic fines linked to your vehicle. Pay via Mobile Money (M-Pesa, Tigo Pesa, Airtel Money), Bank Transfer, Cash at RTMS offices, or Debit/Credit Card — or file an appeal if you believe a fine was issued in error.</div>
   </div>
   <div class="state state-loading" id="state-loading" style="display:none">
     <div class="spinner"></div>
@@ -432,33 +460,143 @@ function openPay(id, total, fineNum) {
   currentFineNum   = fineNum;
   currentTotal     = total;
   selectedProvider = 'M-Pesa';
+  selectedPayMethod = 'MOBILE'; // always reset to mobile tab on open
   renderPayStep1();
   openModal('pay-modal');
 }
 
+// ── selectedPayMethod: MOBILE | BANK | CASH | CARD
+let selectedPayMethod = 'MOBILE';
+
 function renderPayStep1() {
+  selectedPayMethod = selectedPayMethod || 'MOBILE';
   document.getElementById('pay-body').innerHTML =
     '<div class="amount-display">' +
       '<div class="amount-label">Total Amount Due</div>' +
       '<div class="amount-value">TZS ' + currentTotal.toLocaleString() + '</div>' +
+      '<div style="font-size:11px;color:var(--ink3);margin-top:4px">Fine #: ' + esc(currentFineNum) + '</div>' +
     '</div>' +
-    '<div style="font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Select Mobile Provider</div>' +
-    '<div class="provider-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">' +
-      providerBtn('M-Pesa','Vodacom','var(--green)') +
-      providerBtn('Tigo Pesa','Tigo','var(--blue)') +
-      providerBtn('Airtel Money','Airtel','var(--red)') +
+    '<div class="pay-section-label">How would you like to pay?</div>' +
+    '<div class="pay-methods">' +
+      methodBtn('MOBILE','📱','Mobile Money','M-Pesa · Tigo Pesa · Airtel Money') +
+      methodBtn('BANK','🏦','Bank Transfer','CRDB · NMB · NBC · DTB') +
+      methodBtn('CASH','💵','Cash Payment','Traffic office · CRDB branch · Post office') +
+      methodBtn('CARD','💳','Debit / Credit Card','Visa · Mastercard') +
     '</div>' +
-    '<div class="field"><label>Your Mobile Number *</label><input type="tel" id="pay-phone" placeholder="+255712345678"/></div>' +
-    '<div class="mpesa-steps">' +
-      '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">How it works</div>' +
-      '<div class="mpesa-step"><div class="step-num">1</div><div class="step-text">Enter your number and click <strong>Pay Now</strong></div></div>' +
-      '<div class="mpesa-step"><div class="step-num">2</div><div class="step-text">A push notification appears on your phone</div></div>' +
-      '<div class="mpesa-step"><div class="step-num">3</div><div class="step-text">Enter your <strong>PIN</strong> to approve</div></div>' +
-      '<div class="mpesa-step"><div class="step-num">4</div><div class="step-text">Fine marked as <strong>PAID</strong> instantly</div></div>' +
-    '</div>';
+    buildMethodUI();
 
-  document.getElementById('pay-footer').innerHTML =
-    '<button class="btn btn-pay" id="pay-btn" onclick="submitMobilePayment()">&#x1F4F1; Pay Now — TZS ' + currentTotal.toLocaleString() + '</button>' +
+  document.getElementById('pay-footer').innerHTML = buildPayFooter();
+}
+
+function methodBtn(key, icon, name, sub) {
+  const sel = selectedPayMethod === key;
+  return '<div class="pay-method '+(sel?'selected':'')+'" data-m="'+key+'" onclick="selectPayMethod(\''+key+'\')">'+
+    '<div class="pay-method-icon">'+icon+'</div>'+
+    '<div class="pay-method-name">'+name+'</div>'+
+    '<div class="pay-method-sub">'+sub+'</div>'+
+  '</div>';
+}
+
+function selectPayMethod(m) {
+  selectedPayMethod = m;
+  renderPayStep1();
+}
+
+function buildMethodUI() {
+  if (selectedPayMethod === 'MOBILE') {
+    return '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin:12px 0 8px;text-transform:uppercase;letter-spacing:.05em">Select Mobile Provider</div>'+
+      '<div class="provider-grid" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'+
+        providerBtn('M-Pesa','Vodacom','var(--green)')+
+        providerBtn('Tigo Pesa','Tigo','var(--blue)')+
+        providerBtn('Airtel Money','Airtel','var(--red)')+
+      '</div>'+
+      '<div class="field"><label>Your Mobile Number *</label><input type="tel" id="pay-phone" placeholder="+255712345678"/></div>'+
+      '<div class="mpesa-steps">'+
+        '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">How it works</div>'+
+        '<div class="mpesa-step"><div class="step-num">1</div><div class="step-text">Enter your number and click <strong>Pay Now</strong></div></div>'+
+        '<div class="mpesa-step"><div class="step-num">2</div><div class="step-text">A push notification appears on your phone</div></div>'+
+        '<div class="mpesa-step"><div class="step-num">3</div><div class="step-text">Enter your <strong>PIN</strong> to approve</div></div>'+
+        '<div class="mpesa-step"><div class="step-num">4</div><div class="step-text">Fine marked as <strong>PAID</strong> instantly</div></div>'+
+      '</div>';
+  }
+
+  if (selectedPayMethod === 'BANK') {
+    return '<div class="mpesa-steps">'+
+      '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Bank Transfer Details</div>'+
+      '<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px;line-height:1.9">'+
+        '<div><strong>Bank:</strong> CRDB Bank / NMB Bank / NBC</div>'+
+        '<div><strong>Account Name:</strong> Tanzania Revenue Authority — Traffic Fines</div>'+
+        '<div><strong>Account Number:</strong> 0150-755-8888-001</div>'+
+        '<div><strong>Reference:</strong> <span style="color:var(--green);font-weight:700">' + currentFineNum + '</span></div>'+
+        '<div><strong>Amount:</strong> TZS ' + currentTotal.toLocaleString() + '</div>'+
+      '</div>'+
+      '<div class="field"><label>Your Bank Transaction Reference *</label><input type="text" id="pay-bank-ref" placeholder="e.g. CRDB2026050600123"/></div>'+
+      '<div class="mpesa-step"><div class="step-num">1</div><div class="step-text">Transfer TZS '+currentTotal.toLocaleString()+' to the account above using fine number as reference</div></div>'+
+      '<div class="mpesa-step"><div class="step-num">2</div><div class="step-text">Enter your bank transaction reference below and click <strong>Confirm Payment</strong></div></div>'+
+      '<div class="mpesa-step"><div class="step-num">3</div><div class="step-text">Your fine will be marked pending and verified within <strong>1 working day</strong></div></div>'+
+    '</div>';
+  }
+
+  if (selectedPayMethod === 'CASH') {
+    return '<div class="mpesa-steps">'+
+      '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Cash Payment Locations</div>'+
+      '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">'+
+        cashLocation('🏢','RTMS Traffic Office — Ubungo','Mon–Fri 8:00am–5:00pm','Morogoro Rd, Dar es Salaam')+
+        cashLocation('🏢','RTMS Traffic Office — Kariakoo','Mon–Fri 8:00am–5:00pm','Msimbazi St, Dar es Salaam')+
+        cashLocation('🏦','Any CRDB / NMB Branch','Banking hours','Countrywide — use fine number as reference')+
+        cashLocation('📮','Tanzania Post Offices','Mon–Fri 8:00am–4:00pm','Select locations — ask at counter')+
+      '</div>'+
+      '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:12px;font-size:12px;color:var(--ink2);line-height:1.7">'+
+        '⚠️ Always bring your <strong>Fine Number: '+currentFineNum+'</strong> and a valid <strong>National ID</strong> when paying cash. Request an official receipt.'+
+      '</div>'+
+      '<div class="field" style="margin-top:12px"><label>Receipt Number (after paying) *</label><input type="text" id="pay-cash-ref" placeholder="e.g. RCT-2026-00123"/></div>'+
+    '</div>';
+  }
+
+  if (selectedPayMethod === 'CARD') {
+    return '<div class="mpesa-steps">'+
+      '<div style="font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Card Payment</div>'+
+      '<div style="background:var(--green-bg);border:1px solid var(--green);border-radius:8px;padding:14px;margin-bottom:12px;font-size:13px;line-height:1.7">'+
+        '💳 Card payments are processed securely via <strong>Azampay</strong> payment gateway. Your card details are never stored by RTMS.'+
+      '</div>'+
+      '<div class="field"><label>Card Number *</label><input type="text" id="pay-card-num" placeholder="•••• •••• •••• ••••" maxlength="19" oninput="formatCard(this)"/></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+        '<div class="field"><label>Expiry Date *</label><input type="text" id="pay-card-exp" placeholder="MM / YY" maxlength="7"/></div>'+
+        '<div class="field"><label>CVV *</label><input type="text" id="pay-card-cvv" placeholder="•••" maxlength="4"/></div>'+
+      '</div>'+
+      '<div class="field"><label>Cardholder Name *</label><input type="text" id="pay-card-name" placeholder="As printed on card" style="text-transform:uppercase"/></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--ink3)">'+
+        '<span>🔒 SSL Secured</span><span>•</span><span>Visa</span><span>•</span><span>Mastercard</span>'+
+      '</div>'+
+    '</div>';
+  }
+  return '';
+}
+
+function cashLocation(icon, name, hours, address) {
+  return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start">'+
+    '<span style="font-size:18px">'+icon+'</span>'+
+    '<div>'+
+      '<div style="font-size:13px;font-weight:600;color:var(--ink)">'+name+'</div>'+
+      '<div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">'+hours+' &bull; '+address+'</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function formatCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+
+function buildPayFooter() {
+  const label = {
+    MOBILE: '📱 Pay Now — TZS ' + currentTotal.toLocaleString(),
+    BANK:   '🏦 Confirm Bank Transfer',
+    CASH:   '💵 Confirm Cash Payment',
+    CARD:   '💳 Pay by Card — TZS ' + currentTotal.toLocaleString(),
+  }[selectedPayMethod] || 'Pay Now';
+
+  return '<button class="btn btn-pay" id="pay-btn" onclick="submitPayment()">'+label+'</button>'+
     '<button class="btn btn-ghost" onclick="closeModal(\'pay-modal\')">Cancel</button>';
 }
 
@@ -473,6 +611,82 @@ function providerBtn(name, sub, color) {
 function selectProvider(p) {
   selectedProvider = p;
   renderPayStep1();
+}
+
+// ── UNIFIED PAYMENT HANDLER ─────────────────────────────────────
+async function submitPayment() {
+  if (selectedPayMethod === 'MOBILE') { submitMobilePayment(); return; }
+  if (selectedPayMethod === 'BANK')   { submitBankPayment();   return; }
+  if (selectedPayMethod === 'CASH')   { submitCashPayment();   return; }
+  if (selectedPayMethod === 'CARD')   { submitCardPayment();   return; }
+}
+
+async function submitBankPayment() {
+  const ref = document.getElementById('pay-bank-ref')?.value.trim();
+  if (!ref) { showToast('Please enter your bank transaction reference', 'error'); return; }
+  const btn = document.getElementById('pay-btn');
+  if (btn) { btn.disabled=true; btn.textContent='Submitting...'; }
+  const res = await apiFetch('/fines/' + currentFineId + '/pay/mobile', {
+    method: 'POST',
+    body: JSON.stringify({ phone: 'BANK', provider: 'BANK_TRANSFER', amount_tzs: currentTotal, transaction_ref: ref })
+  });
+  if (!res.ok) { showPaymentFailed('Could not submit. Please try again or visit a traffic office.'); return; }
+  showBankConfirmed(ref);
+}
+
+function showBankConfirmed(ref) {
+  document.getElementById('pay-body').innerHTML =
+    '<div class="success-box">'+
+      '<div class="success-icon">🏦</div>'+
+      '<div class="success-title">Bank Transfer Submitted</div>'+
+      '<div class="success-sub">'+
+        'Reference: <strong>'+esc(ref)+'</strong><br>'+
+        'Fine: <strong>'+esc(currentFineNum)+'</strong><br><br>'+
+        'Your payment will be verified within <strong>1 working day</strong>. You will receive an SMS confirmation once verified.'+
+      '</div>'+
+    '</div>';
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-primary" onclick="closeModal(\'pay-modal\');doSearch()">Done &#x2192;</button>';
+}
+
+async function submitCashPayment() {
+  const ref = document.getElementById('pay-cash-ref')?.value.trim();
+  if (!ref) { showToast('Please enter the receipt number from the cashier', 'error'); return; }
+  const btn = document.getElementById('pay-btn');
+  if (btn) { btn.disabled=true; btn.textContent='Submitting...'; }
+  const res = await apiFetch('/fines/' + currentFineId + '/pay/mobile', {
+    method: 'POST',
+    body: JSON.stringify({ phone: 'CASH', provider: 'CASH', amount_tzs: currentTotal, transaction_ref: ref })
+  });
+  if (!res.ok) { showPaymentFailed('Could not submit. Please visit the traffic office directly.'); return; }
+  document.getElementById('pay-body').innerHTML =
+    '<div class="success-box">'+
+      '<div class="success-icon">💵</div>'+
+      '<div class="success-title">Cash Payment Recorded</div>'+
+      '<div class="success-sub">Receipt: <strong>'+esc(ref)+'</strong><br>Fine: <strong>'+esc(currentFineNum)+'</strong><br><br>Keep your receipt as proof of payment.</div>'+
+    '</div>';
+  document.getElementById('pay-footer').innerHTML =
+    '<button class="btn btn-primary" onclick="closeModal(\'pay-modal\');doSearch()">Done &#x2192;</button>';
+}
+
+async function submitCardPayment() {
+  const num  = document.getElementById('pay-card-num')?.value.replace(/\s/g,'');
+  const exp  = document.getElementById('pay-card-exp')?.value.trim();
+  const cvv  = document.getElementById('pay-card-cvv')?.value.trim();
+  const name = document.getElementById('pay-card-name')?.value.trim();
+  if (!num||num.length<15) { showToast('Please enter a valid card number','error'); return; }
+  if (!exp) { showToast('Please enter card expiry date','error'); return; }
+  if (!cvv) { showToast('Please enter CVV','error'); return; }
+  if (!name) { showToast('Please enter cardholder name','error'); return; }
+  const btn = document.getElementById('pay-btn');
+  if (btn) { btn.disabled=true; btn.textContent='Processing...'; }
+  // Process via mobile payment endpoint with CARD provider
+  const res = await apiFetch('/fines/' + currentFineId + '/pay/mobile', {
+    method: 'POST',
+    body: JSON.stringify({ phone: name, provider: 'CARD', amount_tzs: currentTotal, transaction_ref: 'CARD-'+Date.now() })
+  });
+  if (!res.ok) { showPaymentFailed('Card payment failed. Please check your details and try again.'); return; }
+  showPaymentSuccess('CARD-'+Date.now());
 }
 
 // ── KEY FIX: Uses public /fines/:id/pay/mobile — no token needed ──

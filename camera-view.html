@@ -129,9 +129,29 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .modal-detail-value.green{color:var(--green)}.modal-detail-value.amber{color:var(--amber)}.modal-detail-value.red{color:var(--red)}
 
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* ── SYSTEM NAVIGATION ── */
+.sys-nav{background:rgba(0,0,0,.8);border-bottom:1px solid rgba(255,255,255,.07);padding:7px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;z-index:300}
+.sys-nav-brand{font-family:monospace;font-size:13px;font-weight:700;color:#e0e0e0;letter-spacing:.08em;margin-right:8px}
+.sys-nav-links{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sys-nav-link{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-decoration:none;padding:4px 10px;border-radius:5px;transition:all .15s;cursor:default;letter-spacing:.02em}
+a.sys-nav-link{cursor:pointer}
+a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+.sys-nav-link.active{background:#00ff88;color:#000}
+@media(max-width:600px){.sys-nav{padding:6px 12px}.sys-nav-link{padding:3px 7px;font-size:10px}}
 </style>
 </head>
 <body>
+<div class="sys-nav">
+  <div class="sys-nav-brand">🚦 RTMS</div>
+  <div class="sys-nav-links">
+    <a class="sys-nav-link" href="citizen-portal.html">🏠 Citizen Portal</a>
+    <a class="sys-nav-link" href="dashboard.html">👮 Staff Dashboard</a>
+    <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
+    <span class="sys-nav-link active">📷 Camera View</span>
+  </div>
+</div>
+
 
 <div class="wm"><div class="wm-text">SEUSHI ANWAR · RTMS</div></div>
 
