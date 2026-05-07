@@ -125,7 +125,6 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
 <div class="sys-nav">
   <div class="sys-nav-brand">🚦 RTMS</div>
   <div class="sys-nav-links">
-    <a class="sys-nav-link" href="citizen-portal.html">🏠 Citizen Portal</a>
     <a class="sys-nav-link" href="dashboard.html">👮 Staff Dashboard</a>
     <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
     <span class="sys-nav-link active">📷 Camera View</span>
@@ -279,10 +278,11 @@ const ctx    = canvas.getContext('2d');
 
 function resizeCanvas() {
   const wrap = canvas.parentElement;
-  canvas.width  = wrap.clientWidth  || 800;
-  canvas.height = wrap.clientHeight || 520;
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  if(W && H) { canvas.width = W; canvas.height = H; }
 }
-resizeCanvas();
+// Don't call resizeCanvas() immediately — safeStart handles initial size
 window.addEventListener('resize', resizeCanvas);
 
 // Perspective math — map a road point to canvas
@@ -1812,17 +1812,56 @@ function render(){
 }
 
 // Initial spawn — put cars in all lanes from start
-for(let lane=0;lane<4;lane++){
-  const car=new Car();
-  car.lane=lane;
-  car.dir=lane<2?-1:1; // left lanes away, right lanes toward
-  car.isOvertaking=(lane===1||lane===3);
-  // Spread initial positions: left lanes mid-distance, right lanes approaching
-  car.progress=lane<2?(0.55+lane*0.15):(0.15+lane*0.1);
-  cars.push(car);
+function initCars() {
+  cars = [];
+  for(let lane=0;lane<4;lane++){
+    const car=new Car();
+    car.lane=lane;
+    car.dir=lane<2?-1:1;
+    car.isOvertaking=(lane===1||lane===3);
+    car.progress=lane<2?(0.55+lane*0.15):(0.15+lane*0.1);
+    cars.push(car);
+  }
 }
 
-render();
+// ── SAFE STARTUP ─────────────────────────────────────────────
+// Defer until layout is painted so canvas has real dimensions.
+// Use ResizeObserver so it also restarts correctly on window resize.
+let _started = false;
+
+function safeStart() {
+  const wrap = canvas.parentElement;
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  if(!W || !H) return; // layout not ready yet
+  canvas.width  = W;
+  canvas.height = H;
+  if(!_started) {
+    _started = true;
+    initCars();
+    if(simRunning) render();
+  }
+}
+
+// ResizeObserver fires when element gets real size
+if(window.ResizeObserver) {
+  const ro = new ResizeObserver(() => {
+    const wrap = canvas.parentElement;
+    if(wrap.clientWidth && wrap.clientHeight) {
+      canvas.width  = wrap.clientWidth;
+      canvas.height = wrap.clientHeight;
+      if(!_started) { _started=true; initCars(); if(simRunning) render(); }
+    }
+  });
+  ro.observe(canvas.parentElement);
+} else {
+  // Fallback: try every 50ms until layout is ready
+  const poll = setInterval(()=>{ safeStart(); if(_started) clearInterval(poll); }, 50);
+}
+
+// Also try immediately and via rAF
+safeStart();
+requestAnimationFrame(safeStart);
 </script>
 </body>
 </html>

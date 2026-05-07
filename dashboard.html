@@ -244,7 +244,6 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:var(--text)}
 <div class="sys-nav">
   <div class="sys-nav-brand">🚦 RTMS</div>
   <div class="sys-nav-links">
-    <a class="sys-nav-link" href="citizen-portal.html">🏠 Citizen Portal</a>
     <span class="sys-nav-link active">👮 Staff Dashboard</span>
     <a class="sys-nav-link" href="camera-monitor.html">📡 Camera Monitor</a>
     <a class="sys-nav-link" href="camera-view.html">📷 Camera View</a>
@@ -315,6 +314,11 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:var(--text)}
     <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
     <span style="font-size:12px;color:var(--text3);font-family:var(--mono)">My Vehicle Portal</span>
     <div class="topbar-right">
+      <a href="citizen-portal.html" target="_blank"
+         style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;font-family:var(--mono);cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:6px"
+         title="View your fines on the Citizen Portal">
+        🏠 Citizen Portal
+      </a>
       <div class="officer-badge" id="user-portal-badge">--</div>
       <button class="logout-btn" onclick="logout()">Sign Out</button>
     </div>
@@ -608,6 +612,8 @@ function bootPortal() {
   if (role === "USER") {
     document.getElementById("user-portal").style.display = "grid";
     document.getElementById("user-portal-badge").textContent = "👤 " + (fullname||username);
+    // Auto-sync first so all vehicles registered under this name/phone/NID are linked
+    apiFetch("/admin/sync-vehicles", {method:"POST"}).catch(()=>{});
     userLoadVehicles();
   } else {
     document.getElementById("staff-dashboard").style.display = "grid";
@@ -1502,15 +1508,14 @@ function updateQueueBadge() {
 
 // ── SYNC VEHICLES ────────────────────────────────────────────
 async function syncMyVehicles() {
-  showToast("Searching for your vehicles...", "");
-  // Call admin sync endpoint if admin, otherwise just reload
-  const role = localStorage.getItem("rtms_role");
-  if (role === "ADMIN") {
-    const r = await apiFetch("/admin/sync-vehicles", {method:"POST"});
-    if (r && r.success) showToast("Synced! " + r.vehicles_linked + " vehicle(s) linked", "success");
+  showToast("Syncing your vehicles...", "");
+  // Always call sync — server matches by name/phone/email/NID for any role
+  const r = await apiFetch("/admin/sync-vehicles", {method:"POST"});
+  if(r && r.success !== false) {
+    const linked = r.vehicles_linked || r.count || 0;
+    showToast(linked > 0 ? "Synced! " + linked + " vehicle(s) linked to your account" : "Sync complete — no new vehicles found", linked > 0 ? "success" : "");
   }
   await userLoadVehicles();
-  showToast("Vehicles refreshed", "success");
 }
 
 // ── VEHICLE OWNER SELF-REGISTRATION ─────────────────────────
