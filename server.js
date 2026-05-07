@@ -188,8 +188,8 @@ app.post('/vehicles', authenticateToken, async (req, res) => {
          (plate_number, owner_name, owner_phone, owner_email,
           owner_national_id, owner_address,
           make, model, color, year,
-          chassis_number, engine_number, registration_expiry)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+          chassis_number, engine_number, registration_expiry, vehicle_category)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
       [
         plate_number.trim().toUpperCase(),
         owner_name,
@@ -623,12 +623,24 @@ app.get('/alerts/recent', authenticateToken, requireRole('ADMIN','OFFICER'), asy
 
 app.patch('/alerts/:id/acknowledge', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
   try {
+    const officerName  = req.user.full_name  || req.body?.officer_name || 'Unknown Officer';
+    const badgeNumber  = req.user.badge_number || req.body?.badge_number || '';
     const { rows } = await db(
-      `UPDATE officer_alerts SET acknowledged=TRUE, acknowledged_by=$1, acknowledged_at=NOW() WHERE id=$2 RETURNING *`,
-      [req.user.id, req.params.id]
+      `UPDATE officer_alerts
+       SET acknowledged=TRUE, acknowledged_by=$1, acknowledged_at=NOW(),
+           message = COALESCE(message,'') || ' | ASSIGNED: ' || $3 || CASE WHEN $4!='' THEN ' [' || $4 || ']' ELSE '' END || ' — EN ROUTE'
+       WHERE id=$2 RETURNING *`,
+      [req.user.id, req.params.id, officerName, badgeNumber]
     );
     if (!rows.length) return res.status(404).json({ error: 'Alert not found' });
-    res.json(rows[0]);
+    // Return enriched response
+    res.json({
+      ...rows[0],
+      assigned_officer: officerName,
+      assigned_badge:   badgeNumber,
+      status:           'OFFICER_EN_ROUTE',
+      message:          `Officer ${officerName}${badgeNumber?' ['+badgeNumber+']':''} assigned — en route to intercept`,
+    });
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 

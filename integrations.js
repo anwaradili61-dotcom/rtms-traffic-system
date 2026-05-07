@@ -45,8 +45,11 @@ const TRA = {
 
 // Fine amounts for integration violations (TZS)
 const INTEGRATION_FINES = {
-  NO_LATRA_PERMIT:    500000,  // No transit permit
+  NO_LATRA_PERMIT:    500000,  // No transit permit (commercial vehicle)
   EXPIRED_LATRA:      300000,  // Expired transit permit
+  VTS_TAMPERING:      1000000, // VTS device tampered/disabled — LATRA critical
+  ROUTE_VIOLATION:    400000,  // Operating outside licensed route
+  ETICKET_VIOLATION:  200000,  // E-ticketing non-compliance
   NO_INSURANCE:       200000,  // No insurance
   EXPIRED_INSURANCE:  150000,  // Expired insurance
 };
@@ -61,18 +64,37 @@ function log(module, level, message, data = {}) {
 // on plate patterns so you can test the full flow
 // ─────────────────────────────────────────────────────────────
 function simulateLatraCheck(plateNumber) {
-  // Simulate: plates ending in odd numbers have no permit
-  const lastChar = plateNumber.slice(-1);
-  const hasPermit = !['1','3','5','7','9'].includes(lastChar);
-  const expired   = plateNumber.includes('X');
+  // LATRA simulation for COMMERCIAL vehicles only
+  // Violations include: no permit, expired permit, route violation, VTS tampering, speeding
+  const lastChar   = plateNumber.slice(-1);
+  const hasPermit  = !['1','3','5','7','9'].includes(lastChar);
+  const expired    = plateNumber.includes('X');
+  const vtsOk      = !plateNumber.includes('V'); // VTS device check
+  const routeOk    = !plateNumber.includes('R'); // Route compliance
+  const eTicketOk  = !plateNumber.includes('E'); // E-ticketing compliance
+
+  let violation = null;
+  if (!hasPermit || expired)   violation = expired ? 'EXPIRED_LATRA' : 'NO_LATRA_PERMIT';
+  else if (!vtsOk)             violation = 'VTS_TAMPERING';
+  else if (!routeOk)           violation = 'ROUTE_VIOLATION';
+  else if (!eTicketOk)         violation = 'ETICKET_VIOLATION';
+
   return {
-    has_permit:    hasPermit && !expired,
-    expired:       expired,
-    permit_number: hasPermit ? 'LTR-' + plateNumber + '-2025' : null,
-    permit_type:   hasPermit ? 'TRANSIT' : null,
-    expiry_date:   hasPermit ? '2025-12-31' : null,
-    vehicle_class: 'HEAVY_GOODS',
-    route:         hasPermit ? 'DSM-ARUSHA-NAIROBI' : null,
+    has_permit:     hasPermit && !expired,
+    expired:        expired,
+    permit_number:  hasPermit ? 'LTR-' + plateNumber + '-2025' : null,
+    permit_type:    hasPermit ? 'PSV_TRANSIT' : null,
+    licence_class:  'COMMERCIAL_TRANSPORT',
+    expiry_date:    hasPermit ? '2025-12-31' : null,
+    vehicle_class:  'HEAVY_GOODS',
+    route:          hasPermit ? 'DSM-ARUSHA-NAIROBI' : null,
+    vts_compliant:  vtsOk,
+    route_compliant: routeOk,
+    eticket_compliant: eTicketOk,
+    violation_detail: violation,
+    suspended:      !hasPermit || expired,
+    latra_licence_number: hasPermit ? 'LATRA-' + plateNumber + '-2025' : null,
+    regulation_basis: 'Land Transport Regulatory Authority Act, CAP 413',
   };
 }
 
@@ -228,6 +250,63 @@ async function checkTra(plateNumber) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LATRA COMMERCIAL VEHICLE CLASSIFIER
+// LATRA regulates commercial/public transport only:
+//   • Intercity buses, daladala (commuter buses)
+//   • Trucks, lorries, freight carriers
+//   • Online taxis, special hire vehicles
+//   • Long-distance buses (VTS required)
+//   • Commercial transport fleets under LATRA licence
+// Personal/private vehicles → NOT subject to LATRA checks
+// TIRA insurance → ALL vehicles
+// ─────────────────────────────────────────────────────────────
+async function isCommercialVehicle(vehicleId, plateNumber) {
+  if (!vehicleId) {
+    // No DB record — use plate pattern heuristic:
+    // Tanzania commercial plates often start with T followed by specific series
+    // Trucks/lorries: plate ends in T (trailer), or make/model suggests commercial
+    // Conservative fallback: run LATRA on any plate that doesn't look private
+    // Private plates: T + 3 digits + 3 letters (standard format)
+    // Commercial/PSV plates often have different formats or specific prefixes
+    // We'll check the DB for make/model to determine type
+    return false; // default: no vehicle record = skip LATRA
+  }
+  try {
+    const { rows } = await db(
+      `SELECT make, model, year,
+              COALESCE(vehicle_category, 'PRIVATE') AS vehicle_category,
+              LOWER(make) AS make_l, LOWER(COALESCE(model,'')) AS model_l
+       FROM vehicles WHERE id = $1`,
+      [vehicleId]
+    );
+    if (!rows.length) return false;
+    const { make_l, model_l, vehicle_category } = rows[0];
+    // Explicit category takes precedence
+    if (vehicle_category && vehicle_category !== 'PRIVATE' && vehicle_category !== 'MOTORCYCLE') {
+      return true; // PSV, TRUCK, BUS, TAXI, FREIGHT, GOVERNMENT all subject to LATRA
+    }
+    // Commercial vehicle indicators in make/model
+    const commercialMakes = [
+      'mercedes','actros','scania','volvo','man ','isuzu','mitsubishi fuso',
+      'hino','toyota hiace','toyota coaster','nissan ud','yutong','king long',
+      'zhongtong','golden dragon','ashok leyland','tata','daf','iveco',
+      'renault truck','foton','sinotruk','dongfeng','faw','cnhtc','shacman'
+    ];
+    const commercialModels = [
+      'truck','lorry','bus','daladala','hiace','coaster','transit','sprinter',
+      'boxer','ducato','daily','cargo','tipper','flatbed','tanker','trailer',
+      'semi','articulated','long distance','freight','fuso','dyna','3ton',
+      '5ton','7ton','10ton','15ton','20ton','30ton'
+    ];
+    const isCommercialMake  = commercialMakes.some(m => make_l.includes(m));
+    const isCommercialModel = commercialModels.some(m => model_l.includes(m));
+    return isCommercialMake || isCommercialModel;
+  } catch(e) {
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // MAIN: RUN ALL CHECKS FOR A PLATE
 // Called by processor.js on every detection
 // Returns array of violations found
@@ -235,12 +314,18 @@ async function checkTra(plateNumber) {
 async function runAllChecks(plateNumber, vehicleId, cameraId, gpsLat, gpsLng) {
   log('INTEGRATIONS', 'INFO', 'Running all external checks', { plate: plateNumber });
 
-  // Run all three checks in parallel for speed
-  const [latraResult, tiraResult, traResult] = await Promise.all([
-    checkLatra(plateNumber),
-    checkInsurance(plateNumber),
-    checkTra(plateNumber),
-  ]);
+  // Determine if this is a commercial vehicle BEFORE running checks
+  // LATRA only applies to commercial/public transport vehicles
+  const commercial = await isCommercialVehicle(vehicleId, plateNumber);
+  log('INTEGRATIONS', 'INFO', `Vehicle type: ${commercial ? 'COMMERCIAL (LATRA applies)' : 'PRIVATE (LATRA skipped)'}`, { plate: plateNumber });
+
+  // Run checks: LATRA only for commercial, TIRA+TRA for all
+  const checksToRun = commercial
+    ? [checkLatra(plateNumber), checkInsurance(plateNumber), checkTra(plateNumber)]
+    : [Promise.resolve({ source:'LATRA', plate:plateNumber, compliant:true, violation:null, fine_amount:0, details:{ skipped:true, reason:'Private vehicle — LATRA not applicable' }, checked_at:new Date().toISOString(), simulated:true }),
+       checkInsurance(plateNumber), checkTra(plateNumber)];
+
+  const [latraResult, tiraResult, traResult] = await Promise.all(checksToRun);
 
   const results = [latraResult, tiraResult, traResult];
   const violations = results.filter(r => r.violation);

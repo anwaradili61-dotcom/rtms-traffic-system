@@ -563,12 +563,12 @@ async function register() {
 // ── SESSION MANAGEMENT (30 days) ──────────────────────────────
 function saveSession(data) {
   const expiresAt = Date.now() + (30*24*60*60*1000);
-  localStorage.setItem("rtms_token",      data.token);
-  localStorage.setItem("rtms_role",       data.user.role);
-  localStorage.setItem("rtms_username",   data.user.username);
-  localStorage.setItem("rtms_fullname",   data.user.full_name);
-  localStorage.setItem("rtms_badge",      data.user.badge_number||"");
-  localStorage.setItem("rtms_expires_at", String(expiresAt));
+  sessionStorage.setItem("rtms_token",      data.token);
+  sessionStorage.setItem("rtms_role",       data.user.role);
+  sessionStorage.setItem("rtms_username",   data.user.username);
+  sessionStorage.setItem("rtms_fullname",   data.user.full_name);
+  sessionStorage.setItem("rtms_badge",      data.user.badge_number||"");
+  sessionStorage.setItem("rtms_expires_at", String(expiresAt));
   // Save extra fields for vehicle pre-fill
   localStorage.setItem("rtms_phone",      data.user.phone||"");
   localStorage.setItem("rtms_email",      data.user.email||"");
@@ -576,7 +576,7 @@ function saveSession(data) {
 }
 
 function isSessionValid() {
-  const token = localStorage.getItem("rtms_token");
+  const token = sessionStorage.getItem("rtms_token");
   if (!token) return false;
   // Check JWT exp directly
   try {
@@ -584,17 +584,19 @@ function isSessionValid() {
     if (payload.exp * 1000 < Date.now()) return false; // JWT itself expired
   } catch(e) { return false; }
   // Also check our local expiry — always set to 30 days from last login
-  let expiresAt = Number(localStorage.getItem("rtms_expires_at")||0);
+  let expiresAt = Number(sessionStorage.getItem("rtms_expires_at")||0);
   if (!expiresAt) {
     expiresAt = Date.now() + 30*24*60*60*1000;
-    localStorage.setItem("rtms_expires_at", String(expiresAt));
+    sessionStorage.setItem("rtms_expires_at", String(expiresAt));
   }
   return Date.now() < expiresAt;
 }
 
 function logout() {
   stopAlertStream();
-  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at","rtms_phone","rtms_email","rtms_nid"].forEach(k=>localStorage.removeItem(k));
+  // Session keys in sessionStorage (per-tab) — clear all on logout
+  ["rtms_token","rtms_role","rtms_username","rtms_fullname","rtms_badge","rtms_expires_at"].forEach(k=>sessionStorage.removeItem(k));
+  // Keep prefill keys in localStorage so they survive logout (convenience)
   document.getElementById("staff-dashboard").style.display="none";
   document.getElementById("user-portal").style.display="none";
   document.getElementById("login-screen").style.display="flex";
@@ -604,10 +606,10 @@ function logout() {
 }
 
 function bootPortal() {
-  const role     = CURRENT_USER.role       || localStorage.getItem("rtms_role");
-  const fullname = CURRENT_USER.full_name  || localStorage.getItem("rtms_fullname");
-  const badge    = CURRENT_USER.badge_number || localStorage.getItem("rtms_badge");
-  const username = CURRENT_USER.username   || localStorage.getItem("rtms_username");
+  const role     = CURRENT_USER.role       || sessionStorage.getItem("rtms_role");
+  const fullname = CURRENT_USER.full_name  || sessionStorage.getItem("rtms_fullname");
+  const badge    = CURRENT_USER.badge_number || sessionStorage.getItem("rtms_badge");
+  const username = CURRENT_USER.username   || sessionStorage.getItem("rtms_username");
   document.getElementById("login-screen").style.display = "none";
   if (role === "USER") {
     document.getElementById("user-portal").style.display = "grid";
@@ -632,7 +634,7 @@ function bootPortal() {
 
 // ── API HELPER ────────────────────────────────────────────────
 async function apiFetch(path, opts={}) {
-  const token = localStorage.getItem("rtms_token");
+  const token = sessionStorage.getItem("rtms_token");
   try {
     const r = await fetch(API+path, {
       headers:{"Content-Type":"application/json","Authorization":token?"Bearer "+token:""},
@@ -788,7 +790,7 @@ async function openFine(id){
     row("Due Date",d.due_date?d.due_date.split("T")[0]:"--")+
     row("Issued",d.issued_at?new Date(d.issued_at).toLocaleString():"--")+
     (d.evidence_image_url?row("Evidence",'<a href="'+d.evidence_image_url+'" target="_blank" style="color:var(--accent2)">View Image ↗</a>'):"")+'</div>';
-  const role=localStorage.getItem("rtms_role");const s=d.status;let btns="";
+  const role=sessionStorage.getItem("rtms_role");const s=d.status;let btns="";
   if(["ADMIN","CASHIER"].includes(role)&&["ISSUED","OVERDUE","PENDING"].includes(s))
     btns+='<button class="btn btn-primary" onclick="recordPayment(\''+d.id+'\',\''+d.fine_number+'\')">Record Payment</button>';
   if(["ISSUED","PENDING","OVERDUE"].includes(s))
@@ -904,10 +906,10 @@ async function submitUser(){
 }
 
 async function submitVehicle(){
-  const body={plate_number:document.getElementById("v-plate").value.trim().toUpperCase(),owner_name:document.getElementById("v-name").value.trim(),owner_phone:document.getElementById("v-phone").value.trim(),owner_email:document.getElementById("v-email").value.trim(),owner_national_id:document.getElementById("v-nid").value.trim(),owner_address:document.getElementById("v-addr").value.trim(),make:document.getElementById("v-make").value.trim(),model:document.getElementById("v-model").value.trim(),color:document.getElementById("v-color").value.trim(),year:parseInt(document.getElementById("v-year").value)||null,chassis_number:document.getElementById("v-chassis").value.trim(),engine_number:document.getElementById("v-engine").value.trim(),registration_expiry:document.getElementById("v-expiry").value};
+  const body={plate_number:document.getElementById("v-plate").value.trim().toUpperCase(),owner_name:document.getElementById("v-name").value.trim(),owner_phone:document.getElementById("v-phone").value.trim(),owner_email:document.getElementById("v-email").value.trim(),owner_national_id:document.getElementById("v-nid").value.trim(),owner_address:document.getElementById("v-addr").value.trim(),make:document.getElementById("v-make").value.trim(),model:document.getElementById("v-model").value.trim(),color:document.getElementById("v-color").value.trim(),year:parseInt(document.getElementById("v-year").value)||null,chassis_number:document.getElementById("v-chassis").value.trim(),engine_number:document.getElementById("v-engine").value.trim(),registration_expiry:document.getElementById("v-expiry").value,vehicle_category:document.getElementById("v-category")?.value||'PRIVATE'};
   if(!body.plate_number||!body.owner_name||!body.owner_phone||!body.registration_expiry){showToast("Fill in all required fields","error");return;}
   const r=await apiFetch("/vehicles",{method:"POST",body:JSON.stringify(body)});
-  if(r&&!r.error){showToast("Vehicle registered: "+body.plate_number,"success");closeModal("vehicle-modal");["v-plate","v-name","v-phone","v-email","v-nid","v-addr","v-make","v-model","v-color","v-year","v-chassis","v-engine","v-expiry"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});if(document.getElementById("v-tbody"))loadVehicles();else if(localStorage.getItem("rtms_role")==="USER")userLoadVehicles();}
+  if(r&&!r.error){showToast("Vehicle registered: "+body.plate_number,"success");closeModal("vehicle-modal");["v-plate","v-name","v-phone","v-email","v-nid","v-addr","v-make","v-model","v-color","v-year","v-chassis","v-engine","v-expiry"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});if(document.getElementById("v-tbody"))loadVehicles();else if(sessionStorage.getItem("rtms_role")==="USER")userLoadVehicles();}
   else showToast("Error: "+(r?.error||"Unknown"),"error");
 }
 
@@ -1201,7 +1203,7 @@ function showToast(msg,type){const t=document.getElementById("toast");t.textCont
 // ── OFFICER ALERT STREAM ──────────────────────────────────────
 // FIX: Uses polling instead of SSE so token works via Authorization header
 function startAlertStream() {
-  const role = localStorage.getItem("rtms_role");
+  const role = sessionStorage.getItem("rtms_role");
   if (!["ADMIN","OFFICER"].includes(role)) return;
   stopAlertStream();
   setAlertDot(true);
@@ -1335,7 +1337,7 @@ function setAlertDot(on) {
   const dot   = document.getElementById("alert-dot");
   const label = document.getElementById("alert-dot-label");
   if (!dot || !label) return;
-  if (on) { dot.className="alert-stream-dot on"; label.textContent="Alerts live"; label.style.color="var(--green)"; }
+  if (on) { dot.className="alert-stream-dot on"; label.textContent="Alerts live — " + (sessionStorage.getItem("rtms_fullname")||"") + " online"; label.style.color="var(--green)"; }
   else    { dot.className="alert-stream-dot";    label.textContent="Alerts off";  label.style.color="var(--text3)"; }
 }
 
@@ -1405,7 +1407,9 @@ function renderAlertPopup(alert) {
     (vHtml?`<div class="alert-violations">${vHtml}</div>`:'<div class="alert-violations"><div class="alert-violation"><div class="alert-violation-icon">⚠️</div><div><div class="alert-violation-text">Integration violation detected</div></div></div></div>')+
     `<div class="alert-meta">📡 ${cam.name} &bull; ➡ ${direction} &bull; ${new Date(alert.time||Date.now()).toLocaleTimeString()}</div>`+
     `<div class="alert-actions">
-      <button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged</button>
+      <button class="alert-btn-ack" onclick="acknowledgeAlert('${alert.alertId}')">
+        🚔 ${sessionStorage.getItem('rtms_fullname')||'Officer'} — ACKNOWLEDGE &amp; INTERCEPT
+      </button>
       <button style="flex:1;background:rgba(59,130,246,.3);border:1px solid var(--accent);color:var(--accent2);border-radius:8px;padding:9px;font-family:var(--mono);font-size:11px;cursor:pointer" onclick="openAlertDetail(window._lastAlert)">🔍 Full Details</button>
       <button class="alert-btn-dismiss" onclick="dismissAlert()">✕</button>
     </div>`;
@@ -1463,10 +1467,25 @@ function renderAlertPopup(alert) {
 }
 
 async function acknowledgeAlert(alertId) {
-  if (alertId&&alertId!=="undefined") await apiFetch("/alerts/"+alertId+"/acknowledge",{method:"PATCH"}).catch(()=>{});
-  closeAlertDetail();
-  dismissAlert();
-  showToast("Alert acknowledged","success");
+  const officerName = sessionStorage.getItem("rtms_fullname") || "Officer";
+  const badge       = sessionStorage.getItem("rtms_badge") || "";
+  if (alertId && alertId !== "undefined") {
+    await apiFetch("/alerts/"+alertId+"/acknowledge", {
+      method: "PATCH",
+      body:   JSON.stringify({ officer_name: officerName, badge_number: badge })
+    }).catch(()=>{});
+  }
+  // Show assignment status in popup before closing
+  const popupBody = document.getElementById("alert-popup-body");
+  if (popupBody) {
+    const div = document.createElement("div");
+    div.style.cssText = "background:rgba(34,197,94,.15);border:1px solid #22c55e;border-radius:8px;padding:10px 14px;margin-top:8px;font-family:var(--mono);font-size:11px;color:#22c55e;font-weight:700;animation:slideIn .3s ease";
+    div.innerHTML = `🚔 OFFICER ${officerName.toUpperCase()}${badge?" ["+badge+"]":""} — ASSIGNED<br><span style="font-weight:400;opacity:.85">Status: EN ROUTE TO INTERCEPT VEHICLE</span>`;
+    popupBody.appendChild(div);
+  }
+  showToast(`🚔 ${officerName} — Assigned & En Route to Intercept`, "success");
+  if (alertId) seenAlertIds.add(alertId);
+  setTimeout(() => { closeAlertDetail(); dismissAlert(); }, 2200);
 }
 
 function closeAlertDetail() {
@@ -1567,7 +1586,7 @@ function openAlertDetail(alert) {
 
     <!-- Actions -->
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="alert-btn-ack" style="flex:2" onclick="acknowledgeAlert('${alert.alertId}')">✓ Acknowledged — Officer Dispatched</button>
+      <button class="alert-btn-ack" style="flex:2" onclick="acknowledgeAlert('${alert.alertId}')">🚔 ${sessionStorage.getItem('rtms_fullname')||'Officer'} — ACKNOWLEDGE &amp; INTERCEPT</button>
       <button class="alert-btn-dismiss" style="flex:1" onclick="closeAlertDetail()">Close</button>
     </div>`;
 
@@ -1600,7 +1619,7 @@ async function syncMyVehicles() {
 // ── VEHICLE OWNER SELF-REGISTRATION ─────────────────────────
 function openUserVehicleModal() {
   // Pre-fill all owner details from logged-in user account
-  const fullname = localStorage.getItem("rtms_fullname") || "";
+  const fullname = sessionStorage.getItem("rtms_fullname") || "";
   const phone    = localStorage.getItem("rtms_phone")    || "";
   const email    = localStorage.getItem("rtms_email")    || "";
   const nid      = localStorage.getItem("rtms_nid")      || "";
@@ -1699,20 +1718,20 @@ function selectModel(model) {
 
 // ── INIT ──────────────────────────────────────────────────────
 window.addEventListener("load", () => {
-  const token = localStorage.getItem("rtms_token");
-  const role  = localStorage.getItem("rtms_role");
+  const token = sessionStorage.getItem("rtms_token");
+  const role  = sessionStorage.getItem("rtms_role");
   if (token && role && isSessionValid()) {
-    CURRENT_USER = { role, username: localStorage.getItem("rtms_username"), full_name: localStorage.getItem("rtms_fullname"), badge_number: localStorage.getItem("rtms_badge") };
+    CURRENT_USER = { role, username: sessionStorage.getItem("rtms_username"), full_name: sessionStorage.getItem("rtms_fullname"), badge_number: sessionStorage.getItem("rtms_badge") };
     bootPortal();
   }
-  if (token && role && !localStorage.getItem("rtms_expires_at")) {
-    localStorage.setItem("rtms_expires_at", String(Date.now()+30*24*60*60*1000));
+  if (token && role && !sessionStorage.getItem("rtms_expires_at")) {
+    sessionStorage.setItem("rtms_expires_at", String(Date.now()+30*24*60*60*1000));
   }
 });
 
 // Session check every 12 hours — only warn, don't force logout unless truly expired
 setInterval(()=>{
-  const token=localStorage.getItem("rtms_token");if(!token)return;
+  const token=sessionStorage.getItem("rtms_token");if(!token)return;
   if(!isSessionValid()){showToast("Session expired — please log in again","error");setTimeout(logout,5000);}
 },12*60*60*1000);
 
