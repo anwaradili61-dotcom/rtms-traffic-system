@@ -598,24 +598,24 @@ function addDetection({type,plate,owner,camera,violation,confidence,amount,fine_
   el.className=`detection ${clsMap[type]||'rejected'}`;
   el.title='Click to view evidence photo';
   el.onclick=()=>openEvModal({type,plate,owner,camera,violation,confidence,amount,fine_num});
-  el.innerHTML=`
-    <div class="det-time">${nowT()}</div>
-    <div>
-      <div class="det-plate">${plate}</div>
-      <div class="det-info">
-        <span class="det-cam">${camera}</span>
-        <span class="det-type">${(violation||'').replace(/_/g,' ')}</span>
-        <span class="det-conf ${confCls}">CONF ${(confidence*100).toFixed(0)}%</span>
-      </div>
-      ${owner?`<div class="det-owner">&#x1F464; ${owner}</div>`:''}
-      ${watchlist?`<div style="background:rgba(220,38,38,.15);border:1px solid var(--red);border-radius:6px;padding:6px 10px;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--red);font-weight:700">🚨 WATCHLIST: ${watchlist.watch_reason} — ${watchlist.severity}${watchlist.instructions?' | '+watchlist.instructions.substring(0,60):''}</div>`:''}`
-      <div class="det-hint">&#x1F4F7; Click to view evidence</div>
-    </div>
-    <div style="text-align:right">
-      <div class="det-badge ${bdgCls[type]||'b-reject'}">${bdgMap[type]||'UNKNOWN'}</div>
-      ${amount?`<div class="det-amount">TZS ${fmt(amount)}</div>`:''}
-      ${fine_num?`<div class="det-fnum">${fine_num}</div>`:''}
-    </div>`;
+  el.innerHTML=
+    '<div class="det-time">'+nowT()+'</div>'+
+    '<div>'+
+      '<div class="det-plate">'+plate+'</div>'+
+      '<div class="det-info">'+
+        '<span class="det-cam">'+camera+'</span>'+
+        '<span class="det-type">'+(violation||'').replace(/_/g,' ')+'</span>'+
+        '<span class="det-conf '+confCls+'">CONF '+(confidence*100).toFixed(0)+'%</span>'+
+      '</div>'+
+      (owner?'<div class="det-owner">&#x1F464; '+owner+'</div>':'')+
+      (watchlist?'<div style="background:rgba(220,38,38,.15);border:1px solid var(--red);border-radius:6px;padding:6px 10px;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--red);font-weight:700">&#x1F6A8; WATCHLIST: '+watchlist.watch_reason+' — '+watchlist.severity+(watchlist.instructions?' | '+watchlist.instructions.substring(0,60):'')+' </div>':'')+
+      '<div class="det-hint">&#x1F4F7; Click to view evidence</div>'+
+    '</div>'+
+    '<div style="text-align:right">'+
+      '<div class="det-badge '+(bdgCls[type]||'b-reject')+'">'+(bdgMap[type]||'UNKNOWN')+'</div>'+
+      (amount?'<div class="det-amount">TZS '+fmt(amount)+'</div>':'')+
+      (fine_num?'<div class="det-fnum">'+fine_num+'</div>':'')+
+    '</div>';
 
   const feed=document.getElementById('feed-area');
   feed.insertBefore(el,feed.firstChild);

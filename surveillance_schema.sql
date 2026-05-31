@@ -1,11 +1,7 @@
--- ═══════════════════════════════════════════════════════════════
--- RTMS SURVEILLANCE & PUBLIC SAFETY SCHEMA
--- © SEUSHI, ANWAR 2025 | Dar es Salaam, Tanzania
--- Run in: rtms_database_6mgd via pgAdmin Query Tool
--- ═══════════════════════════════════════════════════════════════
-
--- ── 1. WATCHLIST ─────────────────────────────────────────────
--- Persons or vehicles flagged by law enforcement for monitoring
+-- ═══════════════════════════════════════════════════════════
+-- BLOCK 1 of 5 — Run this first
+-- Creates the watchlist table
+-- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS watchlist (
   id                 SERIAL PRIMARY KEY,
   entry_type         VARCHAR(20) NOT NULL CHECK (entry_type IN ('VEHICLE','PERSON')),
@@ -60,6 +56,14 @@ CREATE INDEX IF NOT EXISTS idx_watchlist_severity ON watchlist (severity);
 
 -- ── 2. WATCHLIST HITS ────────────────────────────────────────
 -- Every time a camera detects a plate on the watchlist
+
+
+SELECT 'Block 1 done' AS step;
+
+-- ═══════════════════════════════════════════════════════════
+-- BLOCK 2 of 5 — Run after Block 1
+-- Creates the watchlist_hits table
+-- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS watchlist_hits (
   id               SERIAL PRIMARY KEY,
   watchlist_id     INTEGER NOT NULL REFERENCES watchlist(id),
@@ -85,6 +89,14 @@ CREATE INDEX IF NOT EXISTS idx_hits_detected  ON watchlist_hits (detected_at DES
 
 -- ── 3. INCIDENTS ─────────────────────────────────────────────
 -- Crime/security incidents logged at or near camera locations
+
+
+SELECT 'Block 2 done' AS step;
+
+-- ═══════════════════════════════════════════════════════════
+-- BLOCK 3 of 5 — Run after Block 2
+-- Creates the incidents table
+-- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS incidents (
   id                 SERIAL PRIMARY KEY,
   incident_number    VARCHAR(30) UNIQUE NOT NULL DEFAULT 'INC-' || to_char(NOW(),'YYMMDDHH24MISS') || '-' || floor(random()*1000)::text,
@@ -133,6 +145,14 @@ CREATE INDEX IF NOT EXISTS idx_incidents_plate    ON incidents (plate_number) WH
 CREATE INDEX IF NOT EXISTS idx_incidents_camera   ON incidents (camera_id)    WHERE camera_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_incidents_occurred ON incidents (occurred_at DESC);
 
+
+
+SELECT 'Block 3 done' AS step;
+
+-- ═══════════════════════════════════════════════════════════
+-- BLOCK 4 of 5 — Run after Block 3
+-- Creates views and indexes
+-- ═══════════════════════════════════════════════════════════
 -- ── 4. NID VEHICLE LOOKUP VIEW ───────────────────────────────
 -- Lookup all vehicles registered to a given NID
 CREATE OR REPLACE VIEW v_nid_vehicles AS
@@ -172,5 +192,15 @@ CREATE OR REPLACE VIEW v_surveillance_stats AS
     (SELECT COUNT(*) FROM incidents WHERE severity='CRITICAL' AND status='OPEN') AS critical_incidents,
     (SELECT COUNT(*) FROM incidents WHERE occurred_at > NOW()-INTERVAL'24h') AS incidents_24h;
 
--- Confirm
-SELECT 'Surveillance schema installed successfully' AS result;
+
+
+SELECT 'Block 4 done' AS step;
+
+-- ═══════════════════════════════════════════════════════════
+-- BLOCK 5 of 5 — Final confirmation
+-- ═══════════════════════════════════════════════════════════
+SELECT 'Block 5 done' AS step;
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public' AND table_name IN ('watchlist','watchlist_hits','incidents')
+ORDER BY table_name;
+-- Should return 3 rows: incidents, watchlist, watchlist_hits
