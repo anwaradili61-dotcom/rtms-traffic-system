@@ -777,3 +777,202 @@ app.post('/admin/sync-vehicles', authenticateToken, requireRole('ADMIN'), async 
 // ── START ────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅  RTMS API running on port ${PORT}`));
+
+// ═══════════════════════════════════════════════════════════════
+// SURVEILLANCE & PUBLIC SAFETY ROUTES
+// © SEUSHI, ANWAR 2025 | Dar es Salaam, Tanzania
+// ═══════════════════════════════════════════════════════════════
+
+// ── GET /surveillance/stats ───────────────────────────────────
+app.get('/surveillance/stats', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { rows } = await db(`SELECT * FROM v_surveillance_stats`);
+    res.json({ data: rows[0] });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── GET /watchlist ────────────────────────────────────────────
+app.get('/watchlist', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { status='ACTIVE', severity, type } = req.query;
+    let q = `SELECT w.*, u.full_name AS created_by_name
+             FROM watchlist w LEFT JOIN users u ON u.id = w.created_by
+             WHERE 1=1`;
+    const params = [];
+    if (status) { q += ` AND w.status=$${params.length+1}`; params.push(status); }
+    if (severity){ q += ` AND w.severity=$${params.length+1}`; params.push(severity); }
+    if (type)    { q += ` AND w.entry_type=$${params.length+1}`; params.push(type); }
+    q += ` ORDER BY w.created_at DESC LIMIT 200`;
+    const { rows } = await db(q, params);
+    res.json({ data: rows, count: rows.length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── POST /watchlist ───────────────────────────────────────────
+app.post('/watchlist', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const {
+      entry_type, plate_number, vehicle_make, vehicle_model, vehicle_color,
+      national_id, full_name, date_of_birth, known_associates, last_known_address,
+      watch_reason, severity='MEDIUM', warrant_number, issuing_authority,
+      case_reference, description, instructions, expires_at
+    } = req.body;
+    if (!entry_type || !watch_reason) return res.status(400).json({ error: 'entry_type and watch_reason are required' });
+    const { rows } = await db(
+      `INSERT INTO watchlist
+         (entry_type, plate_number, vehicle_make, vehicle_model, vehicle_color,
+          national_id, full_name, date_of_birth, known_associates, last_known_address,
+          watch_reason, severity, warrant_number, issuing_authority,
+          case_reference, description, instructions, expires_at, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+       RETURNING *`,
+      [entry_type, plate_number?.toUpperCase()||null, vehicle_make||null, vehicle_model||null,
+       vehicle_color||null, national_id||null, full_name||null, date_of_birth||null,
+       known_associates||null, last_known_address||null, watch_reason, severity,
+       warrant_number||null, issuing_authority||null, case_reference||null,
+       description||null, instructions||null, expires_at||null, req.user.id]
+    );
+    res.status(201).json(rows[0]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── PATCH /watchlist/:id/resolve ─────────────────────────────
+app.patch('/watchlist/:id/resolve', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { resolution_notes } = req.body;
+    const { rows } = await db(
+      `UPDATE watchlist SET status='RESOLVED', resolved_at=NOW(),
+       resolved_by=$1, resolution_notes=$2, updated_at=NOW()
+       WHERE id=$3 RETURNING *`,
+      [req.user.id, resolution_notes||null, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── GET /watchlist/hits ───────────────────────────────────────
+app.get('/watchlist/hits', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { rows } = await db(
+      `SELECT wh.*, w.watch_reason, w.severity, w.full_name, w.national_id,
+              w.instructions, w.warrant_number
+       FROM watchlist_hits wh
+       JOIN watchlist w ON w.id = wh.watchlist_id
+       ORDER BY wh.detected_at DESC LIMIT 100`
+    );
+    res.json({ data: rows, count: rows.length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── GET /nid/:nid — NID person/vehicle lookup ─────────────────
+app.get('/nid/:nid', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const nid = req.params.nid.trim();
+    // Vehicles registered to this NID
+    const { rows: vehicles } = await db(
+      `SELECT * FROM v_nid_vehicles WHERE national_id = $1`, [nid]
+    );
+    // Any watchlist entries for this NID
+    const { rows: watches } = await db(
+      `SELECT * FROM watchlist WHERE national_id=$1 AND status='ACTIVE'`, [nid]
+    );
+    // Incidents linked to this NID
+    const { rows: incidents } = await db(
+      `SELECT * FROM incidents WHERE national_id=$1 ORDER BY occurred_at DESC LIMIT 20`, [nid]
+    );
+    // Fines across all vehicles
+    const { rows: fines } = await db(
+      `SELECT f.*, v.plate_number, vi.violation_type FROM fines f
+       JOIN violations vi ON vi.id = f.violation_id
+       JOIN vehicles v ON v.id = vi.vehicle_id
+       WHERE v.owner_national_id=$1 ORDER BY f.issued_at DESC LIMIT 50`, [nid]
+    );
+    const owner = vehicles.length ? {
+      name:    vehicles[0].owner_name,
+      phone:   vehicles[0].owner_phone,
+      email:   vehicles[0].owner_email,
+      address: vehicles[0].owner_address,
+      nid,
+    } : null;
+    res.json({ owner, vehicles, watches, incidents, fines, found: vehicles.length > 0 });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── GET /incidents ────────────────────────────────────────────
+app.get('/incidents', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { status, severity, type } = req.query;
+    let q = `SELECT i.*, u1.full_name AS reporter_name, u2.full_name AS officer_name
+             FROM incidents i
+             LEFT JOIN users u1 ON u1.id = i.reported_by
+             LEFT JOIN users u2 ON u2.id = i.assigned_officer
+             WHERE 1=1`;
+    const p = [];
+    if (status)   { q += ` AND i.status=$${p.length+1}`;        p.push(status); }
+    if (severity) { q += ` AND i.severity=$${p.length+1}`;      p.push(severity); }
+    if (type)     { q += ` AND i.incident_type=$${p.length+1}`; p.push(type); }
+    q += ` ORDER BY i.occurred_at DESC LIMIT 200`;
+    const { rows } = await db(q, p);
+    res.json({ data: rows, count: rows.length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── POST /incidents ───────────────────────────────────────────
+app.post('/incidents', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const {
+      incident_type, title, description, camera_id, gps_lat, gps_lng,
+      location_name, plate_number, national_id, suspect_description,
+      severity='MEDIUM', occurred_at
+    } = req.body;
+    if (!incident_type || !title) return res.status(400).json({ error: 'incident_type and title required' });
+    const num = 'INC-' + Date.now().toString().slice(-8) + '-' + Math.floor(Math.random()*100);
+    const { rows } = await db(
+      `INSERT INTO incidents
+         (incident_number, incident_type, title, description, camera_id,
+          gps_lat, gps_lng, location_name, plate_number, national_id,
+          suspect_description, severity, reported_by, occurred_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+      [num, incident_type, title, description||null, camera_id||null,
+       gps_lat||null, gps_lng||null, location_name||null,
+       plate_number?.toUpperCase()||null, national_id||null,
+       suspect_description||null, severity, req.user.id,
+       occurred_at||new Date().toISOString()]
+    );
+    res.status(201).json(rows[0]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── PATCH /incidents/:id/assign ───────────────────────────────
+app.patch('/incidents/:id/assign', authenticateToken, requireRole('ADMIN','OFFICER'), async (req, res) => {
+  try {
+    const { rows } = await db(
+      `UPDATE incidents SET assigned_officer=$1, assigned_at=NOW(), status='ASSIGNED', updated_at=NOW()
+       WHERE id=$2 RETURNING *`,
+      [req.user.id, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── INTERNAL: Check plate against watchlist (called by processor) ──
+app.get('/watchlist/check/:plate', authenticateToken, async (req, res) => {
+  try {
+    const plate = req.params.plate.toUpperCase();
+    const { rows } = await db(
+      `SELECT * FROM watchlist WHERE plate_number=$1 AND status='ACTIVE' ORDER BY severity DESC LIMIT 5`,
+      [plate]
+    );
+    if (rows.length) {
+      // Log the hit
+      await db(
+        `INSERT INTO watchlist_hits (watchlist_id, plate_number, camera_id, detected_at)
+         VALUES ($1,$2,$3,NOW())`,
+        [rows[0].id, plate, 'API-CHECK']
+      );
+    }
+    res.json({ hits: rows, is_watched: rows.length > 0 });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});

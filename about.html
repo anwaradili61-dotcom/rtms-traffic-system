@@ -259,6 +259,10 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)
     <span class="sidenav-item-icon">🛡️</span> TIRA Compliance
   </a>
 
+  <div class="sidenav-section">Legal</div>
+  <a class="sidenav-item" onclick="scrollTo('surveillance-policy')">
+    <span class="sidenav-item-icon">👁️</span> Surveillance Policy
+  </a>
   <div class="sidenav-section">Quick Links</div>
   <a class="sidenav-item" href="citizen-portal.html">
     <span class="sidenav-item-icon">🏠</span> Citizen Portal
@@ -285,7 +289,7 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)
 <div id="home" class="hero">
   <div class="hero-eyebrow">United Republic of Tanzania</div>
   <h1 class="hero-title">Road Traffic<br>Management <em>System</em></h1>
-  <p class="hero-subtitle">A next-generation AI-powered traffic enforcement platform built for Tanzania — detecting violations, issuing fines, and connecting officers in real time across the city of Dar es Salaam and beyond.</p>
+  <p class="hero-subtitle">A next-generation AI-powered traffic enforcement and public safety platform built for Tanzania — detecting violations, issuing fines, flagging wanted vehicles, managing security incidents, and connecting officers in real time across Dar es Salaam and beyond.</p>
   <div class="hero-badges">
     <span class="badge badge-gold">🏆 Tanzanian Innovation</span>
     <span class="badge badge-cyan">🤖 AI-Powered ALPR</span>
@@ -410,6 +414,24 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)
       <div class="module-name">TIRA Integration</div>
       <div class="module-desc">Validates insurance status for ALL vehicles against TIRA records. Uninsured vehicles are flagged immediately and an officer alert is triggered.</div>
       <span class="module-tag">All Vehicles</span>
+    </div>
+    <div class="module">
+      <div class="module-icon">👁️</div>
+      <div class="module-name">Surveillance & Watchlist</div>
+      <div class="module-desc">Vehicles and persons flagged by law enforcement are watched across all cameras. Every camera hit is logged and officers are alerted instantly with intercept instructions.</div>
+      <span class="module-tag">Law Enforcement</span>
+    </div>
+    <div class="module">
+      <div class="module-icon">🔍</div>
+      <div class="module-name">NID Vehicle Lookup</div>
+      <div class="module-desc">Officers can search by National ID (NID) to retrieve all registered vehicles, outstanding fines, watchlist status, and linked incidents for any person.</div>
+      <span class="module-tag">NID-Linked</span>
+    </div>
+    <div class="module">
+      <div class="module-icon">🚨</div>
+      <div class="module-name">Incident Management</div>
+      <div class="module-desc">Log, assign and track security incidents — carjackings, suspicious vehicles, hit-and-run, robbery, assault — linked to camera locations and GPS coordinates.</div>
+      <span class="module-tag">Multi-Agency</span>
     </div>
   </div>
 </div>
@@ -672,6 +694,30 @@ a.sys-nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)
 </div>
 
 </main>
+</div>
+
+<!-- SURVEILLANCE POLICY -->
+<div id="surveillance-policy" class="section">
+  <div class="section-label">Regulatory Compliance</div>
+  <h2 class="section-title">Surveillance <em>Policy</em></h2>
+  <div class="section-body">
+    <p>The RTMS Surveillance module operates exclusively within the legal framework of the United Republic of Tanzania and is restricted to authorised law enforcement personnel (ADMIN and OFFICER roles only).</p>
+    <p><strong>What the surveillance module does:</strong></p>
+    <ul style="padding-left:20px;margin:12px 0;display:flex;flex-direction:column;gap:6px;color:var(--text2)">
+      <li>Flags vehicles with an active warrant, court order, or stolen status on a watchlist</li>
+      <li>Alerts officers when a watched plate is detected by any camera</li>
+      <li>Links National ID numbers to registered vehicles for authorised police lookups</li>
+      <li>Logs security incidents at camera locations with GPS coordinates and evidence</li>
+    </ul>
+    <p><strong>What the surveillance module does NOT do:</strong></p>
+    <ul style="padding-left:20px;margin:12px 0;display:flex;flex-direction:column;gap:6px;color:var(--text2)">
+      <li>Facial recognition — no biometric identification of individuals</li>
+      <li>Mass surveillance — only flagged/watched plates trigger alerts</li>
+      <li>Sharing data with unauthorised third parties</li>
+      <li>Processing sensitive personal data without legal authority</li>
+    </ul>
+    <div class="hl-box">All NID lookups are audit-logged with the officer's identity, timestamp and justification. Access requires a valid warrant or police case reference. Unauthorised use is a criminal offence under the PDPA 2022.</div>
+  </div>
 </div>
 
 <!-- FOOTER -->

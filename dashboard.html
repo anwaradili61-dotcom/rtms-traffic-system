@@ -669,6 +669,11 @@ function buildSidebar(role) {
       '<div class="nav-item" onclick="showStaffTab(\'vehicles\',this)"><span class="nav-icon">&#x1F697;</span> Vehicles</div>'+
       '<div class="nav-item" onclick="openModal(\'violation-modal\')"><span class="nav-icon">&#x1F4F8;</span> Log Violation</div>'+
       '<div class="nav-item" onclick="openModal(\'vehicle-modal\')"><span class="nav-icon">&#x2795;</span> Add Vehicle</div>':'')+
+    '<div class="nav-section">&#x1F6A8; Surveillance</div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'watchlist\',this)"><span class="nav-icon">&#x1F440;</span> Watchlist <span class="nav-count red" id="nav-watchlist">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'incidents\',this)"><span class="nav-icon">&#x1F6A8;</span> Incidents <span class="nav-count red" id="nav-incidents">-</span></div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'nid-lookup\',this)"><span class="nav-icon">&#x1F50D;</span> NID Lookup</div>'+
+    '<div class="nav-item" onclick="showStaffTab(\'watchlist-hits\',this)"><span class="nav-icon">&#x26A0;&#xFE0F;</span> Camera Hits <span class="nav-count amber" id="nav-hits">-</span></div>'+
     (isAdmin?
       '<div class="nav-section">Admin</div>'+
       '<div class="nav-item" onclick="showStaffTab(\'users\',this)"><span class="nav-icon">&#x1F465;</span> Manage Users</div>':'')+
@@ -710,6 +715,10 @@ function showStaffTab(tab,el){
   else if(tab==="latra")renderIntegrationView("LATRA");
   else if(tab==="tira")renderIntegrationView("TIRA");
   else if(tab==="alerts-log")renderAlertsLogView();
+  else if(tab==="watchlist")renderWatchlistView();
+  else if(tab==="incidents")renderIncidentsView();
+  else if(tab==="nid-lookup")renderNidLookup();
+  else if(tab==="watchlist-hits")renderWatchlistHitsView();
 }
 
 function renderFinesView(title,status){
@@ -1766,6 +1775,478 @@ function toggleTheme() {
   // Re-check every hour
   setInterval(applyAutoTheme, 3600000);
 })();
+
+
+// ══════════════════════════════════════════════════════════════
+// SURVEILLANCE & PUBLIC SAFETY MODULE
+// © SEUSHI, ANWAR 2025 | Dar es Salaam, Tanzania
+// ══════════════════════════════════════════════════════════════
+
+const WATCH_REASONS = {
+  STOLEN_VEHICLE:'Stolen Vehicle',WANTED_PERSON:'Wanted Person',
+  SUSPECT:'Suspect',MISSING_PERSON:'Missing Person',COURT_ORDER:'Court Order',
+  IMMIGRATION:'Immigration Flag',TAKUKURU:'TAKUKURU Flag',
+  TERRORISM_WATCH:'Terrorism Watch',CUSTOMS_FLAG:'Customs Flag',
+  TRAFFIC_WARRANT:'Traffic Warrant',OTHER:'Other'
+};
+const INCIDENT_TYPES = {
+  THEFT:'Theft',ROBBERY:'Robbery',ASSAULT:'Assault',CARJACKING:'Carjacking',
+  HIT_AND_RUN:'Hit & Run',RECKLESS_DRIVING:'Reckless Driving',DUI:'DUI/Drunk Driving',
+  SUSPICIOUS_VEHICLE:'Suspicious Vehicle',SUSPICIOUS_PERSON:'Suspicious Person',
+  ROAD_ACCIDENT:'Road Accident',PUBLIC_DISORDER:'Public Disorder',OTHER:'Other'
+};
+const SEV_COLOR = {LOW:'var(--text3)',MEDIUM:'var(--amber2)',HIGH:'var(--red2)',CRITICAL:'var(--red)'};
+const SEV_BG    = {LOW:'var(--bg3)',MEDIUM:'var(--amber-bg,rgba(213,121,0,.1))',HIGH:'var(--red-bg,rgba(220,38,38,.08))',CRITICAL:'rgba(220,38,38,.18)'};
+
+// ── WATCHLIST VIEW ────────────────────────────────────────────
+async function renderWatchlistView() {
+  const m = document.getElementById('staff-main');
+  m.innerHTML = `
+    <div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>
+    <div class="stats-row">
+      <div class="stat-card red"><div class="stat-label">Active Watches</div><div class="stat-value" id="sw-active">-</div></div>
+      <div class="stat-card red"><div class="stat-label">Critical</div><div class="stat-value" id="sw-critical">-</div></div>
+      <div class="stat-card amber"><div class="stat-label">Hits (24h)</div><div class="stat-value" id="sw-hits">-</div></div>
+      <div class="stat-card amber"><div class="stat-label">Unacknowledged</div><div class="stat-value" id="sw-unack">-</div></div>
+    </div>
+    <div>
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div><div class="section-title">&#x1F440; Watchlist</div><div class="section-sub">Vehicles &amp; persons flagged for surveillance</div></div>
+        <button class="btn btn-primary" onclick="openAddWatchModal()">+ Add to Watchlist</button>
+      </div>
+      <div class="toolbar" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="wl-type-filter" class="toolbar-select" onchange="loadWatchlist()">
+          <option value="">All Types</option><option value="VEHICLE">Vehicle Watch</option><option value="PERSON">Person Watch</option>
+        </select>
+        <select id="wl-sev-filter" class="toolbar-select" onchange="loadWatchlist()">
+          <option value="">All Severity</option><option value="CRITICAL">Critical</option><option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option><option value="LOW">Low</option>
+        </select>
+        <button class="btn btn-ghost" onclick="loadWatchlist()">&#x1F504; Refresh</button>
+      </div>
+      <div id="watchlist-table">Loading...</div>
+    </div>`;
+  loadSurveillanceStats();
+  loadWatchlist();
+}
+
+async function loadSurveillanceStats() {
+  const r = await apiFetch('/surveillance/stats');
+  if (!r.data) return;
+  const s = r.data;
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v??'-'; };
+  set('sw-active',   s.active_watches);
+  set('sw-critical', s.critical_watches);
+  set('sw-hits',     s.hits_24h);
+  set('sw-unack',    s.unacknowledged_hits);
+  set('nav-watchlist', s.active_watches||'');
+  set('nav-incidents', s.open_incidents||'');
+  set('nav-hits',      s.unacknowledged_hits||'');
+}
+
+async function loadWatchlist() {
+  const type = document.getElementById('wl-type-filter')?.value || '';
+  const sev  = document.getElementById('wl-sev-filter')?.value  || '';
+  let url = '/watchlist?status=ACTIVE';
+  if (type) url += '&type=' + type;
+  if (sev)  url += '&severity=' + sev;
+  const r = await apiFetch(url);
+  const el = document.getElementById('watchlist-table');
+  if (!el) return;
+  if (!r.data?.length) { el.innerHTML = '<div style="padding:24px;color:var(--text3);font-family:var(--mono);text-align:center">No active watches</div>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Type</th><th>Plate / NID</th><th>Name / Vehicle</th><th>Reason</th><th>Severity</th><th>Warrant</th><th>Added</th><th>Actions</th></tr></thead>
+    <tbody>${r.data.map(w => `
+      <tr style="background:${SEV_BG[w.severity]}">
+        <td><span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg3);border:1px solid var(--border)">${w.entry_type}</span></td>
+        <td style="font-family:var(--mono);font-weight:700;color:${SEV_COLOR[w.severity]}">${w.plate_number||w.national_id||'—'}</td>
+        <td>
+          <div style="font-weight:600">${w.full_name||[w.vehicle_make,w.vehicle_model].filter(Boolean).join(' ')||'—'}</div>
+          ${w.vehicle_color?`<div style="font-size:11px;color:var(--text3)">${w.vehicle_color}</div>`:''}
+        </td>
+        <td><span style="font-size:11px">${WATCH_REASONS[w.watch_reason]||w.watch_reason}</span></td>
+        <td><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${SEV_COLOR[w.severity]}">${w.severity}</span></td>
+        <td style="font-family:var(--mono);font-size:11px">${w.warrant_number||'—'}</td>
+        <td style="font-size:11px;color:var(--text3)">${new Date(w.created_at).toLocaleDateString('en-GB')}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px" onclick="viewWatchEntry(${w.id})">View</button>
+          <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;color:var(--green)" onclick="resolveWatch(${w.id})">Resolve</button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function resolveWatch(id) {
+  const notes = prompt('Resolution notes (what happened):');
+  if (notes === null) return;
+  const r = await apiFetch('/watchlist/'+id+'/resolve', { method:'PATCH', body: JSON.stringify({ resolution_notes: notes }) });
+  if (r.status === 200) { showToast('Watch entry resolved','success'); loadWatchlist(); }
+  else showToast('Error resolving','error');
+}
+
+function viewWatchEntry(id) { showToast('Details — coming in full deployment',''); }
+
+// ── ADD WATCHLIST MODAL ───────────────────────────────────────
+function openAddWatchModal() {
+  const existing = document.getElementById('add-watch-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'add-watch-modal';
+  overlay.className = 'modal-overlay open';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:580px">
+      <div class="modal-hdr">
+        <span style="font-family:var(--head);font-size:16px;color:var(--text)">&#x1F440; Add to Watchlist</span>
+        <div class="modal-close" onclick="document.getElementById('add-watch-modal').remove()">&#x2715;</div>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Entry Type *</div>
+            <select class="field-input" id="aw-type">
+              <option value="VEHICLE">Vehicle Watch</option>
+              <option value="PERSON">Person Watch</option>
+            </select></div>
+          <div><div class="field-label">Severity *</div>
+            <select class="field-input" id="aw-severity">
+              <option value="MEDIUM">Medium</option><option value="HIGH">High</option>
+              <option value="CRITICAL">CRITICAL</option><option value="LOW">Low</option>
+            </select></div>
+        </div>
+        <div><div class="field-label">Watch Reason *</div>
+          <select class="field-input" id="aw-reason">
+            ${Object.entries(WATCH_REASONS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+          </select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Plate Number</div><input class="field-input" id="aw-plate" placeholder="T123ABC" style="text-transform:uppercase"/></div>
+          <div><div class="field-label">National ID (NID)</div><input class="field-input" id="aw-nid" placeholder="19XXXXXXXXXX"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Full Name</div><input class="field-input" id="aw-name" placeholder="Person / vehicle owner name"/></div>
+          <div><div class="field-label">Warrant / Case Number</div><input class="field-input" id="aw-warrant" placeholder="e.g. DSM/CR/0012/2025"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Vehicle Make</div><input class="field-input" id="aw-make" placeholder="Toyota, Mercedes..."/></div>
+          <div><div class="field-label">Vehicle Color</div><input class="field-input" id="aw-color" placeholder="White, Black..."/></div>
+        </div>
+        <div><div class="field-label">Issuing Authority</div><input class="field-input" id="aw-authority" placeholder="Tanzania Police / TAKUKURU / Immigration..."/></div>
+        <div><div class="field-label">Description &amp; Context</div><textarea class="field-input" id="aw-desc" rows="3" placeholder="Describe the reason for adding to watchlist..."></textarea></div>
+        <div><div class="field-label">Officer Instructions (on intercept)</div><textarea class="field-input" id="aw-instr" rows="2" placeholder="e.g. Detain and call 0800-POLICE. Do not approach alone."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="document.getElementById('add-watch-modal').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitWatchEntry()">&#x1F440; Add to Watchlist</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitWatchEntry() {
+  const body = {
+    entry_type:        document.getElementById('aw-type').value,
+    severity:          document.getElementById('aw-severity').value,
+    watch_reason:      document.getElementById('aw-reason').value,
+    plate_number:      document.getElementById('aw-plate').value.trim().toUpperCase(),
+    national_id:       document.getElementById('aw-nid').value.trim(),
+    full_name:         document.getElementById('aw-name').value.trim(),
+    warrant_number:    document.getElementById('aw-warrant').value.trim(),
+    vehicle_make:      document.getElementById('aw-make').value.trim(),
+    vehicle_color:     document.getElementById('aw-color').value.trim(),
+    issuing_authority: document.getElementById('aw-authority').value.trim(),
+    description:       document.getElementById('aw-desc').value.trim(),
+    instructions:      document.getElementById('aw-instr').value.trim(),
+  };
+  if (!body.plate_number && !body.national_id) { showToast('Enter plate number or NID','error'); return; }
+  const r = await apiFetch('/watchlist', { method:'POST', body: JSON.stringify(body) });
+  if (r.status === 201) {
+    showToast('✓ Added to watchlist — cameras are now watching','success');
+    document.getElementById('add-watch-modal').remove();
+    loadWatchlist();
+  } else { showToast(r.data?.error || 'Error adding to watchlist','error'); }
+}
+
+// ── INCIDENTS VIEW ────────────────────────────────────────────
+async function renderIncidentsView() {
+  const m = document.getElementById('staff-main');
+  m.innerHTML = `
+    <div class="conn-warn" id="conn-warn" style="display:none">&#x26A0; Cannot reach API</div>
+    <div>
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div><div class="section-title">&#x1F6A8; Incidents</div><div class="section-sub">Security &amp; traffic incidents at camera locations</div></div>
+        <button class="btn btn-primary" onclick="openLogIncidentModal()">+ Log Incident</button>
+      </div>
+      <div class="toolbar" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="inc-status-filter" class="toolbar-select" onchange="loadIncidents()">
+          <option value="">All Status</option><option value="OPEN">Open</option>
+          <option value="ASSIGNED">Assigned</option><option value="INVESTIGATING">Investigating</option>
+          <option value="RESOLVED">Resolved</option>
+        </select>
+        <select id="inc-sev-filter" class="toolbar-select" onchange="loadIncidents()">
+          <option value="">All Severity</option><option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option><option value="MEDIUM">Medium</option>
+        </select>
+        <button class="btn btn-ghost" onclick="loadIncidents()">&#x1F504; Refresh</button>
+      </div>
+      <div id="incidents-table">Loading...</div>
+    </div>`;
+  loadIncidents();
+}
+
+async function loadIncidents() {
+  const status = document.getElementById('inc-status-filter')?.value || '';
+  const sev    = document.getElementById('inc-sev-filter')?.value    || '';
+  let url = '/incidents?';
+  if (status) url += '&status=' + status;
+  if (sev)    url += '&severity=' + sev;
+  const r = await apiFetch(url);
+  const el = document.getElementById('incidents-table');
+  if (!el) return;
+  if (!r.data?.length) { el.innerHTML = '<div style="padding:24px;color:var(--text3);font-family:var(--mono);text-align:center">No incidents logged</div>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Number</th><th>Type</th><th>Title</th><th>Plate / NID</th><th>Severity</th><th>Status</th><th>Officer</th><th>Time</th><th>Actions</th></tr></thead>
+    <tbody>${r.data.map(i => `<tr style="background:${SEV_BG[i.severity]}">
+      <td style="font-family:var(--mono);font-size:11px">${i.incident_number}</td>
+      <td style="font-size:11px">${INCIDENT_TYPES[i.incident_type]||i.incident_type}</td>
+      <td style="font-weight:600">${i.title}</td>
+      <td style="font-family:var(--mono);font-size:11px">${i.plate_number||i.national_id||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${SEV_COLOR[i.severity]}">${i.severity}</span></td>
+      <td><span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg3)">${i.status}</span></td>
+      <td style="font-size:11px">${i.officer_name||'Unassigned'}</td>
+      <td style="font-size:11px;color:var(--text3)">${new Date(i.occurred_at).toLocaleString('en-GB')}</td>
+      <td><button class="btn btn-ghost" style="font-size:10px;padding:3px 8px" onclick="assignIncident(${i.id})">Assign to Me</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+async function assignIncident(id) {
+  const r = await apiFetch('/incidents/'+id+'/assign', { method:'PATCH' });
+  if (r.status === 200) { showToast('Incident assigned to you','success'); loadIncidents(); }
+  else showToast('Error assigning incident','error');
+}
+
+function openLogIncidentModal() {
+  const existing = document.getElementById('log-incident-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'log-incident-modal';
+  overlay.className = 'modal-overlay open';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:560px">
+      <div class="modal-hdr">
+        <span style="font-family:var(--head);font-size:16px;color:var(--text)">&#x1F6A8; Log Incident</span>
+        <div class="modal-close" onclick="document.getElementById('log-incident-modal').remove()">&#x2715;</div>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Incident Type *</div>
+            <select class="field-input" id="li-type">
+              ${Object.entries(INCIDENT_TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+            </select></div>
+          <div><div class="field-label">Severity *</div>
+            <select class="field-input" id="li-severity">
+              <option value="MEDIUM">Medium</option><option value="HIGH">High</option>
+              <option value="CRITICAL">Critical</option><option value="LOW">Low</option>
+            </select></div>
+        </div>
+        <div><div class="field-label">Title *</div><input class="field-input" id="li-title" placeholder="Brief incident title"/></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Plate Number (if known)</div><input class="field-input" id="li-plate" placeholder="T123ABC" style="text-transform:uppercase"/></div>
+          <div><div class="field-label">National ID (if known)</div><input class="field-input" id="li-nid" placeholder="19XXXXXXXXXX"/></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="field-label">Camera Location</div>
+            <select class="field-input" id="li-camera">
+              <option value="">Select camera...</option>
+              <option value="CAM-DSM-001">CAM-001 Uhuru St / Samora Ave</option>
+              <option value="CAM-DSM-002">CAM-002 Morogoro Road</option>
+              <option value="CAM-DSM-003">CAM-003 Kariakoo</option>
+              <option value="CAM-DSM-004">CAM-004 Bagamoyo Road</option>
+              <option value="CAM-DSM-005">CAM-005 NM Expressway</option>
+            </select></div>
+          <div><div class="field-label">Location Name</div><input class="field-input" id="li-location" placeholder="e.g. Near Ubungo Bus Terminal"/></div>
+        </div>
+        <div><div class="field-label">Suspect Description</div><input class="field-input" id="li-suspect" placeholder="Height, clothing, distinguishing features..."/></div>
+        <div><div class="field-label">Full Description</div><textarea class="field-input" id="li-desc" rows="3" placeholder="Detailed account of what happened..."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="document.getElementById('log-incident-modal').remove()">Cancel</button>
+          <button class="btn btn-primary" onclick="submitIncident()">&#x1F6A8; Log Incident</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function submitIncident() {
+  const body = {
+    incident_type:       document.getElementById('li-type').value,
+    severity:            document.getElementById('li-severity').value,
+    title:               document.getElementById('li-title').value.trim(),
+    plate_number:        document.getElementById('li-plate').value.trim().toUpperCase(),
+    national_id:         document.getElementById('li-nid').value.trim(),
+    camera_id:           document.getElementById('li-camera').value,
+    location_name:       document.getElementById('li-location').value.trim(),
+    suspect_description: document.getElementById('li-suspect').value.trim(),
+    description:         document.getElementById('li-desc').value.trim(),
+  };
+  if (!body.title) { showToast('Title is required','error'); return; }
+  const r = await apiFetch('/incidents', { method:'POST', body: JSON.stringify(body) });
+  if (r.status === 201) {
+    showToast('✓ Incident logged — ' + r.data.incident_number,'success');
+    document.getElementById('log-incident-modal').remove();
+    loadIncidents();
+  } else { showToast(r.data?.error || 'Error logging incident','error'); }
+}
+
+// ── NID LOOKUP ────────────────────────────────────────────────
+function renderNidLookup() {
+  const m = document.getElementById('staff-main');
+  m.innerHTML = `
+    <div>
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div>
+          <div class="section-title">&#x1F50D; NID Lookup</div>
+          <div class="section-sub">Search by National ID number — returns registered vehicles, fines, watchlist status &amp; incidents</div>
+        </div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:560px;margin-bottom:24px">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">National ID Number</div>
+        <div style="display:flex;gap:10px">
+          <input class="field-input" id="nid-search-input" placeholder="Enter NID e.g. 19820314XXXXXXXX" style="flex:1;font-family:var(--mono)"
+            onkeydown="if(event.key==='Enter')runNidLookup()"/>
+          <button class="btn btn-primary" onclick="runNidLookup()">&#x1F50D; Search</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--mono)">
+          &#x26A0;&#xFE0F; NID lookup is restricted to ADMIN and OFFICER roles. All lookups are audit-logged.
+        </div>
+      </div>
+      <div id="nid-result"></div>
+    </div>`;
+}
+
+async function runNidLookup() {
+  const nid = document.getElementById('nid-search-input')?.value.trim();
+  if (!nid) { showToast('Enter a National ID number','error'); return; }
+  const el = document.getElementById('nid-result');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:16px;color:var(--text3);font-family:var(--mono)">Searching...</div>';
+  const r = await apiFetch('/nid/' + encodeURIComponent(nid));
+  if (!r.data) { el.innerHTML = '<div style="padding:16px;color:var(--red);font-family:var(--mono)">API error</div>'; return; }
+  const d = r.data;
+  if (!d.found && !d.vehicles?.length) {
+    el.innerHTML = `<div style="padding:20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+      <div style="color:var(--text3);font-family:var(--mono)">&#x2717; No records found for NID: <strong style="color:var(--text)">${nid}</strong></div>
+    </div>`;
+    return;
+  }
+  const watchBadge = d.watches?.length
+    ? `<span style="background:rgba(220,38,38,.15);border:1px solid var(--red);color:var(--red);font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700">&#x26A0; ON WATCHLIST</span>` : '';
+  el.innerHTML = `
+    <!-- Person Summary -->
+    <div style="background:var(--bg2);border:1px solid ${d.watches?.length?'var(--red)':'var(--border)'};border-radius:10px;padding:24px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:var(--head);font-size:22px;color:var(--text)">${d.owner?.name || 'Unknown Person'}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:3px">NID: ${nid} &nbsp;|&nbsp; ${d.vehicles?.length||0} registered vehicle(s)</div>
+        </div>
+        ${watchBadge}
+      </div>
+      ${d.owner ? `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        ${d.owner.phone  ? `<div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Phone</div><div style="font-weight:600">${d.owner.phone}</div></div>` : ''}
+        ${d.owner.email  ? `<div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Email</div><div style="font-weight:600">${d.owner.email}</div></div>` : ''}
+        ${d.owner.address? `<div><div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Address</div><div style="font-weight:600">${d.owner.address}</div></div>` : ''}
+      </div>` : ''}
+    </div>
+
+    <!-- Watchlist Alerts -->
+    ${d.watches?.length ? `
+    <div style="background:rgba(220,38,38,.08);border:1px solid var(--red);border-radius:10px;padding:18px;margin-bottom:16px">
+      <div style="font-family:var(--head);font-size:16px;color:var(--red);margin-bottom:12px">&#x26A0; Active Watchlist Entries</div>
+      ${d.watches.map(w => `
+        <div style="background:rgba(0,0,0,.3);border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="font-weight:700;color:var(--red)">${WATCH_REASONS[w.watch_reason]||w.watch_reason} — ${w.severity}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">${w.description||'No description'}</div>
+          ${w.instructions?`<div style="font-family:var(--mono);font-size:11px;background:rgba(220,38,38,.15);padding:8px;border-radius:4px;margin-top:6px;color:var(--red)">&#x1F6A8; OFFICER INSTRUCTIONS: ${w.instructions}</div>`:''}
+          ${w.warrant_number?`<div style="font-size:11px;color:var(--text3);margin-top:4px">Warrant: ${w.warrant_number} | Authority: ${w.issuing_authority||'—'}</div>`:''}
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- Vehicles -->
+    ${d.vehicles?.length ? `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+      <div style="font-family:var(--head);font-size:16px;color:var(--text);margin-bottom:12px">&#x1F697; Registered Vehicles (${d.vehicles.length})</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${d.vehicles.map(v => `
+          <div style="background:var(--bg3);border-radius:8px;padding:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;${v.on_watchlist?'border:1px solid var(--red)':''}">
+            <div>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)">${v.plate_number} ${v.on_watchlist?'<span style="color:var(--red);font-size:11px">&#x26A0; WATCHED</span>':''}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:3px">${[v.make,v.model,v.color,v.year].filter(Boolean).join(' &bull; ')}</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px">${v.vehicle_category||'PRIVATE'}</div>
+            </div>
+            <div style="text-align:right">
+              ${Number(v.outstanding_tzs)>0
+                ?`<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--red)">TZS ${Number(v.outstanding_tzs).toLocaleString()}</div><div style="font-size:10px;color:var(--text3)">outstanding</div>`
+                :`<div style="font-size:12px;color:var(--green)">&#x2713; No outstanding fines</div>`}
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${v.total_fines||0} fine(s) total</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Recent Incidents -->
+    ${d.incidents?.length ? `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+      <div style="font-family:var(--head);font-size:16px;color:var(--text);margin-bottom:12px">&#x1F6A8; Linked Incidents (${d.incidents.length})</div>
+      ${d.incidents.slice(0,5).map(i => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span style="font-family:var(--mono);font-size:10px;color:${SEV_COLOR[i.severity]};font-weight:700">${i.severity}</span>
+            <span style="font-size:13px;font-weight:600;margin-left:8px">${i.title}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3)">${new Date(i.occurred_at).toLocaleDateString('en-GB')}</div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openAddWatchModal()">+ Add to Watchlist</button>
+      <button class="btn btn-ghost" onclick="openLogIncidentModal()">&#x1F6A8; Log Incident</button>
+    </div>`;
+}
+
+// ── WATCHLIST HITS VIEW ───────────────────────────────────────
+async function renderWatchlistHitsView() {
+  const m = document.getElementById('staff-main');
+  m.innerHTML = `
+    <div>
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div><div class="section-title">&#x26A0;&#xFE0F; Camera Hits</div><div class="section-sub">Watchlisted plates detected by cameras</div></div>
+        <button class="btn btn-ghost" onclick="renderWatchlistHitsView()">&#x1F504; Refresh</button>
+      </div>
+      <div id="hits-table">Loading...</div>
+    </div>`;
+  const r = await apiFetch('/watchlist/hits');
+  const el = document.getElementById('hits-table');
+  if (!el) return;
+  if (!r.data?.length) { el.innerHTML = '<div style="padding:24px;color:var(--text3);font-family:var(--mono);text-align:center">No watchlist hits recorded</div>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Plate</th><th>Watch Reason</th><th>Severity</th><th>Camera</th><th>Detected At</th><th>Instructions</th><th>Status</th></tr></thead>
+    <tbody>${r.data.map(h => `<tr style="background:${SEV_BG[h.severity]}">
+      <td style="font-family:var(--mono);font-weight:700;font-size:14px;color:${SEV_COLOR[h.severity]}">${h.plate_number}</td>
+      <td>${WATCH_REASONS[h.watch_reason]||h.watch_reason}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${SEV_COLOR[h.severity]}">${h.severity}</span></td>
+      <td style="font-family:var(--mono);font-size:11px">${h.camera_id}</td>
+      <td style="font-size:11px">${new Date(h.detected_at).toLocaleString('en-GB')}</td>
+      <td style="font-size:11px;color:var(--amber2)">${h.instructions||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:10px">${h.acknowledged?'&#x2713; ACK':'UNACK'}</span></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ── WATCHLIST CHECK IN CAMERA VIEW API POSTS ─────────────────
+// Triggered from server.js processor pipeline — no client code needed
+// But we show watchlist hits in the alert popup if present
+const _origShowAlert = typeof showNextAlert === 'function' ? showNextAlert : null;
 
 </script>
 </body>

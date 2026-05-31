@@ -445,9 +445,39 @@ async function processDetection(payload) {
       status:      caseResult.fine.status,
     });
 
+    // ── WATCHLIST CHECK ───────────────────────────────────────
+    // Run silently alongside normal processing — does not block
+    // If plate is on watchlist, record hit and include in result
+    let watchlistHits = [];
+    try {
+      const { rows: wHits } = await db(
+        `SELECT w.* FROM watchlist w
+         WHERE w.plate_number = $1 AND w.status = 'ACTIVE'
+         ORDER BY w.severity DESC LIMIT 3`,
+        [plate_number.toUpperCase()]
+      );
+      if (wHits.length > 0) {
+        watchlistHits = wHits;
+        // Log the hit
+        for (const w of wHits) {
+          await db(
+            `INSERT INTO watchlist_hits
+               (watchlist_id, plate_number, camera_id, gps_lat, gps_lng, confidence, detected_at)
+             VALUES ($1,$2,$3,$4,$5,$6,NOW())`,
+            [w.id, plate_number.toUpperCase(), cameraId, gpsLat||null, gpsLng||null, confidenceScore]
+          );
+        }
+        log('PROCESSOR', `⚠️ WATCHLIST HIT: ${plate_number} — ${wHits[0].watch_reason}`, { severity: wHits[0].severity });
+      }
+    } catch (wErr) {
+      log('PROCESSOR', 'Watchlist check error (non-blocking)', { error: wErr.message });
+    }
+
     return {
       success:      true,
       stage:        'COMPLETE',
+      watchlist_hits: watchlistHits,
+      is_watched:   watchlistHits.length > 0,
       elapsed_ms:   elapsed,
       needsReview:  finalNeedsReview,
       vehicle,

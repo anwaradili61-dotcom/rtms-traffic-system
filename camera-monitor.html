@@ -608,6 +608,7 @@ function addDetection({type,plate,owner,camera,violation,confidence,amount,fine_
         <span class="det-conf ${confCls}">CONF ${(confidence*100).toFixed(0)}%</span>
       </div>
       ${owner?`<div class="det-owner">&#x1F464; ${owner}</div>`:''}
+      ${watchlist?`<div style="background:rgba(220,38,38,.15);border:1px solid var(--red);border-radius:6px;padding:6px 10px;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--red);font-weight:700">🚨 WATCHLIST: ${watchlist.watch_reason} — ${watchlist.severity}${watchlist.instructions?' | '+watchlist.instructions.substring(0,60):''}</div>`:''}`
       <div class="det-hint">&#x1F4F7; Click to view evidence</div>
     </div>
     <div style="text-align:right">
@@ -806,7 +807,23 @@ async function simTick(){
         counters.fines++;document.getElementById('s-fines').textContent=counters.fines;
         const owner = data.vehicle?.owner_name || data.vehicle?.name || '';
         if (owner) cacheOwner(payload.plate_number, owner);
-        addDetection({type:'fine',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score,amount:data.fine?.amount_tzs||AMOUNTS[payload.violation_type],fine_num:data.fine?.fine_number});
+        // Check for watchlist hits returned by the server
+        const wHits = data.watchlist_hits || [];
+        if (wHits.length > 0) {
+          const w = wHits[0];
+          addLog(`🚨 WATCHLIST HIT: ${payload.plate_number} — ${w.watch_reason} [${w.severity}]`, 'err');
+          addDetection({
+            type: w.severity === 'CRITICAL' ? 'alert' : 'fine',
+            plate: payload.plate_number, owner,
+            camera: payload.camera_id, violation: 'WATCHLIST: ' + (w.watch_reason||''),
+            confidence: payload.confidence_score,
+            amount: data.fine?.amount_tzs||AMOUNTS[payload.violation_type],
+            fine_num: data.fine?.fine_number,
+            watchlist: w,
+          });
+        } else {
+          addDetection({type:'fine',plate:payload.plate_number,owner,camera:payload.camera_id,violation:payload.violation_type,confidence:payload.confidence_score,amount:data.fine?.amount_tzs||AMOUNTS[payload.violation_type],fine_num:data.fine?.fine_number});
+        }
         // If owner empty from server, fetch and enrich DOM card
         if (!owner) {
           getOwner(payload.plate_number).then(name => {

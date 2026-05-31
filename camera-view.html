@@ -1733,10 +1733,11 @@ function tryDetect(){
 
 async function sendToAPI(car, vType, conf, isAlert) {
   const cam=CAMERAS[currentCam];
+  const token = localStorage.getItem('rtms_token') || sessionStorage.getItem('rtms_token') || '';
   try {
-    await fetch(API+'/violations', {
+    const resp = await fetch(API+'/violations', {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('rtms_token')},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({
         plate_number:car.plate, violation_type:vType,
         camera_id:cam.id, confidence_score:conf,
@@ -1744,7 +1745,37 @@ async function sendToAPI(car, vType, conf, isAlert) {
         occurred_at:new Date().toISOString()
       })
     });
+    if (resp.ok) {
+      const data = await resp.json();
+      // Show watchlist hit overlay if server flagged this plate
+      if (data.is_watched && data.watchlist_hits?.length > 0) {
+        showWatchlistAlert(car, data.watchlist_hits[0]);
+      }
+    }
   } catch(e){}
+}
+
+// Show a prominent watchlist hit overlay on the camera feed
+function showWatchlistAlert(car, watchEntry) {
+  const box = document.getElementById('detection-box');
+  if (!box) return;
+  box.style.borderColor = 'var(--red)';
+  box.style.boxShadow   = '0 0 30px rgba(255,34,68,.9)';
+  const label = document.getElementById('plate-label');
+  if (label) label.innerHTML =
+    car.plate + ' <span style="color:var(--red);font-size:9px">🚨 WATCHLIST</span>';
+  // Red banner under detection box
+  let banner = document.getElementById('watchlist-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'watchlist-banner';
+    banner.style.cssText = 'position:absolute;top:60px;left:50%;transform:translateX(-50%);background:rgba(220,38,38,.92);border:2px solid var(--red);border-radius:8px;padding:10px 18px;font-family:var(--mono);font-size:11px;color:#fff;font-weight:700;z-index:100;text-align:center;max-width:320px;box-shadow:0 0 40px rgba(255,34,68,.5)';
+    document.querySelector('.cam-overlay').appendChild(banner);
+  }
+  banner.innerHTML = `🚨 WATCHLIST HIT — ${car.plate}<br><span style="font-weight:400;font-size:10px">${watchEntry.watch_reason||''} · ${watchEntry.severity||''}</span>${watchEntry.instructions?'<br><span style="color:#ffcc00;font-size:9px">'+watchEntry.instructions.substring(0,80)+'</span>':''}`;
+  banner.style.display = 'block';
+  setTimeout(() => { if (banner) banner.style.display = 'none'; }, 6000);
+  playDetectionChime(true); // use alert chime for watchlist
 }
 
 const API='https://rtms-traffic-system.onrender.com';
