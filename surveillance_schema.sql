@@ -3,7 +3,7 @@
 -- Creates the watchlist table
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS watchlist (
-  id                 SERIAL PRIMARY KEY,
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entry_type         VARCHAR(20) NOT NULL CHECK (entry_type IN ('VEHICLE','PERSON')),
 
   -- Vehicle watch fields
@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS watchlist (
   active_since       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at         TIMESTAMPTZ,
   resolved_at        TIMESTAMPTZ,
-  resolved_by        INTEGER REFERENCES users(id),
+  resolved_by        UUID REFERENCES users(id),
   resolution_notes   TEXT,
 
   -- Tracking
-  created_by         INTEGER REFERENCES users(id),
+  created_by         UUID REFERENCES users(id),
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -65,7 +65,7 @@ SELECT 'Block 1 done' AS step;
 -- Creates the watchlist_hits table
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS watchlist_hits (
-  id               SERIAL PRIMARY KEY,
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   watchlist_id     INTEGER NOT NULL REFERENCES watchlist(id),
   plate_number     VARCHAR(20) NOT NULL,
   camera_id        VARCHAR(30) NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS watchlist_hits (
   direction        VARCHAR(20),
   officer_notified BOOLEAN DEFAULT FALSE,
   acknowledged     BOOLEAN DEFAULT FALSE,
-  acknowledged_by  INTEGER REFERENCES users(id),
+  acknowledged_by  UUID REFERENCES users(id),
   acknowledged_at  TIMESTAMPTZ,
   notes            TEXT
 );
@@ -98,7 +98,7 @@ SELECT 'Block 2 done' AS step;
 -- Creates the incidents table
 -- ═══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS incidents (
-  id                 SERIAL PRIMARY KEY,
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   incident_number    VARCHAR(30) UNIQUE NOT NULL DEFAULT 'INC-' || to_char(NOW(),'YYMMDDHH24MISS') || '-' || floor(random()*1000)::text,
   incident_type      VARCHAR(40) NOT NULL CHECK (incident_type IN (
                        'THEFT','ROBBERY','ASSAULT','CARJACKING',
@@ -129,8 +129,8 @@ CREATE TABLE IF NOT EXISTS incidents (
   evidence_urls      TEXT[],
   
   -- Assignment
-  reported_by        INTEGER REFERENCES users(id),
-  assigned_officer   INTEGER REFERENCES users(id),
+  reported_by        UUID REFERENCES users(id),
+  assigned_officer   UUID REFERENCES users(id),
   assigned_at        TIMESTAMPTZ,
 
   occurred_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
